@@ -107,3 +107,6 @@ venv.bak/
 #emacs
 *.*~
 .idea/*
+
+# IPython Notebook Checkpoints
+.ipynb_checkpoints/
