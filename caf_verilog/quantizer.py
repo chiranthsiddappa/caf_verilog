@@ -6,15 +6,16 @@ def quantize(data, n_bits, n_bits_imag=0):
     """
     Quantize the data into a range from -X to X within the n_bits size limit.
 
-    :param data:
-    :param n_bits:
-    :param n_bits_imag:
+    :param data: Data list to quantize
+    :param n_bits: Real bits
+    :param n_bits_imag: Imaginary bits
     :return:
     """
     cpx_check = is_complex(data)
+    n_bits_1 = n_bits + 1
     if not cpx_check:
         x_max = get_max(data)
-        q_data = simpleQuant(data, n_bits, x_max, 'sat')
+        q_data = simpleQuant(data, n_bits_1, x_max, 'sat')
         q_data = scale(q_data, n_bits, x_max)
         return q_data
     else:
@@ -23,10 +24,11 @@ def quantize(data, n_bits, n_bits_imag=0):
         cpx_data_imag = cpx_data.imag
         x_max_real = get_max(cpx_data_real)
         x_max_imag = get_max(cpx_data_imag)
-        q_data_real = simpleQuant(cpx_data_real, n_bits, x_max_real, 'sat')
+        q_data_real = simpleQuant(cpx_data_real, n_bits_1, x_max_real, 'sat')
         if not n_bits_imag:
             n_bits_imag = n_bits
-        q_data_imag = simpleQuant(cpx_data_imag, n_bits_imag, x_max_imag, 'sat')
+            n_bits_imag_1 = n_bits_imag + 1
+        q_data_imag = simpleQuant(cpx_data_imag, n_bits_imag + 1, x_max_imag, 'sat')
         q_data_real = scale(q_data_real, n_bits, x_max_real)
         q_data_imag = scale(q_data_imag, n_bits_imag, x_max_imag)
         q_data = q_data_real + q_data_imag * 1j
