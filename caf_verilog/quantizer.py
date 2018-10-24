@@ -27,8 +27,8 @@ def quantize(data, n_bits, n_bits_imag=0):
         q_data_real = simpleQuant(cpx_data_real, n_bits_1, x_max_real, 'sat')
         if not n_bits_imag:
             n_bits_imag = n_bits
-            n_bits_imag_1 = n_bits_imag + 1
-        q_data_imag = simpleQuant(cpx_data_imag, n_bits_imag + 1, x_max_imag, 'sat')
+        n_bits_imag_1 = n_bits_imag + 1
+        q_data_imag = simpleQuant(cpx_data_imag, n_bits_imag_1, x_max_imag, 'sat')
         q_data_real = scale(q_data_real, n_bits, x_max_real)
         q_data_imag = scale(q_data_imag, n_bits_imag, x_max_imag)
         q_data = q_data_real + q_data_imag * 1j
