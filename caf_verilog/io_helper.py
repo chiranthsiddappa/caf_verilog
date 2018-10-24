@@ -15,5 +15,5 @@ def write_quantized_output(output_dir, filename, x, y):
     with open(os.path.join(output_dir, filename), 'w+') as quant_file:
         quant_writer = csv.writer(quant_file, delimiter=',')
         for ii in range(0, len(x)):
-            row = [x[ii].real, x[ii].imag, y[ii].real, y[ii].imag]
+            row = [int(x[ii].real), int(x[ii].imag), int(y[ii].real), int(y[ii].imag)]
             quant_writer.writerow(row)
