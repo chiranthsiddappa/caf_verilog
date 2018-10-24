@@ -54,7 +54,7 @@ def scale(data, n_bits, x_max):
     :param x_max:
     :return:
     """
-    return data * (2**n_bits) / x_max
+    return data * (2**(n_bits-1)) / x_max
 
 
 def is_complex(data):
