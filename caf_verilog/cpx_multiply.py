@@ -1,5 +1,6 @@
 from .quantizer import quantize
 from .io_helper import write_quantized_output
+from numpy import floor
 
 
 class CpxMultiply:
@@ -27,6 +28,7 @@ class CpxMultiply:
         self.y_quant = quantize(self.y, self.y_i_bits, self.y_q_bits)
         self.output_dir = output_dir
         self.test_value_filename = 'cpx_multiply_input_values.txt'
+        self.test_output_filename = 'cpx_multiply_output_values.txt'
 
     def gen_tb(self):
         """
@@ -43,6 +45,15 @@ class CpxMultiply:
 
         :return:
         """
-        ideal_mult = self.x * self.y
-        q_out = quantize(ideal_mult, self.x_i_bits + self.y_i_bits, self.x_q_bits + self.y_q_bits)
-        return q_out
+        """
+           x       y
+        (x + yi)(u + vi) = (xu - yv) + (xv + yu)i
+        """
+        xu = floor(self.x_quant.real) * floor(self.y_quant.real)
+        yv = floor(self.x_quant.imag) * floor(self.y_quant.imag)
+        xv = floor(self.x_quant.real) * floor(self.y_quant.imag)
+        yu = floor(self.x_quant.imag) * floor(self.y_quant.real)
+        i_sub = xu - yv
+        y_add = xv + yu
+        final_out = i_sub + y_add*1j
+        return final_out

@@ -18,6 +18,7 @@ module cpx_multiply #(parameter xi_bits = 12,
 
    /**
     * Represent each step of:
+    *    x       y
     * (x + yi)(u + vi) = (xu - yv) + (xv + yu)i
     */
    reg signed [xi_bits + yi_bits:0] 	   i_sub;

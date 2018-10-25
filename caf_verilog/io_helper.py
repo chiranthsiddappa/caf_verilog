@@ -17,3 +17,27 @@ def write_quantized_output(output_dir, filename, x, y):
         for ii in range(0, len(x)):
             row = [int(x[ii].real), int(x[ii].imag), int(y[ii].real), int(y[ii].imag)]
             quant_writer.writerow(row)
+
+
+def read_complex_output(filename):
+    """
+    Read a file written with complex output, ex. i,j
+
+    :param filename: Full path to open a file handler with.
+    :return:
+    """
+    cpx = []
+    with open(filename) as cpx_file:
+        cpx_reader = csv.reader(cpx_file, delimiter=',')
+        for row in cpx_reader:
+            try:
+                i_data = int(row[0])
+                q_data = int(row[1]) * 1j
+                cpx.append(i_data + q_data)
+            except TypeError as te:
+                Warning(te)
+            except ValueError as ve:
+                Warning(ve)
+            except IndexError as ie:
+                Warning(ie)
+    return cpx
