@@ -2,7 +2,7 @@ import os
 import csv
 
 
-def write_quantized_output(output_dir, filename, x, y):
+def write_quantized_output(output_dir, filename, x, y=None):
     """
     Write an output file with x.real,x.imag,y.real,y.imag values into a comma delimited file.
 
@@ -12,10 +12,14 @@ def write_quantized_output(output_dir, filename, x, y):
     :param y:
     :return:
     """
+    y_vals = type(y) is not None
     with open(os.path.join(output_dir, filename), 'w+') as quant_file:
         quant_writer = csv.writer(quant_file, delimiter=',')
         for ii in range(0, len(x)):
-            row = [int(x[ii].real), int(x[ii].imag), int(y[ii].real), int(y[ii].imag)]
+            row = [int(x[ii].real), int(x[ii].imag)]
+            if y_vals:
+                row.append(int(y[ii].real))
+                row.append(int(y[ii].imag))
             quant_writer.writerow(row)
 
 
