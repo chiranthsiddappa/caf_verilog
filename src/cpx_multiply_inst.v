@@ -1,0 +1,12 @@
+cpx_multiply #(.xi_bits({{ xi_bits }}),
+               .xq_bits({{ xq_bits }}),
+               .yi_bits({{ yi_bits }}),
+               .yq_bits({{ yq_bits }}),
+               .i_bits({{ i_out_bits }}),
+               .q_bits({{ q_out_bits }})) cpx_multiply_tb(.clk(clk),
+                                                          .xi(xi),
+                                                          .xq(xq),
+                                                          .yi(yi),
+                                                          .yq(yq),
+                                                          .i(i_out),
+                                                          .q(q_out));

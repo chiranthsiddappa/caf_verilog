@@ -32,18 +32,7 @@ module cpx_multiply_tb();
       #10 clk = ~clk;
    end
 
-   cpx_multiply #(.xi_bits({{ xi_bits }}),
-                  .xq_bits({{ xq_bits }}),
-                  .yi_bits({{ yi_bits }}),
-                  .yq_bits({{ yq_bits }}),
-                  .i_bits({{ i_out_bits }}),
-                  .q_bits({{ q_out_bits }})) cpx_multiply_tb(.clk(clk),
-                                                             .xi(xi),
-                                                             .xq(xq),
-                                                             .yi(yi),
-                                                             .yq(yq),
-                                                             .i(i_out),
-                                                             .q(q_out));
+   {% include "cpx_multiply_inst.v" %}
 
    always @(posedge clk) begin
       scan_file = $fscanf(cpx_multiply_input, "%d,%d,%d,%d\n", xi,xq,yi,yq);

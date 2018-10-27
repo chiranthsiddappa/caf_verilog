@@ -2,11 +2,11 @@ from .quantizer import quantize
 from .io_helper import write_quantized_output
 from numpy import floor
 import os
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 from shutil import copy
 
 filedir = os.path.dirname(os.path.realpath(__file__))
-cpx_multiply_tb_module_path = os.path.join(filedir, '..', 'src', 'cpx_multiply_tb.v')
+cpx_multiply_tb_module_path = os.path.join(filedir, '..', 'src')
 cpx_multiply_path = os.path.join(filedir, '..', 'src', 'cpx_multiply.v')
 
 
@@ -76,9 +76,10 @@ class CpxMultiply:
         """
         out_tb = None
         t_dict = self.template_dict()
-        with open(cpx_multiply_tb_module_path) as cpx_temp:
-            template = Template(cpx_temp.read())
-            out_tb = template.render(**t_dict)
+        template_loader = FileSystemLoader(searchpath=cpx_multiply_tb_module_path)
+        env = Environment(loader=template_loader)
+        template = env.get_template('cpx_multiply_tb.v')
+        out_tb = template.render(**t_dict)
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
 
