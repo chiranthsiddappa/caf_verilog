@@ -28,6 +28,5 @@ class TestCpxMultiply(TestCase):
     def test_cpx_multiply_y_imag(self):
         xj = self.x * 1j
         x = self.x + xj
-        test_y_i = np.array([255., 62., -226., -172., 143., 241., -26., -253., -97., 206.])
-        cpx_multiply = CpxMultiply(x, x, x_q_bits=8)
-        npt.assert_almost_equal(cpx_multiply.x_quant.imag[:10], self.test_x)
+        cpx_multiply = CpxMultiply(x, x, y_q_bits=8)
+        npt.assert_almost_equal(cpx_multiply.y_quant.imag[:10], self.test_x)

@@ -21,23 +21,20 @@ class TestQuantizer(TestCase):
         npt.assert_almost_equal(q[:10], self.test_q)
 
     def test_quantizer_max(self):
-        n = np.arange(0, 12)
-        x = np.cos(2 * np.pi * 0.211 * n) * 0.95
-        test_q = np.array([243., 59., -215., -163., 135., 229., -24., -241., -92., 196.])
+        x = self.x * 0.95
+        test_q = np.array([121., 29., -108., -82., 67., 114., -12., -121., -46., 98.])
         q = quantizer.quantize(x, 8)
         npt.assert_almost_equal(q[:10], test_q)
 
     def test_quantizer_cpx_default(self):
-        n = np.arange(0, 12)
-        x = np.cos(2 * np.pi * 0.211 * n)
+        x = self.x
         xj = x * 1j
         x = x + xj
         q = quantizer.quantize(x, 8)
         npt.assert_almost_equal(q.imag[:10], self.test_q)
 
     def test_quantizer_cpx_8(self):
-        n = np.arange(0, 12)
-        x = np.cos(2 * np.pi * 0.211 * n)
+        x = self.x
         xj = x * 1j
         x = x + xj
         q = quantizer.quantize(x, 3, 8)
