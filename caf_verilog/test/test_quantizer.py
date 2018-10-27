@@ -6,12 +6,19 @@ from .. import quantizer
 
 class TestQuantizer(TestCase):
 
-    def test_quantizer_8_bits(self):
+    def setUp(self):
         n = np.arange(0, 12)
-        x = np.cos(2 * np.pi * 0.211 * n)
-        test_q = np.array([255., 62., -226., -172., 143., 241., -26., -253., -97., 206.])
-        q = quantizer.quantize(x, 8)
-        npt.assert_almost_equal(q[:10], test_q)
+        self.x = np.cos(2 * np.pi * 0.211 * n)
+        self.test_q = np.array([ 127., 31., -113., -86., 71., 120., -13., -127., -49., 103.])
+
+    def test_x(self):
+        test_x = np.array([1., 0.24259923, -0.88229123, -0.67068558, 0.55687562, 0.94088077, -0.10036171, -0.98957612,
+                           -0.3797791, 0.80530789, 0.77051324, -0.43145605])
+        npt.assert_almost_equal(self.x, test_x)
+
+    def test_quantizer_8_bits(self):
+        q = quantizer.quantize(self.x, 8)
+        npt.assert_almost_equal(q[:10], self.test_q)
 
     def test_quantizer_max(self):
         n = np.arange(0, 12)
@@ -25,15 +32,13 @@ class TestQuantizer(TestCase):
         x = np.cos(2 * np.pi * 0.211 * n)
         xj = x * 1j
         x = x + xj
-        test_q = np.array([255., 62., -226., -172., 143., 241., -26., -253., -97., 206.])
         q = quantizer.quantize(x, 8)
-        npt.assert_almost_equal(q.imag[:10], test_q)
+        npt.assert_almost_equal(q.imag[:10], self.test_q)
 
     def test_quantizer_cpx_8(self):
         n = np.arange(0, 12)
         x = np.cos(2 * np.pi * 0.211 * n)
         xj = x * 1j
         x = x + xj
-        test_q = np.array([255., 62., -226., -172., 143., 241., -26., -253., -97., 206.])
         q = quantizer.quantize(x, 3, 8)
-        npt.assert_almost_equal(q.imag[:10], test_q)
+        npt.assert_almost_equal(q.imag[:10], self.test_q)
