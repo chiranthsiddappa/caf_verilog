@@ -110,3 +110,6 @@ venv.bak/
 
 # IPython Notebook Checkpoints
 .ipynb_checkpoints/
+
+# Verilog files from notebooks
+docs/source/nb_examples/*.v

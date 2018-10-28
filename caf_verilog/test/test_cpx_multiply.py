@@ -2,7 +2,8 @@ from unittest import TestCase
 import numpy.testing as npt
 import numpy as np
 from ..cpx_multiply import CpxMultiply
-
+import os
+from tempfile import mkdtemp
 
 class TestCpxMultiply(TestCase):
 
@@ -30,3 +31,16 @@ class TestCpxMultiply(TestCase):
         x = self.x + xj
         cpx_multiply = CpxMultiply(x, x, y_q_bits=8)
         npt.assert_almost_equal(cpx_multiply.y_quant.imag[:10], self.test_x)
+
+    def test_cpx_multiply_gen_tb(self):
+        """
+        Only tests that the files are written out.
+        :return:
+        """
+        tmpdir = mkdtemp()
+        cpx_multiply = CpxMultiply(self.x, self.x, output_dir=tmpdir)
+        cpx_multiply.gen_tb()
+        files = os.listdir(tmpdir)
+        test_files = ['cpx_multiply_tb.v', 'cpx_multiply_input_values.txt', 'cpx_multiply.v']
+        for file in test_files:
+            self.assertIn(file, files)
