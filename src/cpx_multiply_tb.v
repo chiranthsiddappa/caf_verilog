@@ -31,7 +31,10 @@ module cpx_multiply_tb();
       if (cpx_multiply_output == `NULL) begin
          $display("cpx_multiply_output handle was NULL");
          $finish;
-      end      
+      end
+      #10
+        m_axis_x_tvalid = 1'b1;
+      m_axis_y_tvalid = 1'b1;
    end
 
    always begin
@@ -47,9 +50,6 @@ module cpx_multiply_tb();
       end
       if ($feof(cpx_multiply_input)) begin
          $finish;
-      end else begin
-         m_axis_x_tvalid = 1'b1;
-         m_axis_y_tvalid = 1'b1;
       end
    end
 endmodule // cpx_multiply_tb

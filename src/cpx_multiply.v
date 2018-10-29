@@ -20,7 +20,7 @@ module cpx_multiply #(parameter xi_bits = 12,
     output reg signed [q_bits-1:0] q
     );
 
-   reg [4:0]                       pipeline;
+   reg [3:0]                       pipeline;
 
    initial begin
       pipeline = 5'b0;
@@ -82,11 +82,9 @@ module cpx_multiply #(parameter xi_bits = 12,
 
    always @(posedge clk) begin
       if(in_valid) begin
-         pipeline <= pipeline + 1'b1;
-         if (pipeline == 4'd4) begin
-            s_axis_i_tvalid <= 1'b1;
-            s_axis_q_tvalid <= 1'b1;
-         end
+         pipeline <= (pipeline << 1) | 4'b1;
+         s_axis_i_tvalid <= pipeline[3];
+         s_axis_q_tvalid <= pipeline[3];
       end
    end // always @ (posedge clk)
 
