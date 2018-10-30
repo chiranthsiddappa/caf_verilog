@@ -1,4 +1,5 @@
 `timescale 1ns/1ns
+`define NULL 0
 
 module cpx_multiply_tb();
    reg clk;
@@ -12,7 +13,6 @@ module cpx_multiply_tb();
    reg signed [{{ yq_bits - 1 }}:0] yq;
    wire signed [{{ i_out_bits - 1 }}:0] i_out;
    wire signed [{{ q_out_bits - 1 }}:0] q_out;
-`define NULL 0
 
    initial begin
       clk = 1'b0;

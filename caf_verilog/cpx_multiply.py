@@ -75,7 +75,7 @@ class CpxMultiply:
         :return:
         """
         out_tb = None
-        t_dict = self.template_dict()
+        t_dict = self.template_dict("cpx_multiply_tb")
         template_loader = FileSystemLoader(searchpath=cpx_multiply_tb_module_path)
         env = Environment(loader=template_loader)
         template = env.get_template('cpx_multiply_tb.v')
@@ -83,11 +83,12 @@ class CpxMultiply:
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
 
-    def template_dict(self):
+    def template_dict(self, name):
         t_dict = {'xi_bits': self.x_i_bits, 'xq_bits': self.x_q_bits, 'yi_bits': self.y_i_bits,
                   'yq_bits': self.y_q_bits}
         t_dict['i_out_bits'] = self.x_i_bits + self.y_i_bits
         t_dict['q_out_bits'] = self.x_q_bits + self.y_q_bits
         t_dict['cpx_multiply_input'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         t_dict['cpx_multiply_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
+        t_dict['cpx_multiply_name'] = name
         return t_dict
