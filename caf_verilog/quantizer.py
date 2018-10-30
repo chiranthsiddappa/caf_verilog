@@ -45,7 +45,7 @@ def get_max(data):
     return max(np.floor(max(max(data), abs(min(data)))), 1)
 
 
-def scale(data, n_bits, x_max):
+def scale(data, n_bits, x_max, use_complex=False):
     """
     Takes values and scales them to the max of the n_bits limit.
 
@@ -54,8 +54,9 @@ def scale(data, n_bits, x_max):
     :param x_max:
     :return:
     """
-    scaled_output = data * (2**(n_bits-1)) / x_max
-    return np.floor(scaled_output)
+    scaled_output = (data * (2**(n_bits-1) - 1)) / x_max
+    scaled_output = np.round(scaled_output)
+    return scaled_output
 
 
 def is_complex(data):
