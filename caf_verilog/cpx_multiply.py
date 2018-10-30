@@ -37,6 +37,7 @@ class CpxMultiply:
         self.tb_filename = 'cpx_multiply_tb.v'
         self.test_value_filename = 'cpx_multiply_input_values.txt'
         self.test_output_filename = 'cpx_multiply_output_values.txt'
+        copy(cpx_multiply_path, self.output_dir)
 
     def gen_tb(self):
         """
@@ -46,7 +47,6 @@ class CpxMultiply:
         """
         write_quantized_output(self.output_dir, self.test_value_filename, self.x_quant, self.y_quant)
         self.write_cpx_multiply_tb_module()
-        copy(cpx_multiply_path, self.output_dir)
 
     def gen_quantized_output(self):
         """
