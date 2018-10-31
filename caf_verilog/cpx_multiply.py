@@ -7,7 +7,7 @@ from shutil import copy
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 cpx_multiply_tb_module_path = os.path.join(filedir, '..', 'src')
-cpx_multiply_path = os.path.join(filedir, '..', 'src', 'cpx_multiply.v')
+cpx_multiply_module_path = os.path.join(filedir, '..', 'src', 'cpx_multiply.v')
 
 
 class CpxMultiply:
@@ -37,7 +37,7 @@ class CpxMultiply:
         self.tb_filename = 'cpx_multiply_tb.v'
         self.test_value_filename = 'cpx_multiply_input_values.txt'
         self.test_output_filename = 'cpx_multiply_output_values.txt'
-        copy(cpx_multiply_path, self.output_dir)
+        copy(cpx_multiply_module_path, self.output_dir)
 
     def gen_tb(self):
         """
