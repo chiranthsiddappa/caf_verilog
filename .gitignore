@@ -113,3 +113,4 @@ venv.bak/
 
 # Verilog files from notebooks
 docs/source/nb_examples/*.v
+caf_verilog/test/*.v
