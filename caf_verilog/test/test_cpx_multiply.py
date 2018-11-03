@@ -5,32 +5,33 @@ from ..cpx_multiply import CpxMultiply
 import os
 from tempfile import mkdtemp
 
+
 class TestCpxMultiply(TestCase):
 
     def setUp(self):
         n = np.arange(0, 12)
         self.x = np.cos(2 * np.pi * 0.211 * n)
-        self.test_x = np.array([127., 31., -113., -86., 71., 120., -13., -127., -49., 103.])
+        self.test_x = np.array([127., 31., -112., -85., 71., 120., -13., -126., -48., 102., 98., -55.])
 
     def test_cpx_multiply_x_real(self):
         cpx_multiply = CpxMultiply(self.x, self.x, x_i_bits=8)
-        npt.assert_almost_equal(cpx_multiply.x_quant[:10], self.test_x)
+        npt.assert_almost_equal(cpx_multiply.x_quant, self.test_x)
 
     def test_cpx_multiply_x_imag(self):
         xj = self.x * 1j
         x = self.x + xj
         cpx_multiply = CpxMultiply(x, x, x_q_bits=8)
-        npt.assert_almost_equal(cpx_multiply.x_quant.imag[:10], self.test_x)
+        npt.assert_almost_equal(cpx_multiply.x_quant.imag, self.test_x)
 
     def test_cpx_multiply_y_real(self):
         cpx_multiply = CpxMultiply(self.x, self.x, y_i_bits=8)
-        npt.assert_almost_equal(cpx_multiply.y_quant[:10], self.test_x)
+        npt.assert_almost_equal(cpx_multiply.y_quant, self.test_x)
 
     def test_cpx_multiply_y_imag(self):
         xj = self.x * 1j
         x = self.x + xj
         cpx_multiply = CpxMultiply(x, x, y_q_bits=8)
-        npt.assert_almost_equal(cpx_multiply.y_quant.imag[:10], self.test_x)
+        npt.assert_almost_equal(cpx_multiply.y_quant.imag, self.test_x)
 
     def test_cpx_multiply_gen_tb(self):
         """
