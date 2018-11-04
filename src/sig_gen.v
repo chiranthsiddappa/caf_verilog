@@ -35,6 +35,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
       end
       else begin
          phase <= phase;
+         phase_4 <= phase_4;
       end
    end
 
@@ -44,6 +45,8 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
          cosine <= lut[phase_4[phase_bits - 1:phase_bits - n_bits - 1]];
          s_axis_data_tvalid <= 1'b1;
       end else begin
+         sine <= sine;
+         cosine <= cosine;
          s_axis_data_tvalid <= 1'b0;
       end
    end
