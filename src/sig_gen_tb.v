@@ -5,6 +5,7 @@ module sig_gen_tb();
    reg clk;
    integer sig_gen_output;
 
+   reg     m_axis_freq_step_tvalid;
    reg [{{phase_bits}}-1: 0] freq_step;
    reg                       m_axis_data_tready;
    wire signed [{{n_bits}}-1:0] cosine;
@@ -15,13 +16,17 @@ module sig_gen_tb();
       clk = 1'b0;
       freq_step = {{ freq_step_str }};
       m_axis_data_tready = 1'b0;
+      m_axis_freq_step_tvalid = 1'b0;
       sig_gen_output = $fopen("{{ sig_gen_output }}");
       if (sig_gen_output == `NULL) begin
          $display("sig_gen_output handle was NULL");
          $finish;
       end
 
-      @(posedge clk) m_axis_data_tready = 1'b1;
+      @(posedge clk) begin
+         m_axis_data_tready = 1'b1;
+         m_axis_freq_step_tvalid = 1'b1;
+      end
 
    end // initial begin
 

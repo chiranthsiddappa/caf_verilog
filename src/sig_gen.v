@@ -5,6 +5,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
                  parameter lut_length = 255
                  )
    (input clk,
+    input                            m_axis_freq_step_tvalid,
     input [phase_bits - 1: 0]        freq_step,
     input                            m_axis_data_tready,
     output reg signed [n_bits - 1:0] cosine,
@@ -28,7 +29,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    end
 
    always @(posedge clk) begin
-      if (m_axis_data_tready) begin
+      if (m_axis_data_tready & m_axis_freq_step_tvalid) begin
          phase <= phase + freq_step;
          phase_4 <= phase_4 + freq_step;
       end
@@ -38,7 +39,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    end
 
    always @(posedge clk) begin
-      if (m_axis_data_tready) begin
+      if (m_axis_data_tready & m_axis_freq_step_tvalid) begin
          sine <= lut[phase[phase_bits - 1:phase_bits - n_bits - 1]];
          cosine <= lut[phase_4[phase_bits - 1:phase_bits - n_bits - 1]];
          s_axis_data_tvalid <= 1'b1;
