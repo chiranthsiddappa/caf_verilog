@@ -16,28 +16,25 @@ module dot_prod_tb();
    reg signed [({{ yi_bits }} * {{ length }}) - 1:0] yi;
    reg signed [({{ yq_bits }} * {{ length }}) - 1:0] yq;
    wire                                              s_axis_tvalid;
-   wire [{{ i_bits }} - 1:0]                               i;
-   wire [{{ q_bits }} - 1:0]                               q;
-   reg signed [{{ xi_bits - 1}}:0]                         xi_in;
-   reg signed [{{ xq_bits - 1}}:0]                         xq_in;
-   reg signed [{{ yi_bits - 1}}:0]                         yi_in;
-   reg signed [{{ yq_bits - 1}}:0]                         yq_in;
+   wire [{{ sum_i_size }} - 1:0]                     i;
+   wire [{{ sum_q_size }} - 1:0]                     q;
+   reg signed [{{ xi_bits - 1}}:0]                   xi_in;
+   reg signed [{{ xq_bits - 1}}:0]                   xq_in;
+   reg signed [{{ yi_bits - 1}}:0]                   yi_in;
+   reg signed [{{ yq_bits - 1}}:0]                   yq_in;
 
    initial begin
       clk = 1'b0;
       m_axis_x_tvalid = 1'b0;
       m_axis_y_tvalid = 1'b0;
-      dot_multiply_input = $fopen("{{ dot_product_input }}", "r");
-      if (dot_multiply_input == `NULL) begin
-         $display("dot_product_input was NULL");
+      dot_prod_input = $fopen("{{ dot_prod_input }}", "r");
+      if (dot_prod_input == `NULL) begin
+         $display("dot_prod_input was NULL");
          $finish;
       end
-      for (scan_counter = 0; !$feof(dot_product_input); scan_counter = scan_counter + 1) begin
-         scan_file = $fscanf(dot_product_input, "%d,%d,%d,%d\n", xi_reg,xq_reg,yi_reg,yq_reg);
-         xi[{{ xi_bits + 1 }} * scan_counter - 1:{{ xi_bits }} * scan_counter] = xi_reg;
-         xq[{{ xq_bits + 1 }} * scan_counter - 1:{{ xi_bits }} * scan_counter] = xq_reg;
-         yi[{{ yi_bits + 1 }} * scan_counter - 1:{{ yi_bits }} * scan_counter] = yi_reg;
-         yq[{{ yq_bits + 1 }} * scan_counter - 1:{{ yq_bits }} * scan_counter] = yq_reg;
+      for (scan_counter = 0; !$feof(dot_prod_input); scan_counter = scan_counter + 1) begin
+         scan_file = $fscanf(dot_prod_input, "%d,%d,%d,%d\n", xi_in,xq_in,yi_in,yq_in);
+         
       end
       // TODO : write output to a file
       #10
@@ -45,6 +42,8 @@ module dot_prod_tb();
       m_axis_y_tvalid = 1'b1;
    end
 
+   {% include "dot_prod_inst.v" %}
+   
    always begin
       #10 clk = ~clk;
    end
