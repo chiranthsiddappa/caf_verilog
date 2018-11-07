@@ -23,16 +23,16 @@ module dot_prod #(parameter xi_bits = 12,
     output reg [q_bits-1:0]                 q
     );
 
-   wire                        mult_valid_i [0:length-1];
-   wire                        mult_valid_q [0:length-1];
-   reg                         mult_valid [0:length-1];
-   wire signed [i_bits-1:0]    mult_out_i [0:length-1];
-   wire signed [q_bits-1:0]    mult_out_q [0:length-1];
-   wire                        m_axis_data_tvalid;
-   genvar                      iLen;
-   integer                     ithSum;
-   reg signed [sum_i_size - 1:0] sum_i;
-   reg signed [sum_q_size - 1:0] sum_q;
+   wire [0:length-1]                        mult_valid_i;
+   wire [0:length-1]                        mult_valid_q;
+   wire                                     mult_valid;
+   wire signed [i_bits-1:0]                 mult_out_i [0:length-1];
+   wire signed [q_bits-1:0]                 mult_out_q [0:length-1];
+   wire                                     m_axis_data_tvalid;
+   genvar                                   iLen;
+   integer                                  ithSum;
+   reg signed [sum_i_size - 1:0]            sum_i;
+   reg signed [sum_q_size - 1:0]            sum_q;
 
    generate
       for (iLen = 0; iLen < length; iLen = iLen + 1) begin: mult_gen
@@ -58,14 +58,15 @@ module dot_prod #(parameter xi_bits = 12,
    endgenerate
 
    assign m_axis_data_tvalid = m_axis_x_tvalid & m_axis_y_tvalid;
+   assign mult_valid = (&mult_valid_i) & (&mult_valid_q);
 
    always @(posedge clk) begin
-      if (m_axis_product_tready & m_axis_data_tvalid) begin
-         sum_i <= 'd0;
-         sum_q <= 'd0;
+      if (m_axis_product_tready & mult_valid) begin
+         sum_i = 'd0;
+         sum_q = 'd0;
          for (ithSum = 0; ithSum < length; ithSum = ithSum + 1) begin
-            sum_i <= sum_i + mult_out_i[ithSum];
-            sum_q <= sum_q + mult_out_q[ithSum];
+            sum_i = sum_i + mult_out_i[ithSum];
+            sum_q = sum_q + mult_out_q[ithSum];
          end
       end
    end

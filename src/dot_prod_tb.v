@@ -27,19 +27,17 @@ module dot_prod_tb();
       clk = 1'b0;
       m_axis_x_tvalid = 1'b0;
       m_axis_y_tvalid = 1'b0;
+      xi = 'd0;
+      xq = 'd0;
+      yi = 'd0;
+      yq = 'd0;
       dot_prod_input = $fopen("{{ dot_prod_input }}", "r");
+      scan_counter = 'd0;
       if (dot_prod_input == `NULL) begin
          $display("dot_prod_input was NULL");
          $finish;
       end
-      for (scan_counter = 0; !$feof(dot_prod_input); scan_counter = scan_counter + 1) begin
-         scan_file = $fscanf(dot_prod_input, "%d,%d,%d,%d\n", xi_in,xq_in,yi_in,yq_in);
-         
-      end
       // TODO : write output to a file
-      #10
-        m_axis_x_tvalid = 1'b1;
-      m_axis_y_tvalid = 1'b1;
    end
 
    {% include "dot_prod_inst.v" %}
@@ -49,6 +47,22 @@ module dot_prod_tb();
    end
 
    always @(posedge clk) begin
-
+      if (!$feof(dot_prod_input)) begin
+         scan_counter = scan_counter + 1;
+         scan_file = $fscanf(dot_prod_input, "%d,%d,%d,%d\n", xi_in,xq_in,yi_in,yq_in);
+         xi = (xi << {{ xi_bits }}) | xi_in;
+         xq = (xq << {{ xq_bits }}) | xq_in;
+         yi = (yi << {{ yi_bits }}) | yi_in;
+         yq = (yq << {{ yq_bits }}) | yq_in;
+      end
+      if (scan_counter > {{ length }}) begin
+         m_axis_x_tvalid = 1'b1;
+         m_axis_y_tvalid = 1'b1;
+         m_axis_product_tready = 1'b1;
+      end
+      else begin
+         m_axis_x_tvalid = 1'b0;
+         m_axis_y_tvalid = 1'b0;
+      end
    end
 endmodule // dot_prod_tb
