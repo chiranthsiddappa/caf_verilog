@@ -26,8 +26,8 @@ module dot_prod #(parameter xi_bits = 12,
    wire [0:length-1]                        mult_valid_i;
    wire [0:length-1]                        mult_valid_q;
    wire                                     mult_valid;
-   wire signed [i_bits-1:0]                 mult_out_i [0:length-1];
-   wire signed [q_bits-1:0]                 mult_out_q [0:length-1];
+   wire signed [xi_bits + yi_bits -1:0]                 mult_out_i [0:length-1];
+   wire signed [xi_bits + yi_bits -1:0]                 mult_out_q [0:length-1];
    wire                                     m_axis_data_tvalid;
    genvar                                   iLen;
    integer                                  ithSum;
@@ -70,6 +70,12 @@ module dot_prod #(parameter xi_bits = 12,
             sum_i = sum_i + mult_out_i[ithSum];
             sum_q = sum_q + mult_out_q[ithSum];
          end
-      end
+         i <= sum_i;
+         q <= sum_q;
+         s_axis_product_tvalid <= 1'b1;
+      end // if (m_axis_product_tready & mult_valid)
+      else begin
+         s_axis_product_tvalid <= 1'b0;
+      end // else: !if(m_axis_product_tready & mult_valid)
    end
 endmodule // dot_prod
