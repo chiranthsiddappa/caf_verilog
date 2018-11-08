@@ -37,7 +37,7 @@ class CpxMultiply(CafVerilogBase):
         self.tb_filename = 'cpx_multiply_tb.v'
         self.test_value_filename = 'cpx_multiply_input_values.txt'
         self.test_output_filename = 'cpx_multiply_output_values.txt'
-        copy(cpx_multiply_module_path, self.output_dir)
+        copy(self.module_path(), self.output_dir)
 
     def gen_tb(self):
         """
@@ -76,7 +76,7 @@ class CpxMultiply(CafVerilogBase):
         """
         out_tb = None
         t_dict = self.template_dict("cpx_multiply_tb")
-        template_loader = FileSystemLoader(searchpath=cpx_multiply_tb_module_path)
+        template_loader = FileSystemLoader(searchpath=self.tb_module_path())
         env = Environment(loader=template_loader)
         template = env.get_template('cpx_multiply_tb.v')
         out_tb = template.render(**t_dict)

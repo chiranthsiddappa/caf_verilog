@@ -1,3 +1,4 @@
 scikit-dsp-comm>=0.0.5
 numpy
 Jinja2
+inflection
