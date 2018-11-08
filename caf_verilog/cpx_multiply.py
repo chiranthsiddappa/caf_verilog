@@ -4,13 +4,14 @@ from numpy import floor
 import os
 from jinja2 import Environment, FileSystemLoader
 from shutil import copy
+from .caf_verilog_base import CafVerilogBase
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 cpx_multiply_tb_module_path = os.path.join(filedir, '..', 'src')
 cpx_multiply_module_path = os.path.join(filedir, '..', 'src', 'cpx_multiply.v')
 
 
-class CpxMultiply:
+class CpxMultiply(CafVerilogBase):
 
     def __init__(self, x, y, x_i_bits=12, x_q_bits=0, y_i_bits=12, y_q_bits=0, output_dir='.'):
         """
@@ -25,8 +26,7 @@ class CpxMultiply:
         """
         self.x = x
         self.y = y
-        if not (len(self.x) == len(self.y)):
-            raise ValueError("x and y are not the same length")
+        self.cpx_input_length_check()
         self.x_i_bits = x_i_bits
         self.x_q_bits = x_q_bits if x_q_bits else self.x_i_bits
         self.y_i_bits = y_i_bits
@@ -83,12 +83,12 @@ class CpxMultiply:
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
 
-    def template_dict(self, name):
+    def template_dict(self, inst_name=None):
         t_dict = {'xi_bits': self.x_i_bits, 'xq_bits': self.x_q_bits, 'yi_bits': self.y_i_bits,
                   'yq_bits': self.y_q_bits}
         t_dict['i_out_bits'] = self.x_i_bits + self.y_i_bits
         t_dict['q_out_bits'] = self.x_q_bits + self.y_q_bits
         t_dict['cpx_multiply_input'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         t_dict['cpx_multiply_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
-        t_dict['cpx_multiply_name'] = name
+        t_dict['cpx_multiply_name'] = inst_name if inst_name else 'cpx_multiply_tb'
         return t_dict

@@ -2,13 +2,14 @@ from . quantizer import quantize
 import os
 from jinja2 import Environment, FileSystemLoader, Template
 import numpy as np
+from .caf_verilog_base import CafVerilogBase
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 sig_gen_tb_module_path = os.path.join(filedir, '..', 'src')
 sig_gen_module_path = os.path.join(filedir, '..', 'src', 'sig_gen.v')
 
 
-class SigGen:
+class SigGen(CafVerilogBase):
 
     def __init__(self, freq_res, fs, n_bits, output_dir='.'):
         self.f = freq_res
