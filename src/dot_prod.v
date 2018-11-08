@@ -13,12 +13,12 @@ module dot_prod #(parameter xi_bits = 12,
    (input clk,
     input                                   m_axis_product_tready,
     input                                   m_axis_x_tvalid,
-    input signed [(xi_bits * length) - 1:0] xi,
-    input signed [(xq_bits * length) - 1:0] xq,
+    input [(xi_bits * length) - 1:0] xi,
+    input [(xq_bits * length) - 1:0] xq,
     input                                   m_axis_y_tvalid,
-    input signed [(yi_bits * length) - 1:0] yi,
-    input signed [(yq_bits * length) - 1:0] yq,
-    output reg                              s_axis_tvalid,
+    input [(yi_bits * length) - 1:0] yi,
+    input [(yq_bits * length) - 1:0] yq,
+    output reg                              s_axis_product_tvalid,
     output reg [i_bits-1:0]                 i,
     output reg [q_bits-1:0]                 q
     );
@@ -33,6 +33,10 @@ module dot_prod #(parameter xi_bits = 12,
    integer                                  ithSum;
    reg signed [sum_i_size - 1:0]            sum_i;
    reg signed [sum_q_size - 1:0]            sum_q;
+
+   initial begin
+      s_axis_product_tvalid = 1'b0;
+   end
 
    generate
       for (iLen = 0; iLen < length; iLen = iLen + 1) begin: mult_gen
@@ -62,9 +66,7 @@ module dot_prod #(parameter xi_bits = 12,
 
    always @(posedge clk) begin
       if (m_axis_product_tready & mult_valid) begin
-         sum_i = 'd0;
-         sum_q = 'd0;
-         for (ithSum = 0; ithSum < length; ithSum = ithSum + 1) begin
+         for (ithSum = 0, sum_i = 0, sum_q = 0; ithSum < length; ithSum = ithSum + 1) begin
             sum_i = sum_i + mult_out_i[ithSum];
             sum_q = sum_q + mult_out_q[ithSum];
          end

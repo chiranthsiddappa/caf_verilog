@@ -15,7 +15,7 @@ dot_prod #(.xi_bits({{ xi_bits }}),
                                   .m_axis_y_tvalid(m_axis_y_tvalid),
                                   .yi(yi),
                                   .yq(yq),
-                                  .s_axis_tvalid(s_axis_tvalid),
+                                  .s_axis_product_tvalid(s_axis_product_tvalid),
                                   .i(i),
                                   .q(q)
                                   );

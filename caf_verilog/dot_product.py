@@ -33,15 +33,15 @@ class DotProduct(CafVerilogBase):
         self.y_i_bits = y_i_bits
         self.y_q_bits = y_q_bits if y_q_bits else self.y_i_bits
         if self.x_i_bits > self.y_i_bits:
-            self.sum_i_size = np.log2(self.x_i_bits * self.length)
+            self.sum_i_size = ((2**self.x_i_bits - 1)**2) * self.length
         else:
-            self.sum_i_size = np.log2(self.y_i_bits * self.length)
-        self.sum_i_size = int(np.ceil(self.sum_i_size))
+            self.sum_i_size = ((2**self.y_i_bits - 1)**2) * self.length
+        self.sum_i_size = int(np.ceil(np.log2(self.sum_i_size)))
         if self.x_q_bits > self.y_q_bits:
-            self.sum_q_size = np.log2(self.x_q_bits * self.length)
+            self.sum_q_size = ((2**self.x_q_bits - 1)**2) * self.length
         else:
-            self.sum_q_size = np.log2(self.y_q_bits * self.length)
-        self.sum_q_size = int(np.ceil(self.sum_q_size))
+            self.sum_q_size = ((2**self.y_q_bits - 1)**2) * self.length
+        self.sum_q_size = int(np.ceil(np.log2(self.sum_q_size)))
         self.x_quant = quantize(self.x, self.x_i_bits, self.x_q_bits)
         self.y_quant = quantize(self.y, self.y_i_bits, self.y_q_bits)
         self.output_dir = output_dir
