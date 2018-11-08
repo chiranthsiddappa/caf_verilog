@@ -6,10 +6,6 @@ from jinja2 import Environment, FileSystemLoader
 from shutil import copy
 from .caf_verilog_base import CafVerilogBase
 
-filedir = os.path.dirname(os.path.realpath(__file__))
-cpx_multiply_tb_module_path = os.path.join(filedir, '..', 'src')
-cpx_multiply_module_path = os.path.join(filedir, '..', 'src', 'cpx_multiply.v')
-
 
 class CpxMultiply(CafVerilogBase):
 
