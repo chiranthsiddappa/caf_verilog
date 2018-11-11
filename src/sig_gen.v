@@ -15,17 +15,11 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    reg [phase_bits - 1:0] phase;
    reg [phase_bits - 1:0] phase_4;
    reg signed [n_bits -1:0] lut [0:lut_length];
-   integer                  lut_iter;
-   integer                  lut_filehandler;
-   integer                  scan_file;
 
    initial begin
       phase = {phase_bits{1'b0}};
       phase_4 = {phase_bits{1'b1}} / 3'd4;
-      lut_filehandler = $fopen("{{ lut_filename }}", "r");
-      for (lut_iter = 0; lut_iter <= lut_length; lut_iter = lut_iter + 1) begin
-         scan_file = $fscanf(lut_filehandler, "%d\n", lut[lut_iter]);
-      end
+      $readmemb("{{ lut_filename }}", lut);
    end
 
    always @(posedge clk) begin
