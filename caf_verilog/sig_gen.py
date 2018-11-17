@@ -68,7 +68,7 @@ class SigGen(CafVerilogBase):
         values = lut_values(self.n_bits)
         with open(os.path.join(self.output_dir, self.lut_filename), 'w+') as lut_file:
             for val in values:
-                lut_file.write(str(int(val)) + "\n")
+                lut_file.write(bin_num(val, self.n_bits) + "\n")
 
     def write_module(self):
         self.write_lut_values()
@@ -117,3 +117,11 @@ def phase_increment(f_out, phase_bits, f_clk):
     :return:
     """
     return int(f_out * 2**phase_bits / f_clk)
+
+
+def bin_num(n, n_bits):
+    mask = (2 << n_bits - 1) - 1
+    num = int(n) & mask
+    f_str = '{:0' + str(n_bits) + 'b}'
+    f_res = f_str.format(int(num))
+    return f_res

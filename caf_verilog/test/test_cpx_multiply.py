@@ -45,3 +45,13 @@ class TestCpxMultiply(TestCase):
         test_files = ['cpx_multiply_tb.v', 'cpx_multiply_input_values.txt', 'cpx_multiply.v']
         for file in test_files:
             self.assertIn(file, files)
+
+    def test_cpx_multiply_gen_quantized_output(self):
+        n = np.arange(0, 10)
+        x = np.exp(2 * np.pi * 0.15 * n * 1j)
+        y = np.exp(-2 * np.pi * 0.05 * n * 1j)
+        cpx_multiply = CpxMultiply(x, y)
+        test_quo = np.array([ 4190209. + 0.j, 3390489. + 2462733.j, 1293993. + 3985731.j, -1293993. + 3985731.j,
+                              -3390489.+2462733.j, -4190209. + 0.j, -3390489. - 2462733.j, -1293993. - 3985731.j,
+                              1293993.-3985731.j, 3390489. - 2462733.j])
+        npt.assert_almost_equal(cpx_multiply.gen_quantized_output(), test_quo)
