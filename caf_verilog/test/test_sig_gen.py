@@ -17,3 +17,10 @@ class TestSigGen(TestCase):
         nbits = 27
         test_nbits = sg.phase_bits(fclk, precision)
         self.assertEqual(nbits, test_nbits)
+
+    def test_phase_increment_xil(self):
+        fclk = 100e6
+        nbits = 18
+        test_inc = sg.phase_increment(19e6, nbits, fclk)
+        inc = 49807
+        self.assertEqual(inc, test_inc)
