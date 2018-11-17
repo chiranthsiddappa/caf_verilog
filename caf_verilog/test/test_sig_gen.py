@@ -1,5 +1,7 @@
 from unittest import TestCase
 from .. import sig_gen as sg
+from tempfile import mkdtemp
+import os
 
 
 class TestSigGen(TestCase):
@@ -24,3 +26,17 @@ class TestSigGen(TestCase):
         test_inc = sg.phase_increment(19e6, nbits, fclk)
         inc = 49807
         self.assertEqual(inc, test_inc)
+
+    def test_sig_gen_gen_tb(self):
+        """
+        Test that the files are written out
+        :return:
+        """
+        tmpdir = mkdtemp()
+        sig_gen = sg.SigGen(1200, 625e3, 8, output_dir=tmpdir)
+        sig_gen.gen_tb()
+        files = os.listdir(tmpdir)
+        test_files = ['sig_gen_tb.v', 'sig_gen_625_10_8.txt', 'sig_gen_625_10_8.v']
+        for file in test_files:
+            self.assertIn(file, files)
+
