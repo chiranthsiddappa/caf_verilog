@@ -1,3 +1,14 @@
+from . caf_verilog_base import CafVerilogBase
+
+
+class XCorr(CafVerilogBase):
+
+    def __init__(self, pipeline=False):
+        """
+
+        :param pipeline:
+        """
+
 
 def simple_xcorr(f, g, nlags):
     """
