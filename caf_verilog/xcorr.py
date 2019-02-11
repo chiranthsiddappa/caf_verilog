@@ -3,12 +3,19 @@ from . caf_verilog_base import CafVerilogBase
 
 class XCorr(CafVerilogBase):
 
-    def __init__(self, pipeline=False):
+    def __init__(self, ref, rec, pipeline=False):
         """
 
+        :param ref: Reference signal.
+        :param rec: Received or simulated secondary signal.
         :param pipeline:
         """
 
+    def gen_quantized_output(self):
+        """
+
+        :return:
+        """
 
 def simple_xcorr(f, g, nlags):
     """
