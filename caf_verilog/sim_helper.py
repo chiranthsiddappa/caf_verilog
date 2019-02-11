@@ -21,10 +21,8 @@ def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False):
         if index_error:
             raise IndexError("Center and length result in an out of bounds error in rec")
     ref_ret = ref[ref_center - fill_length: ref_center + fill_length]
-    print(type(ref_ret))
     if padding:
         fill_zeros = [0 for zz in range(0, fill_length)]
-        print(type(fill_zeros))
         ref_ret = fill_zeros + list(ref_ret)
         ref_ret += fill_zeros
     if rec:
