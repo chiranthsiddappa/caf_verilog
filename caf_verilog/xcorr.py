@@ -35,6 +35,22 @@ class XCorr(CafVerilogBase):
         """
 
 
+def dot_xcorr(ref, rec):
+    """
+    Perform the cross correlation using the dot product.
+    This produces an output list of magnitudes that are inverse offset from the center
+    of the reference signal.
+
+    :param ref:
+    :param rec:
+    :return:
+    """
+    dx = []
+    for i in range(0, len(rec) - len(ref)):
+        dx.append(ndot(ref, rec[i:len(ref) + i]))
+    return dx
+
+
 def simple_xcorr(f, g, nlags):
     """
 
