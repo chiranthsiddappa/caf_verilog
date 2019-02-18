@@ -1,21 +1,39 @@
 from . caf_verilog_base import CafVerilogBase
+from .quantizer import quantize
+from numpy import dot as ndot
 
 
 class XCorr(CafVerilogBase):
 
-    def __init__(self, ref, rec, pipeline=False):
+    def __init__(self, ref, rec, ref_i_bits=12, ref_q_bits=0,
+                 rec_i_bits=12, rec_q_bits=0,
+                 pipeline=False):
         """
 
         :param ref: Reference signal.
         :param rec: Received or simulated secondary signal.
+        :param ref_i_bits:
+        :param ref_q_bits:
+        :param rec_i_bits:
+        :param rec_q_bits:
         :param pipeline:
         """
+        self.ref = ref
+        self.rec = rec
+        self.ref_i_bits = ref_i_bits
+        self.ref_q_bits = ref_q_bits
+        self.rec_i_bits = rec_i_bits
+        self.rec_q_bits = rec_q_bits
+        self.pip = pipeline
+        self.ref_quant = quantize(self.ref, self.ref_i_bits, self.ref_q_bits)
+        self.rec_quant = quantize(self.rec, self.rec_i_bits, self.rec_q_bits)
 
     def gen_quantized_output(self):
         """
 
         :return:
         """
+
 
 def simple_xcorr(f, g, nlags):
     """
