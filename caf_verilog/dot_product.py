@@ -77,3 +77,22 @@ class DotProduct(CafVerilogBase):
         out_tb = template.render(**t_dict)
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
+
+
+def dot_product(a, b):
+    """
+    Perform the dot product of a and b.
+
+    This method performs the dot product using a multiply and accumulate. Therefore, it is subject to Python 3's int
+    implementation rule when being used with quantized values.
+
+    :param a: Vector of length n.
+    :param b: Vector of length n.
+    :return:
+    """
+    if not len(a) == len(b):
+        raise ValueError("a and b must have the same length")
+    product = 0
+    for ia, ib in zip(a, b):
+        product += ia * ib
+    return product

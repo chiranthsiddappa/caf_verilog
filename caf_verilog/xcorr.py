@@ -1,6 +1,6 @@
 from . caf_verilog_base import CafVerilogBase
 from .quantizer import quantize
-from numpy import dot as ndot
+from . dot_product import dot_product
 
 
 class XCorr(CafVerilogBase):
@@ -47,7 +47,7 @@ def dot_xcorr(ref, rec):
     """
     dx = []
     for i in range(0, len(rec) - len(ref)):
-        dx.append(ndot(ref, rec[i:len(ref) + i]))
+        dx.append(dot_product(ref, rec[i:len(ref) + i]))
     return dx
 
 
