@@ -62,7 +62,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
    assign s_axis_cpx_product_tvalid = s_axis_cpx_i_tvalid & s_axis_cpx_q_tvalid;
 
    always @(posedge clk) begin
-      if (s_axis_cpx_product_tvalid) begin
+      if (s_axis_cpx_product_tvalid && m_axis_product_tready) begin
          if (length_counter < length) begin
             length_counter <= length_counter + 1'b1;
             sum_i <= sum_i + mult_out_i;
