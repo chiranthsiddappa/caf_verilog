@@ -7,6 +7,7 @@ module cpx_multiply_tb();
    integer               scan_file; // file handler
    integer               cpx_multiply_output;
 
+   reg                   m_axis_tready;
    reg                   m_axis_x_tvalid;
    reg signed [{{ xi_bits - 1 }}:0] xi;
    reg signed [{{ xq_bits - 1 }}:0] xq;
@@ -35,6 +36,7 @@ module cpx_multiply_tb();
       #10
         m_axis_x_tvalid = 1'b1;
       m_axis_y_tvalid = 1'b1;
+      m_axis_tready = 1'b1;
    end
 
    always begin
