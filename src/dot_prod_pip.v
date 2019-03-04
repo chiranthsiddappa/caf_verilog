@@ -24,7 +24,6 @@ module dot_prod_pip #(parameter xi_bits = 12,
     output reg [q_bits-1:0]          q
     );
 
-   wire                              mult_valid;
    wire signed [xi_bits + yi_bits -1:0] mult_out_i;
    wire signed [xi_bits + yi_bits -1:0] mult_out_q;
    wire                                 m_axis_data_tvalid;
