@@ -24,8 +24,6 @@ module dot_prod_pip #(parameter xi_bits = 12,
     output reg [q_bits-1:0]          q
     );
 
-   wire [0:length-1]                 mult_valid_i;
-   wire [0:length-1]                 mult_valid_q;
    wire                              mult_valid;
    wire signed [xi_bits + yi_bits -1:0] mult_out_i;
    wire signed [xi_bits + yi_bits -1:0] mult_out_q;
@@ -40,6 +38,8 @@ module dot_prod_pip #(parameter xi_bits = 12,
    initial begin
       s_axis_product_tvalid = 1'b0;
       length_counter = 'd0;
+      sum_i = 'd0;
+      sum_q = 'd0;
    end
 
    cpx_multiply #(.xi_bits(xi_bits),
@@ -59,12 +59,15 @@ module dot_prod_pip #(parameter xi_bits = 12,
                                                                .q(mult_out_q),
                                                                    .s_axis_q_tvalid(s_axis_cpx_q_tvalid));
 
+   assign s_axis_cpx_product_tvalid = s_axis_cpx_i_tvalid & s_axis_cpx_q_tvalid;
+
    always @(posedge clk) begin
-      if (s_axis_product_tvalid) begin
+      if (s_axis_cpx_product_tvalid) begin
          if (length_counter < length) begin
             length_counter <= length_counter + 1'b1;
             sum_i <= sum_i + mult_out_i;
             sum_q <= sum_q + mult_out_q;
+            s_axis_product_tvalid <= 1'b0;
          end
          else begin
             length_counter <= 'd0;
@@ -72,6 +75,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
             sum_q <= 'd0;
             i <= sum_i;
             q <= sum_q;
+            s_axis_product_tvalid <= 1'b1;
          end // else: !if(length_counter < length)
       end // if (s_axis_product_tvalid)
    end // always @ (posedge clk)
