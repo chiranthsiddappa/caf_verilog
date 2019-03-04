@@ -6,7 +6,6 @@ module dot_prod_pip_tb();
    integer dot_prod_pip_input;
    integer scan_file;
    integer scan_counter;
-   integer dot_prod_pip_output;
    reg     m_axis_product_tready;
    reg     m_axis_x_tvalid;
    reg [{{ xi_bits }} - 1:0] xi;
