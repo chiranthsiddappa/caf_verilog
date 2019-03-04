@@ -7,6 +7,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
                       parameter i_bits = 24,
                       parameter q_bits = 24,
                       parameter length = 5,
+                      parameter length_counter_size = 3,
                       parameter sum_i_size = 24,
                       parameter sum_q_size = 24
                       )
@@ -31,7 +32,10 @@ module dot_prod_pip #(parameter xi_bits = 12,
    wire                                 m_axis_data_tvalid;
    reg signed [sum_i_size - 1:0]        sum_i;
    reg signed [sum_q_size - 1:0]        sum_q;
-   reg [$ceil($clog2(length)):0]        length_counter;
+   reg [length_counter_size:0]          length_counter;
+   wire                                 s_axis_cpx_i_tvalid;
+   wire                                 s_axis_cpx_q_tvalid;
+   wire                                 s_axis_cpx_product_tvalid;
 
    initial begin
       s_axis_product_tvalid = 1'b0;
@@ -43,23 +47,24 @@ module dot_prod_pip #(parameter xi_bits = 12,
                   .yi_bits(yi_bits),
                   .yq_bits(yq_bits),
                   .i_bits(xi_bits + yi_bits),
-                  .q_bits(xq_bits + yq_bits)) cpx_multiply_dot(.clk(clk),
+                  .q_bits(xq_bits + yq_bits)) cpx_multiply_dot_pip(.clk(clk),
                                                                .m_axis_x_tvalid(m_axis_x_tvalid),
                                                                .xi(xi),
                                                                .xq(xq),
                                                                .m_axis_y_tvalid(m_axis_y_tvalid),
                                                                .yi(yi),
                                                                .yq(yq),
-                                                               .s_axis_product_tvalid(s_axis_product_tvalid),
                                                                .i(mult_out_i),
-                                                               .q(mult_out_q));
+                                                                   .s_axis_i_tvalid(s_axis_cpx_i_tvalid),
+                                                               .q(mult_out_q),
+                                                                   .s_axis_q_tvalid(s_axis_cpx_q_tvalid));
 
    always @(posedge clk) begin
       if (s_axis_product_tvalid) begin
          if (length_counter < length) begin
             length_counter <= length_counter + 1'b1;
-            sum_i <= sum_i + i;
-            sum_q <= sum_q + q;
+            sum_i <= sum_i + mult_out_i;
+            sum_q <= sum_q + mult_out_q;
          end
          else begin
             length_counter <= 'd0;
