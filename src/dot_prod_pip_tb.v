@@ -36,6 +36,13 @@ module dot_prod_pip_tb();
          $display("dot_prod_input was NULL");
          $finish;
       end
+      @(posedge s_axis_product_tvalid) begin
+         m_axis_product_tready = 1'b0;
+      end
+      @(posedge clk);
+      @(posedge clk) begin
+         $finish;
+      end // UNMATCHED !!
    end // initial begin
 
    {% include "dot_prod_pip_inst.v" %}
