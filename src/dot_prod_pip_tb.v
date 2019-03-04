@@ -30,9 +30,9 @@ module dot_prod_pip_tb();
       xq = 'd0;
       yi = 'd0;
       yq = 'd0;
-      dot_prod_input = $fopen("{{ dot_prod_input }}", "r");
+      dot_prod_pip_input = $fopen("{{ dot_prod_input }}", "r");
       scan_counter = 'd0;
-      if (dot_prod_input == `NULL) begin
+      if (dot_prod_pip_input == `NULL) begin
          $display("dot_prod_input was NULL");
          $finish;
       end
@@ -45,9 +45,9 @@ module dot_prod_pip_tb();
      end
 
    always @(posedge clk) begin
-      if (!$feof(dot_prod_input)) begin
+      if (!$feof(dot_prod_pip_input)) begin
          scan_counter = scan_counter + 1;
-         scan_file = $fscanf(dot_prod_input, "%d,%d,%d,%d\n", xi_in, xq_in, yi_in, yq_in);
+         scan_file = $fscanf(dot_prod_pip_input, "%d,%d,%d,%d\n", xi_in, xq_in, yi_in, yq_in);
          xi = xi_in;
          xq = xq_in;
          yi = yi_in;
