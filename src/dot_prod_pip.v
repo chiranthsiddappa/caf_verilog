@@ -74,12 +74,18 @@ module dot_prod_pip #(parameter xi_bits = 12,
             sum_q <= mult_out_q;
          end // else: !if(length_counter < length)
       end // if (s_axis_product_tvalid)
-      if (length_counter == length - 1) begin
+   end // always @ (posedge clk)
+
+   always @(posedge clk) begin
+      if(length_counter == length - 1) begin
          s_axis_product_tvalid <= 1'b1;
          i <= sum_i;
          q <= sum_q;
-      end else begin
-         s_axis_product_tvalid <= 1'b0;
       end
-   end // always @ (posedge clk)
+      else begin
+         s_axis_product_tvalid <= 1'b0;
+         i <= i;
+         q <= q;
+      end
+   end
 endmodule // dot_prod
