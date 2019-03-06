@@ -36,7 +36,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
 
    initial begin
       s_axis_product_tvalid = 1'b0;
-      length_counter = 'd0;
+      length_counter = -'d1;
       sum_i = 'd0;
       sum_q = 'd0;
    end
@@ -47,6 +47,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
                   .yq_bits(yq_bits),
                   .i_bits(xi_bits + yi_bits),
                   .q_bits(xq_bits + yq_bits)) cpx_multiply_dot_pip(.clk(clk),
+                                                                   .m_axis_tready(m_axis_product_tready),
                                                                .m_axis_x_tvalid(m_axis_x_tvalid),
                                                                .xi(xi),
                                                                .xq(xq),
@@ -62,20 +63,23 @@ module dot_prod_pip #(parameter xi_bits = 12,
 
    always @(posedge clk) begin
       if (s_axis_cpx_product_tvalid && m_axis_product_tready) begin
-         if (length_counter < length) begin
+         if (length_counter < length - 1) begin
             length_counter <= length_counter + 1'b1;
             sum_i <= sum_i + mult_out_i;
             sum_q <= sum_q + mult_out_q;
-            s_axis_product_tvalid <= 1'b0;
          end
          else begin
             length_counter <= 'd0;
-            sum_i <= 'd0;
-            sum_q <= 'd0;
-            i <= sum_i;
-            q <= sum_q;
-            s_axis_product_tvalid <= 1'b1;
+            sum_i <= mult_out_i;
+            sum_q <= mult_out_q;
          end // else: !if(length_counter < length)
       end // if (s_axis_product_tvalid)
+      if (length_counter == length - 1) begin
+         s_axis_product_tvalid <= 1'b1;
+         i <= sum_i;
+         q <= sum_q;
+      end else begin
+         s_axis_product_tvalid <= 1'b0;
+      end
    end // always @ (posedge clk)
 endmodule // dot_prod
