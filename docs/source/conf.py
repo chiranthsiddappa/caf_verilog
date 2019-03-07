@@ -12,9 +12,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
+import os
+import sys
 # sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../../caf_verilog'))
 
 
 # -- Project information -----------------------------------------------------
@@ -24,9 +25,10 @@ copyright = '2019, Chiranth Siddappa'
 author = 'Chiranth Siddappa'
 
 # The short X.Y version
-version = ''
+from caf_verilog import __version__
+version = __version__.__version__
 # The full version, including alpha/beta/rc tags
-release = 'v0.4.0'
+release = __version__.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -44,9 +46,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -109,7 +109,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'CAFVerilogdoc'
+htmlhelp_basename = 'caf_verilogdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
