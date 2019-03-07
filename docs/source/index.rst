@@ -10,6 +10,11 @@ Welcome to CAF Verilog's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Modules
+
+   cpx_multiply
 
 
 Indices and tables
