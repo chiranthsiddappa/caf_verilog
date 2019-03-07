@@ -17,6 +17,7 @@ Welcome to CAF Verilog's documentation!
    caf_verilog_base
    cpx_multiply
    dot_product
+   io_helper
 
 
 Indices and tables
