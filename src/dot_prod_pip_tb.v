@@ -59,7 +59,7 @@ module dot_prod_pip_tb();
          yi = yi_in;
          yq = yq_in;
       end
-      if (scan_counter < {{ length }}) begin
+      if (scan_counter <= {{ length }}) begin
          m_axis_x_tvalid = 1'b1;
          m_axis_y_tvalid = 1'b1;
          m_axis_product_tready = 1'b1;
@@ -70,4 +70,3 @@ module dot_prod_pip_tb();
       end
    end // always @ (posedge clk)
 endmodule // dot_prod_pip_tb
-
