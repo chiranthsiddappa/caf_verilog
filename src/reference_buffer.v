@@ -13,9 +13,9 @@ module reference_buffer #(parameter buffer_length = 10,
     output reg [xi_bits - 1:0] i,
     output reg [xq_bits - 1:0] q,
     output reg                 s_axis_data_tvalid
-    )
+    );
 
-  reg [i_bits + q_bits - 1:0] buffer;
+  reg [i_bits + q_bits - 1:0] buffer [0:buffer_length];
 
   initial begin
      $readmemb("{{ reference_buffer_filename }}", buffer);
