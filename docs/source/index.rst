@@ -18,6 +18,7 @@ Welcome to CAF Verilog's documentation!
    cpx_multiply
    dot_product
    io_helper
+   quantizer
 
 
 Indices and tables
