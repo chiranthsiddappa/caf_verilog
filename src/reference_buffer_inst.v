@@ -1,7 +1,7 @@
 reference_buffer #(.buffer_length({{ buffer_length }}),
                    .buffer_bits({{ buffer_bits }}),
                    .i_bits({{ i_bits }}),
-                   .q_bits({{ q_bits }})
+                   .q_bits({{ q_bits }}))
                    {{ reference_buffer_name }} (.clk(clk),
                                                 .m_axis_tready(m_axis_tready),
                                                 .m_axis_index_tvalid(m_axis_index_tvalid),
