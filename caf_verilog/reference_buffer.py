@@ -50,6 +50,7 @@ class ReferenceBuffer(CafVerilogBase):
         rbf_path = os.path.join(self.output_dir, self.reference_buffer_filename)
         t_dict['reference_buffer_filename'] = os.path.abspath(rbf_path)
         t_dict['reference_buffer_name'] = self.reference_buffer_module_name
+        t_dict['test_output_filename'] = self.test_output_filename
         return t_dict
 
     def gen_tb(self):
