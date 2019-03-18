@@ -3,11 +3,11 @@ reference_buffer #(.buffer_length({{ buffer_length }}),
                    .i_bits({{ i_bits }}),
                    .q_bits({{ q_bits }}))
                    {{ reference_buffer_name }} (.clk(clk),
-                                                .m_axis_tready(m_axis_tready),
-                                                .m_axis_index_tvalid(m_axis_index_tvalid),
-                                                .m_axis_index_tdata(m_axis_index_tdata),
-                                                .s_axis_data_tready(s_axis_data_tready),
+                                                .m_axi_rready(m_axi_rready),
+                                                .m_axi_index_rvalid(m_axi_index_rvalid),
+                                                .m_axi_index_rdata(m_axi_index_rdata),
+                                                .s_axi_data_rready(s_axi_data_rready),
                                                 .i(i),
                                                 .q(q),
-                                                .s_axis_data_tvalid(s_axis_data_tvalid)
+                                                .s_axi_data_rvalid(s_axi_data_rvalid)
                                                 );
