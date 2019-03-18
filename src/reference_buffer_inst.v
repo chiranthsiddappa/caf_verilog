@@ -9,5 +9,5 @@ reference_buffer #(.buffer_length({{ buffer_length }}),
                                                 .s_axi_rready(s_axi_rready),
                                                 .i(i),
                                                 .q(q),
-                                                .s_axi_data_rvalid(s_axi_data_rvalid)
+                                                .s_axi_rvalid(s_axi_rvalid)
                                                 );

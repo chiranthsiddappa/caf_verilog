@@ -12,7 +12,7 @@ module reference_buffer #(parameter buffer_length = 10,
     output reg                       s_axi_rready,
     output reg signed [i_bits - 1:0] i,
     output reg signed [q_bits - 1:0] q,
-    output reg                       s_axi_data_rvalid
+    output reg                       s_axi_rvalid
     );
 
    reg                               m_valid;
@@ -21,7 +21,7 @@ module reference_buffer #(parameter buffer_length = 10,
 
    initial begin
       $readmemb("{{ reference_buffer_filename }}", buffer);
-      s_axi_data_rvalid = 1'b0;
+      s_axi_rvalid = 1'b0;
       s_axi_rready = 1'b1;
       m_valid = 1'b0;
    end
@@ -35,9 +35,9 @@ module reference_buffer #(parameter buffer_length = 10,
       if (m_valid && (addr_buffer < buffer_length)) begin
          i <= buffer[addr_buffer] >> q_bits;
          q <= buffer[addr_buffer] & ((1'b1 << q_bits) - 1);
-         s_axi_data_rvalid <= 1'b1;
+         s_axi_rvalid <= 1'b1;
       end else begin
-         s_axi_data_rvalid <= 1'b0;
+         s_axi_rvalid <= 1'b0;
       end
    end
 endmodule // reference_buffer

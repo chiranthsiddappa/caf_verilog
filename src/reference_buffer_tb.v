@@ -10,7 +10,7 @@ module reference_buffer_tb();
    wire                         s_axi_rready;
    wire signed [{{ i_bits - 1}}:0] i;
    wire signed [{{ q_bits - 1}}:0] q;
-   wire                            s_axi_data_rvalid;
+   wire                            s_axi_rvalid;
 
    initial begin
       clk = 1'b0;
@@ -34,15 +34,15 @@ module reference_buffer_tb();
      end
 
    always @(posedge clk) begin
-      if (s_axi_data_rvalid) begin
+      if (s_axi_rvalid) begin
          $fwrite(write_file, "%d,%d\n", i, q);
       end
-      if (m_axi_raddr < {{ buffer_length }} && s_axi_data_rvalid) begin
+      if (m_axi_raddr < {{ buffer_length }} && s_axi_rvalid) begin
          m_axi_rready = 1'b1;
          m_axi_rvalid = 1'b1;
          m_axi_raddr = m_axi_raddr + 1'b1;
       end
-      else if (m_axi_raddr == {{ buffer_length }} && !s_axi_data_rvalid) begin
+      else if (m_axi_raddr == {{ buffer_length }} && !s_axi_rvalid) begin
          m_axi_rvalid <= 1'b0;
          m_axi_rready <= 1'b0;
          $fclose(write_file);
