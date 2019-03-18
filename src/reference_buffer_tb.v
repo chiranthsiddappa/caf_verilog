@@ -7,7 +7,7 @@ module reference_buffer_tb();
    reg     m_axi_rready;
    reg     m_axi_rvalid;
    reg [{{ index_bits}} - 1:0] m_axi_raddr;
-   wire                         s_axi_data_rready;
+   wire                         s_axi_rready;
    wire signed [{{ i_bits - 1}}:0] i;
    wire signed [{{ q_bits - 1}}:0] q;
    wire                            s_axi_data_rvalid;

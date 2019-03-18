@@ -6,7 +6,7 @@ reference_buffer #(.buffer_length({{ buffer_length }}),
                                                 .m_axi_rready(m_axi_rready),
                                                 .m_axi_rvalid(m_axi_rvalid),
                                                 .m_axi_raddr(m_axi_raddr),
-                                                .s_axi_data_rready(s_axi_data_rready),
+                                                .s_axi_rready(s_axi_rready),
                                                 .i(i),
                                                 .q(q),
                                                 .s_axi_data_rvalid(s_axi_data_rvalid)
