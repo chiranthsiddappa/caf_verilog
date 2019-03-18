@@ -46,7 +46,7 @@ class ReferenceBuffer(CafVerilogBase):
     def template_dict(self):
         b_len = len(self.buffer)
         bits = int(np.ceil(np.log2(b_len)))
-        t_dict = {'buffer_length': b_len, 'buffer_bits': bits,'i_bits': self.i_bits, 'q_bits': self.q_bits}
+        t_dict = {'buffer_length': b_len, 'index_bits': bits,'i_bits': self.i_bits, 'q_bits': self.q_bits}
         rbf_path = os.path.join(self.output_dir, self.reference_buffer_filename)
         t_dict['reference_buffer_filename'] = os.path.abspath(rbf_path)
         t_dict['reference_buffer_name'] = self.reference_buffer_module_name
