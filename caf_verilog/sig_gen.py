@@ -3,7 +3,7 @@ import os
 from jinja2 import Environment, FileSystemLoader, Template
 import numpy as np
 from .caf_verilog_base import CafVerilogBase
-from .caf_verilog_base import bin_num
+from caf_verilog.quantizer import bin_num
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 sig_gen_tb_module_path = os.path.join(filedir, '..', 'src')

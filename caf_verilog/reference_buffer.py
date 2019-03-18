@@ -2,7 +2,7 @@ from .caf_verilog_base import CafVerilogBase
 import os
 from . quantizer import quantize
 from jinja2 import Environment, FileSystemLoader, Template
-from .caf_verilog_base import bin_num
+from caf_verilog.quantizer import bin_num
 import numpy as np
 
 filedir = os.path.dirname(os.path.realpath(__file__))
