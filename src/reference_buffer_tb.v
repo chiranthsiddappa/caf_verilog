@@ -6,7 +6,7 @@ module reference_buffer_tb();
    integer write_file;
    reg     m_axis_tready;
    reg     m_axis_index_tvalid;
-   reg [{{ buffer_bits}} - 1:0] m_axis_index_tdata;
+   reg [{{ index_bits}} - 1:0] m_axis_index_tdata;
    wire                         s_axis_data_tready;
    wire signed [{{ i_bits - 1}}:0] i;
    wire signed [{{ q_bits - 1}}:0] q;

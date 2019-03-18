@@ -1,5 +1,5 @@
 reference_buffer #(.buffer_length({{ buffer_length }}),
-                   .buffer_bits({{ buffer_bits }}),
+                   .index_bits({{ index_bits }}),
                    .i_bits({{ i_bits }}),
                    .q_bits({{ q_bits }}))
                    {{ reference_buffer_name }} (.clk(clk),
