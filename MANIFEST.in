@@ -9,6 +9,9 @@ include src/dot_prod_tb.v
 include src/dot_prod_pip.v
 include src/dot_prod_pip_inst.v
 include src/dot_prod_pip_tb.v
+include src/reference_buffer.v
+include src/reference_buffer_inst.v
+include src/reference_buffer_tb.v
 include src/sig_gen.v
 include src/sig_gen_inst.v
 include src/sig_gen_tb.v
