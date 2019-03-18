@@ -7,7 +7,7 @@ module reference_buffer #(parameter buffer_length = 10,
                           )
    (input clk,
     input                            m_axi_rready,
-    input                            m_axi_index_rvalid,
+    input                            m_axi_rvalid,
     input [index_bits - 1:0]         m_axi_index_rdata,
     output reg                       s_axi_data_rready,
     output reg signed [i_bits - 1:0] i,
@@ -27,7 +27,7 @@ module reference_buffer #(parameter buffer_length = 10,
    end
 
    always @(posedge clk) begin
-      m_valid <= m_axi_index_rvalid & m_axi_rready;
+      m_valid <= m_axi_rvalid & m_axi_rready;
       addr_buffer <= m_axi_index_rdata;
    end
 

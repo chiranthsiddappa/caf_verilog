@@ -5,7 +5,7 @@ module reference_buffer_tb();
    reg clk;
    integer write_file;
    reg     m_axi_rready;
-   reg     m_axi_index_rvalid;
+   reg     m_axi_rvalid;
    reg [{{ index_bits}} - 1:0] m_axi_index_rdata;
    wire                         s_axi_data_rready;
    wire signed [{{ i_bits - 1}}:0] i;
@@ -15,14 +15,14 @@ module reference_buffer_tb();
    initial begin
       clk = 1'b0;
       m_axi_rready = 1'b0;
-      m_axi_index_rvalid = 1'b0;
+      m_axi_rvalid = 1'b0;
       m_axi_index_rdata = 0;
       write_file = $fopen("{{ test_output_filename }}");
       if (write_file == `NULL) begin
          $display("reference_buffer_output_file handle was NULL");
          $finish;
       end
-      @(posedge clk) m_axi_index_rvalid = 1'b1;
+      @(posedge clk) m_axi_rvalid = 1'b1;
       @(posedge clk) m_axi_rready = 1'b1;
       @(posedge clk) m_axi_index_rdata = 1;
    end
@@ -39,11 +39,11 @@ module reference_buffer_tb();
       end
       if (m_axi_index_rdata < {{ buffer_length }} && s_axi_data_rvalid) begin
          m_axi_rready = 1'b1;
-         m_axi_index_rvalid = 1'b1;
+         m_axi_rvalid = 1'b1;
          m_axi_index_rdata = m_axi_index_rdata + 1'b1;
       end
       else if (m_axi_index_rdata == {{ buffer_length }} && !s_axi_data_rvalid) begin
-         m_axi_index_rvalid <= 1'b0;
+         m_axi_rvalid <= 1'b0;
          m_axi_rready <= 1'b0;
          $fclose(write_file);
          $finish;
