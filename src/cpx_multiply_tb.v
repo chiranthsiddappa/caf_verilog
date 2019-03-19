@@ -35,6 +35,7 @@ module cpx_multiply_tb();
       m_axis_tvalid = 1'b1;
       m_axis_tready = 1'b1;
       @(negedge s_axis_tvalid) begin
+         $fclose(cpx_multiply_output);
          $finish;
       end
    end
