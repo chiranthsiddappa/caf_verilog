@@ -24,15 +24,14 @@ module dot_prod_pip #(parameter xi_bits = 12,
     output reg [q_bits-1:0]          q
     );
 
+   wire                              cpx_m_axis_tvalid;
    wire signed [xi_bits + yi_bits -1:0] mult_out_i;
    wire signed [xi_bits + yi_bits -1:0] mult_out_q;
    wire                                 m_axis_data_tvalid;
    reg signed [sum_i_size - 1:0]        sum_i;
    reg signed [sum_q_size - 1:0]        sum_q;
    reg [length_counter_size:0]          length_counter;
-   wire                                 s_axis_cpx_i_tvalid;
-   wire                                 s_axis_cpx_q_tvalid;
-   wire                                 s_axis_cpx_product_tvalid;
+   wire                                 s_axis_cpx_tvalid;
 
    initial begin
       s_axis_product_tvalid = 1'b0;
@@ -41,6 +40,8 @@ module dot_prod_pip #(parameter xi_bits = 12,
       sum_q = 'd0;
    end
 
+   assign cpx_m_axis_tvalid = m_axis_x_tvalid & m_axis_y_tvalid;
+
    cpx_multiply #(.xi_bits(xi_bits),
                   .xq_bits(xq_bits),
                   .yi_bits(yi_bits),
@@ -48,21 +49,17 @@ module dot_prod_pip #(parameter xi_bits = 12,
                   .i_bits(xi_bits + yi_bits),
                   .q_bits(xq_bits + yq_bits)) cpx_multiply_dot_pip(.clk(clk),
                                                                    .m_axis_tready(m_axis_product_tready),
-                                                               .m_axis_x_tvalid(m_axis_x_tvalid),
-                                                               .xi(xi),
-                                                               .xq(xq),
-                                                               .m_axis_y_tvalid(m_axis_y_tvalid),
-                                                               .yi(yi),
-                                                               .yq(yq),
-                                                               .i(mult_out_i),
-                                                                   .s_axis_i_tvalid(s_axis_cpx_i_tvalid),
-                                                               .q(mult_out_q),
-                                                                   .s_axis_q_tvalid(s_axis_cpx_q_tvalid));
-
-   assign s_axis_cpx_product_tvalid = s_axis_cpx_i_tvalid & s_axis_cpx_q_tvalid;
+                                                                   .m_axis_tvalid(cpx_m_axis_tvalid),
+                                                                   .xi(xi),
+                                                                   .xq(xq),
+                                                                   .yi(yi),
+                                                                   .yq(yq),
+                                                                   .i(mult_out_i),
+                                                                   .q(mult_out_q),
+                                                                   .s_axis_tvalid(s_axis_cpx_tvalid));
 
    always @(posedge clk) begin
-      if (s_axis_cpx_product_tvalid && m_axis_product_tready) begin
+      if (s_axis_cpx_tvalid && m_axis_product_tready) begin
          if (length_counter < length - 1) begin
             length_counter <= length_counter + 1'b1;
             sum_i <= sum_i + mult_out_i;
