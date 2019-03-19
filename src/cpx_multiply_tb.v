@@ -34,6 +34,9 @@ module cpx_multiply_tb();
       #10
       m_axis_tvalid = 1'b1;
       m_axis_tready = 1'b1;
+      @(negedge s_axis_tvalid) begin
+         $finish;
+      end
    end
 
    always begin
@@ -48,7 +51,7 @@ module cpx_multiply_tb();
          $fwrite(cpx_multiply_output, "%d,%d\n", i_out,q_out);
       end
       if ($feof(cpx_multiply_input)) begin
-         $finish;
+         m_axis_tvalid = 1'b0;
       end
    end
 endmodule // cpx_multiply_tb

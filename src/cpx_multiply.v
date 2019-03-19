@@ -25,6 +25,7 @@ module cpx_multiply #(parameter xi_bits = 12,
    initial begin
       pipeline = 5'b0;
       s_axis_tready = 1'b0;
+      s_axis_tvalid = 1'b0;
    end
 
    /**
@@ -90,7 +91,7 @@ module cpx_multiply #(parameter xi_bits = 12,
       if(m_axis_tvalid) begin
          pipeline <= (pipeline << 1) | 4'b1;
       end else if (m_axis_tready) begin
-         pipeline <= (pipeline << 1) & 4'b0;
+         pipeline <= (pipeline << 1);
       end
       s_axis_tvalid <= pipeline[3];
    end // always @ (posedge clk)
