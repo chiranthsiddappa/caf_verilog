@@ -31,7 +31,7 @@ module capture_buffer #(parameter buffer_length = 10,
    initial begin
       s_axi_rready = 1'b0;
       s_axi_wready = 1'b0;
-      s_axis_bvalid = 1'b0;
+      s_axi_bvalid = 1'b0;
    end
 
    always @(posedge clk) begin
@@ -47,6 +47,16 @@ module capture_buffer #(parameter buffer_length = 10,
       end
       else begin
          s_axi_rvalid <= 1'b0;
+      end
+   end
+
+   always @(posedge clk) begin
+      s_axi_wready <= 1'b1;
+      if (m_axi_wvalid && (m_axi_waddr < buffer_length)) begin
+         buffer[m_axi_waddr] <= m_axi_wdata;
+         s_axi_bvalid <= 1'b1;
+      end else begin
+         s_axi_bvalid <= 1'b0;
       end
    end
 endmodule // capture_buffer
