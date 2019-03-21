@@ -48,7 +48,7 @@ module cpx_multiply #(parameter xi_bits = 12,
 
 
    always @(posedge clk) begin
-      if (m_axis_tvalid) begin
+      if (m_axis_tvalid & s_axis_tready) begin
          xu <= xi * yi;
          yv <= xq * yq;
       end else begin
@@ -87,7 +87,6 @@ module cpx_multiply #(parameter xi_bits = 12,
    end // always @ (posedge clk)
 
    always @(posedge clk) begin
-      s_axis_tready <= 1'b1;
       if(m_axis_tvalid) begin
          pipeline <= (pipeline << 1) | 4'b1;
       end else if (m_axis_tready) begin
@@ -95,5 +94,14 @@ module cpx_multiply #(parameter xi_bits = 12,
       end
       s_axis_tvalid <= pipeline[3];
    end // always @ (posedge clk)
+
+   always @(posedge clk) begin
+      if (s_axis_tvalid) begin
+         s_axis_tready <= m_axis_tready;
+      end
+      else begin
+         s_axis_tready <= 1'b1;
+      end
+   end
 
 endmodule // cpx_multiply
