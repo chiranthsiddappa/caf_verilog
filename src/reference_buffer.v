@@ -33,8 +33,8 @@ module reference_buffer #(parameter buffer_length = 10,
 
    always @(posedge clk) begin
       if (m_valid && (addr_buffer < buffer_length)) begin
-         i <= buffer[addr_buffer] >> q_bits;
-         q <= buffer[addr_buffer] & ((1'b1 << q_bits) - 1);
+         i <= buffer[addr_buffer][i_bits + q_bits - 1:q_bits];
+         q <= buffer[addr_buffer][q_bits:0];
          s_axi_rvalid <= 1'b1;
       end else begin
          s_axi_rvalid <= 1'b0;
