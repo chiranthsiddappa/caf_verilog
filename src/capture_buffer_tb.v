@@ -12,13 +12,14 @@ module capture_buffer_tb();
    wire signed [{{ i_bits - 1}}:0] i;
    wire signed [{{ q_bits - 1}}:0] q;
    wire                            s_axi_rvalid;
-   reg [{{ index_bits }} - 1:0]    m_axi_waddr;
+   reg [{{ index_bits - 1}}:0]     m_axi_waddr;
    reg                             m_axi_wvalid;
    wire                            s_axi_wready;
-   reg [{{ buffer_bits }} - 1:0]   m_axi_wdata;
-   wire                            s_axi_bresp;
-   wire                            s_axi_bvalid;
-   reg                             m_axi_bready;
+   reg [{{ i_bits + q_bits - 1}}:0] m_axi_wdata;
+   wire                             s_axi_bresp;
+   wire                             s_axi_bvalid;
+   reg                              m_axi_bready;
+   reg [{{ i_bits + q_bits - 1 }}:0] buffer_values [0: {{ buffer_length - 1 }}];
 
    initial begin
       clk = 1'b0;
@@ -30,11 +31,7 @@ module capture_buffer_tb();
          $display("capture_buffer_output_filename handle was NULL");
          $finish;
       end
-      input_file = $fopen("{{ capture_buffer_filename }}");
-      if (input_file == `NULL) begin
-         $display("capture_buffer_filename handle was NULL");
-         $finish;
-      end
+      $readmemb("{{ capture_buffer_filename }}", buffer_values);
    end // initial begin
 
    {% include "capture_buffer_inst.v" %}
@@ -42,6 +39,9 @@ module capture_buffer_tb();
      always begin
         #10 clk = ~clk;
      end
+
+   always @(posedge clk) begin
+   end
 
    always @(posedge clk) begin
       if (s_axi_rvalid) begin
