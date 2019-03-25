@@ -22,9 +22,12 @@ module reference_buffer_tb();
          $display("reference_buffer_output_file handle was NULL");
          $finish;
       end
-      @(posedge clk) m_axi_rvalid = 1'b1;
-      @(posedge clk) m_axi_rready = 1'b1;
-      @(posedge clk) m_axi_raddr = 1;
+      @(posedge clk);      
+      @(posedge clk) begin
+         m_axi_rvalid = 1'b1;
+         m_axi_rready = 1'b1;
+      end // UNMATCHED !!
+      @(posedge clk) m_axi_raddr = 'd1;
    end
 
    {% include "reference_buffer_inst.v" %}

@@ -27,12 +27,12 @@ module reference_buffer #(parameter buffer_length = 10,
    end
 
    always @(posedge clk) begin
-      m_valid <= m_axi_rvalid & m_axi_rready;
+      m_valid <= m_axi_rvalid;
       addr_buffer <= m_axi_raddr;
    end
 
    always @(posedge clk) begin
-      if (m_valid && (addr_buffer < buffer_length)) begin
+      if (m_valid && (addr_buffer < buffer_length) && m_axi_rready) begin
          i <= buffer[addr_buffer][i_bits + q_bits - 1:q_bits];
          q <= buffer[addr_buffer][q_bits:0];
          s_axi_rvalid <= 1'b1;
