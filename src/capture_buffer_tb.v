@@ -24,7 +24,7 @@ module capture_buffer_tb();
       clk = 1'b0;
       m_axi_rready = 1'b0;
       m_axi_rvalid = 1'b0;
-      m_axi_raddr = 0;
+      m_axi_raddr = 'd0;
       write_file = $fopen("{{ test_output_filename }}");
       if (write_file == `NULL) begin
          $display("capture_buffer_output_filename handle was NULL");
@@ -34,6 +34,9 @@ module capture_buffer_tb();
       m_axi_waddr = 'd0;
       m_axi_wvalid = 1'b1;
       m_axi_wdata = buffer_values['d0];
+      @(posedge clk) m_axi_rvalid = 1'b1;
+      @(posedge clk) m_axi_rready = 1'b1;
+      @(posedge clk) m_axi_raddr = 'd1;
    end // initial begin
 
    {% include "capture_buffer_inst.v" %}
