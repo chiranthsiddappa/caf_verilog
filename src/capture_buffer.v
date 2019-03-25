@@ -19,7 +19,7 @@ module capture_buffer #(parameter buffer_length = 10,
     input [index_bits - 1:0]         m_axi_waddr,
     input                            m_axi_wvalid,
     output reg                       s_axi_wready,
-    input [31:0]                     m_axi_wdata,
+    input [i_bits + q_bits - 1:0]    m_axi_wdata,
     output reg                       s_axi_bresp,
     output reg                       s_axi_bvalid,
     input                            m_axi_bready
@@ -41,6 +41,7 @@ module capture_buffer #(parameter buffer_length = 10,
    end
 
    always @(posedge clk) begin
+      s_axi_rready <= 1'b1;
       if (m_r_axi_valid && (r_addr_buffer < buffer_length)) begin
          i <= buffer[r_addr_buffer][i_bits + q_bits - 1:q_bits];
          q <= buffer[r_addr_buffer][q_bits:0];

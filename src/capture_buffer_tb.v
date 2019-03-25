@@ -4,7 +4,6 @@
 module capture_buffer_tb();
    reg clk;
    integer write_file;
-   integer input_file;
    reg     m_axi_rready;
    reg     m_axi_rvalid;
    reg [{{ index_bits }} - 1:0] m_axi_raddr;
@@ -32,6 +31,9 @@ module capture_buffer_tb();
          $finish;
       end
       $readmemb("{{ capture_buffer_filename }}", buffer_values);
+      m_axi_waddr = 'd0;
+      m_axi_wvalid = 1'b1;
+      m_axi_wdata = buffer_values['d0];
    end // initial begin
 
    {% include "capture_buffer_inst.v" %}
@@ -41,6 +43,15 @@ module capture_buffer_tb();
      end
 
    always @(posedge clk) begin
+      if (s_axi_wready) begin
+         if (m_axi_waddr < {{ buffer_length }}) begin
+            m_axi_waddr = m_axi_waddr + 1'b1;
+            m_axi_wdata = buffer_values[m_axi_waddr];
+            m_axi_wvalid = 1'b1;
+         end else begin
+            m_axi_wvalid = 1'b0;
+         end
+      end
    end
 
    always @(posedge clk) begin
