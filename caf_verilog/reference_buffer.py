@@ -16,11 +16,10 @@ class ReferenceBuffer(CafVerilogBase):
         self.q_bits = q_bits
         self.output_dir = output_dir
         self.tb_filename = '%s_tb.v' % (self.module_name())
-        self.buff_quant = quantize(self.buffer, self.i_bits, self.q_bits)
-        self.reference_buffer_filename = "%s_values.txt" % (self.module_name())
-        self.reference_buffer_module_name = name if name else self.module_name()
+        self.buffer_quant = quantize(self.buffer, self.i_bits, self.q_bits)
+        self.buffer_filename = "%s_values.txt" % (self.module_name())
+        self.buffer_module_name = name if name else self.module_name()
         self.test_output_filename = "%s_output_values.txt" % (self.module_name())
-        self.module_path = os.path.join(filedir, '..', 'src', '%s.v' % (self.module_name()))
         self.write_module()
 
     def write_buffer_values(self):
@@ -28,8 +27,8 @@ class ReferenceBuffer(CafVerilogBase):
 
         :return:
         """
-        with open(os.path.join(self.output_dir, self.reference_buffer_filename), 'w+') as rbf:
-            for val in self.buff_quant:
+        with open(os.path.join(self.output_dir, self.buffer_filename), 'w+') as rbf:
+            for val in self.buffer_quant:
                 i_bin = bin_num(val.real, self.i_bits)
                 q_bin = bin_num(val.imag, self.q_bits)
                 rbf.write(i_bin + q_bin + "\n")
@@ -38,7 +37,7 @@ class ReferenceBuffer(CafVerilogBase):
         self.write_buffer_values()
         module_template = None
         t_dict = self.template_dict()
-        with open(self.module_path) as module_file:
+        with open(self.module_path()) as module_file:
             module_template = Template(module_file.read())
         with open(os.path.join(self.output_dir, self.module_name()+".v"), 'w+') as module_file:
             module_file.write(module_template.render(**t_dict))
@@ -47,9 +46,9 @@ class ReferenceBuffer(CafVerilogBase):
         b_len = len(self.buffer)
         bits = int(np.ceil(np.log2(b_len)))
         t_dict = {'buffer_length': b_len, 'index_bits': bits,'i_bits': self.i_bits, 'q_bits': self.q_bits}
-        rbf_path = os.path.join(self.output_dir, self.reference_buffer_filename)
-        t_dict['reference_buffer_filename'] = os.path.abspath(rbf_path)
-        t_dict['reference_buffer_name'] = self.reference_buffer_module_name
+        rbf_path = os.path.join(self.output_dir, self.buffer_filename)
+        t_dict['%s_filename' % self.module_name()] = os.path.abspath(rbf_path)
+        t_dict['%s_name' % self.module_name()] = self.buffer_module_name
         t_dict['test_output_filename'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
         return t_dict
 
