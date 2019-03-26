@@ -1,5 +1,8 @@
 include README.md
 include requirements.txt
+include src/capture_buffer.v
+include src/captuer_buffer_inst.v
+include src/capture_buffer_tb.v
 include src/cpx_multiply.v
 include src/cpx_multiply_inst.v
 include src/cpx_multiply_tb.v
