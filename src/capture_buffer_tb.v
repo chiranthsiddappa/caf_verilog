@@ -34,8 +34,10 @@ module capture_buffer_tb();
       m_axi_waddr = 'd0;
       m_axi_wvalid = 1'b1;
       m_axi_wdata = buffer_values['d0];
-      @(posedge clk) m_axi_rvalid = 1'b1;
-      @(posedge clk) m_axi_rready = 1'b1;
+      @(posedge clk) begin
+         m_axi_rvalid = 1'b1;
+         m_axi_rready = 1'b1;
+      end // UNMATCHED !!
       @(posedge clk) m_axi_raddr = 'd1;
    end // initial begin
 

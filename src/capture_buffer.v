@@ -31,23 +31,26 @@ module capture_buffer #(parameter buffer_length = 10,
 
    initial begin
       s_axi_rready = 1'b0;
+      s_axi_rvalid = 1'b0;
       s_axi_wready = 1'b0;
       s_axi_bvalid = 1'b0;
    end
 
    always @(posedge clk) begin
-      m_r_axi_valid <= m_axi_rvalid & m_axi_rready;
-      r_addr_buffer <= m_axi_raddr;
+      m_r_axi_valid <= m_axi_rvalid;
+      if (m_axi_rvalid) begin
+         r_addr_buffer <= m_axi_raddr;
+      end
    end
 
    always @(posedge clk) begin
-      s_axi_rready <= 1'b1;
+      s_axi_rready <= m_axi_rready | ~s_axi_rvalid;
       if (m_r_axi_valid && (r_addr_buffer < buffer_length)) begin
          i <= buffer[r_addr_buffer][i_bits + q_bits - 1:q_bits];
          q <= buffer[r_addr_buffer][q_bits:0];
          s_axi_rvalid <= 1'b1;
       end
-      else begin
+      else if (m_axi_rready) begin
          s_axi_rvalid <= 1'b0;
       end
    end
