@@ -16,13 +16,20 @@ class SigGen(CafVerilogBase):
         self.f = freq_res
         self.fs = fs
         self.n_bits = n_bits
-        self.phase_bits = phase_bits(fs, freq_res)
+        self.phase_bits = self.calc_smallest_phase_size()
         self.output_dir = output_dir
         self.tb_filename = 'sig_gen_tb.v'
         self.sig_gen_name = "sig_gen_%s_%s_%s" % (str(fs).replace('.', '')[:3], self.phase_bits, self.n_bits)
         self.lut_filename = "%s.txt" % (self.sig_gen_name)
         self.test_output_filename = "sig_gen_output_values.txt"
         self.write_module()
+
+    def calc_smallest_phase_size(self):
+        pb = phase_bits(self.fs, self.f)
+        if pb <= self.n_bits:
+            diff = self.n_bits - pb + 1
+            pb += diff
+        return pb
 
     def template_dict(self, inst_name=None):
         t_dict = {'phase_bits': self.phase_bits, 'n_bits': self.n_bits}
