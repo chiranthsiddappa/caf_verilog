@@ -59,7 +59,7 @@ class SigGen(CafVerilogBase):
         des_freq = freq if freq else self.fs / 4
         increment = phase_increment(des_freq, self.phase_bits, self.fs)
         t_dict = self.template_dict('sig_gen_tb')
-        t_dict['freq_step_str'] = "%d'%s" % (self.phase_bits - 1, str(bin(increment))[1:])
+        t_dict['freq_step_str'] = freq_step_str(self.phase_bits, increment)
         template_loader = FileSystemLoader(searchpath=sig_gen_tb_module_path)
         env = Environment(loader=template_loader)
         template = env.get_template('sig_gen_tb.v')
@@ -86,6 +86,11 @@ class SigGen(CafVerilogBase):
             module_template = Template(module_file.read())
         with open(os.path.join(self.output_dir, self.sig_gen_name+".v"), "w+") as module_file:
             module_file.write(module_template.render(**t_dict))
+
+
+def freq_step_str(phase_bits, increment):
+    fss = "%d'%s" % (phase_bits - 1, str(bin(increment))[1:])
+    return fss
 
 
 def lut_values(n_bits):
