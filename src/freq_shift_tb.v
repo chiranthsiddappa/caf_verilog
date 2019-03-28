@@ -9,8 +9,8 @@ module freq_shift_tb();
    reg [{{q_bits - 1}}:0]     xq;
    wire                       s_axis_tready;
    reg                        m_axis_tready;
-   wire [{{i_bits - 1}}:0]    i;
-   wire [{{q_bits - 1}}:0]    q;
+   wire signed [{{i_bits - 1}}:0]    i;
+   wire signed [{{q_bits - 1}}:0]    q;
    wire                       s_axis_tvalid;
    integer                    freq_shift_input;
    integer                    freq_shift_output;
@@ -18,6 +18,8 @@ module freq_shift_tb();
    initial begin
       clk = 1'b0;
       m_axis_tvalid = 1'b0;
+      m_axis_tready = 1'b0;
+      freq_step = {{ freq_step_str }};
       freq_shift_input = $fopen("{{ freq_shift_input }}", "r");
       if (freq_shift_input == `NULL) begin
          $display("freq_shift_input handle was NULL");
@@ -26,6 +28,11 @@ module freq_shift_tb();
       if (freq_shift_output == `NULL) begin
          $display("freq_shift_output handle was NULL");
       end
+      @(posedge clk);
+      @(negedge s_axis_tvalid) begin
+         $fclose(freq_shift_output);
+         $finish;
+      end
    end
 
    always begin
@@ -33,5 +40,21 @@ module freq_shift_tb();
    end
 
    {% include "freq_shift_inst.v" %}
-endmodule // freq_shift_tb
 
+     always @(posedge clk) begin
+        if (s_axis_tready) begin
+           $fscanf(freq_shift_input, "%d,%d\n", xi,xq);
+           m_axis_tvalid = 1'b1;
+           m_axis_tready = 1'b1;
+        end
+        if ($feof(freq_shift_input)) begin
+           m_axis_tvalid = 1'b0;
+        end
+     end
+
+   always @(posedge clk) begin
+      if (s_axis_tvalid) begin
+         $fwrite(freq_shift_output, "%d,%d\n", i, q);
+      end
+   end
+endmodule // freq_shift_tb
