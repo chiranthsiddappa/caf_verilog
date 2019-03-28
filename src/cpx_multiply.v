@@ -34,9 +34,9 @@ module cpx_multiply #(parameter xi_bits = 12,
     * (x + yi)(u + vi) = (xu - yv) + (xv + yu)i
     */
    reg signed [xi_bits + yi_bits:0] 	   i_sub;
-   reg signed [xi_bits + yi_bits:0]        i_sub_out;
+   reg signed [xi_bits + yi_bits - 1:0]    i_sub_out;
    reg signed [xq_bits + yq_bits:0] 	   q_add;
-   reg signed [xq_bits + yq_bits:0]        q_add_out;
+   reg signed [xq_bits + yq_bits - 1:0]    q_add_out;
    reg signed [xi_bits + yi_bits:0] 	   xu;
    reg signed [xi_bits + yi_bits:0]        xu_out;
    reg signed [xq_bits + yq_bits:0] 	   yv;
@@ -83,8 +83,8 @@ module cpx_multiply #(parameter xi_bits = 12,
          q_add <= q_add;
          q_add_out <= q_add_out;
       end // else: !if(m_axis_tvalid)
-      i <= i_sub_out[i_bits:0];
-      q <= q_add_out[q_bits:0];
+      i <= i_sub_out[xi_bits+yi_bits-1: xi_bits+yi_bits-i_bits];
+      q <= q_add_out[xq_bits+yq_bits-1: xq_bits+yq_bits-q_bits];
    end // always @ (posedge clk)
 
    always @(posedge clk) begin
