@@ -17,6 +17,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    reg signed [n_bits -1:0] lut [0:lut_length];
 
    initial begin
+      s_axis_data_tvalid = 1'b0;
       phase = {phase_bits{1'b0}};
       phase_4 = {phase_bits{1'b1}} / 3'd4;
       $readmemb("{{ lut_filename }}", lut);
