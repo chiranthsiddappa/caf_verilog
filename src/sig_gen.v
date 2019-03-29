@@ -15,16 +15,29 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    reg [phase_bits - 1:0] phase;
    reg [phase_bits - 1:0] phase_4;
    reg signed [n_bits -1:0] lut [0:lut_length];
+   reg [phase_bits - 1:0]   freq_step_buff;
+   reg                      freq_step_set;
 
    initial begin
       s_axis_data_tvalid = 1'b0;
       phase = {phase_bits{1'b0}};
       phase_4 = {phase_bits{1'b1}} / 3'd4;
+      freq_step_buff = 'd0;
+      freq_step_set = 1'b0;
       $readmemb("{{ lut_filename }}", lut);
    end
 
    always @(posedge clk) begin
-      if (m_axis_data_tready & m_axis_freq_step_tvalid) begin
+      if (m_axis_freq_step_tvalid) begin
+         freq_step_set = 1'b1;
+         if (freq_step_buff != freq_step_buff) begin
+            freq_step_buff <= freq_step_buff;
+         end
+      end
+   end
+
+   always @(posedge clk) begin
+      if (m_axis_data_tready & freq_step_set) begin
          phase <= phase + freq_step;
          phase_4 <= phase_4 + freq_step;
       end
@@ -35,7 +48,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    end
 
    always @(posedge clk) begin
-      if (m_axis_data_tready & m_axis_freq_step_tvalid) begin
+      if (m_axis_data_tready & freq_step_set) begin
          sine <= lut[phase[phase_bits - 1:phase_bits - n_bits - 1]];
          cosine <= lut[phase_4[phase_bits - 1:phase_bits - n_bits - 1]];
          s_axis_data_tvalid <= 1'b1;
