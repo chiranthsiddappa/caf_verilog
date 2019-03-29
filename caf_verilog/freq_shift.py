@@ -8,12 +8,13 @@ from . io_helper import write_quantized_output
 
 class FreqShift(CafVerilogBase):
 
-    def __init__(self, x, freq_res, fs, n_bits, i_bits=12, q_bits=12, output_dir='.'):
+    def __init__(self, x, freq_res, fs, n_bits, i_bits=12, q_bits=12, neg_shift=False, output_dir='.'):
         self.freq_res = freq_res
         self.fs = fs
         self.i_bits = i_bits
         self.q_bits = q_bits if q_bits else 0
         self.n_bits = n_bits
+        self.neg_shift = '1\'' + bin(int(neg_shift))[1:]
         self.x_quant = quantize(x, self.i_bits, self.q_bits)
         self.output_dir = output_dir
         self.submodules = {'sig_gen': SigGen(self.freq_res, self.fs, self.n_bits, self.output_dir)}
@@ -27,6 +28,7 @@ class FreqShift(CafVerilogBase):
 
     def template_dict(self):
         t_dict = {'i_bits': self.i_bits, 'q_bits': self.q_bits, 'n_bits': self.n_bits, 'phase_bits': self.phase_bits}
+        t_dict['neg_shift_str'] = self.neg_shift
         t_dict['freq_shift_name'] = self.freq_shift_name
         t_dict['freq_shift_input'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         t_dict['freq_shift_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
