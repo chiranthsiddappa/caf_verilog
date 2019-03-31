@@ -59,7 +59,7 @@ module cpx_multiply #(parameter xi_bits = 12,
          yu <= yu;
       end // else: !if(m_axis_tvalid & s_axis_tready)
    end
-   
+
    always @(posedge clk) begin
       if(m_axis_tready) begin
          xu_out <= xu;
