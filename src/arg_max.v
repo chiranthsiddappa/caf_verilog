@@ -27,6 +27,7 @@ module argmax #(parameter buffer_length = 10,
       s_axis_tready = 1'b1;
       icounter = 'd0;
       out_max = 'd0;
+      s_axis_tvalid = 1'b0;
    end
 
    always @(posedge clk) begin
@@ -41,17 +42,12 @@ module argmax #(parameter buffer_length = 10,
       if (m_axis_tvalid & s_axis_tready) begin
          if (icounter < buffer_length) begin
             icounter <= icounter + 1'b1;
-            s_axis_tvalid <= 1'b0;
          end
       end else if(m_axis_tready) begin
          if ((icounter > buffer_length - 1) && (icounter <= buffer_length)) begin
             icounter <= icounter + 1'b1;
-            s_axis_tvalid <= 1'b0;
          end else if (icounter == buffer_length + 1)  begin
             icounter <= 'd0;
-            s_axis_tvalid <= 1'b1;
-         end else begin
-            s_axis_tvalid <= 1'b0;
          end
       end
    end // always @ (posedge clk)
@@ -78,6 +74,14 @@ module argmax #(parameter buffer_length = 10,
             index <= icounter - 'd2;
             out_max <= argsum;
          end
+      end
+   end // always @ (posedge clk)
+
+   always @(posedge clk) begin
+      if ((icounter == buffer_length + 1)) begin
+         s_axis_tvalid <= 1'b1;
+      end else begin
+         s_axis_tvalid <= 1'b0;
       end
    end
 endmodule // argmax
