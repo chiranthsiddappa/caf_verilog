@@ -12,6 +12,9 @@ include src/dot_prod_tb.v
 include src/dot_prod_pip.v
 include src/dot_prod_pip_inst.v
 include src/dot_prod_pip_tb.v
+include src/freq_shift.v
+include src/freq_shift_inst.v
+include src/freq_shift_tb.v
 include src/reference_buffer.v
 include src/reference_buffer_inst.v
 include src/reference_buffer_tb.v
