@@ -3,6 +3,7 @@ import os
 from jinja2 import Environment, FileSystemLoader, Template
 import numpy as np
 from .caf_verilog_base import CafVerilogBase
+from caf_verilog.quantizer import bin_num
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 sig_gen_tb_module_path = os.path.join(filedir, '..', 'src')
@@ -117,11 +118,3 @@ def phase_increment(f_out, phase_bits, f_clk):
     :return:
     """
     return int(f_out * 2**phase_bits / f_clk)
-
-
-def bin_num(n, n_bits):
-    mask = (2 << n_bits - 1) - 1
-    num = int(n) & mask
-    f_str = '{:0' + str(n_bits) + 'b}'
-    f_res = f_str.format(int(num))
-    return f_res

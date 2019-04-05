@@ -23,9 +23,7 @@ module dot_prod #(parameter xi_bits = 12,
     output reg [q_bits-1:0]                 q
     );
 
-   wire [0:length-1]                        mult_valid_i;
-   wire [0:length-1]                        mult_valid_q;
-   wire                                     mult_valid;
+   wire [0:length - 1]                      mult_valid;
    wire signed [xi_bits + yi_bits -1:0]                 mult_out_i [0:length-1];
    wire signed [xi_bits + yi_bits -1:0]                 mult_out_q [0:length-1];
    wire                                     m_axis_data_tvalid;
@@ -47,14 +45,13 @@ module dot_prod #(parameter xi_bits = 12,
                         .yq_bits(yq_bits),
                         .i_bits(xi_bits + yi_bits),
                         .q_bits(xq_bits + yq_bits)) cpx_multiply_dp(.clk(clk),
-                                                                    .m_axis_x_tvalid(m_axis_x_tvalid),
+                                                                    .m_axis_tready(m_axis_product_tready),
+                                                                    .m_axis_tvalid(m_axis_data_tvalid),
                                                                     .xi(xi[xi_bits * iLen + xi_bits - 1:xi_bits * iLen]),
                                                                     .xq(xq[xq_bits * iLen + xq_bits - 1:xq_bits * iLen]),
-                                                                    .m_axis_y_tvalid(m_axis_y_tvalid),
                                                                     .yi(yi[yi_bits * iLen + yi_bits - 1:yi_bits * iLen]),
                                                                     .yq(yq[yq_bits * iLen + yq_bits - 1:yq_bits * iLen]),
-                                                                    .s_axis_i_tvalid(mult_valid_i[iLen]),
-                                                                    .s_axis_q_tvalid(mult_valid_q[iLen]),
+                                                                    .s_axis_tvalid(mult_valid[iLen]),
                                                                     .i(mult_out_i[iLen]),
                                                                     .q(mult_out_q[iLen])
                                                                     );
@@ -62,7 +59,6 @@ module dot_prod #(parameter xi_bits = 12,
    endgenerate
 
    assign m_axis_data_tvalid = m_axis_x_tvalid & m_axis_y_tvalid;
-   assign mult_valid = (&mult_valid_i) & (&mult_valid_q);
 
    always @(posedge clk) begin
       if (m_axis_product_tready & mult_valid) begin

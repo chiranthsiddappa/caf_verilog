@@ -8,7 +8,6 @@ from .io_helper import write_quantized_output
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 dot_product_tb_module_path = os.path.join(filedir, '..', 'src')
-dot_product_module_path = os.path.join(filedir, '..', 'src', 'dot_prod.v')
 
 
 class DotProduct(CafVerilogBase):
@@ -45,9 +44,10 @@ class DotProduct(CafVerilogBase):
         self.x_quant = quantize(self.x, self.x_i_bits, self.x_q_bits)
         self.y_quant = quantize(self.y, self.y_i_bits, self.y_q_bits)
         self.output_dir = output_dir
-        self.tb_filename = 'dot_product_tb.v'
-        self.test_value_filename = 'dot_product_input_values.txt'
-        self.test_output_filename = 'dot_product_output_values.txt'
+        dot_product_module_path = os.path.join(filedir, '..', 'src', '%s.v' % (self.module_name()))
+        self.tb_filename = '%s_tb.v' % (self.module_name())
+        self.test_value_filename = '%s_input_values.txt' % (self.module_name())
+        self.test_output_filename = '%s_output_values.txt' % (self.module_name())
         copy(dot_product_module_path, self.output_dir)
 
     def gen_tb(self):
@@ -70,10 +70,10 @@ class DotProduct(CafVerilogBase):
         :return:
         """
         out_tb = None
-        t_dict = self.template_dict('dot_product_tb')
+        t_dict = self.template_dict("%s_tb" % (self.module_name()))
         template_loader = FileSystemLoader(searchpath=dot_product_tb_module_path)
         env = Environment(loader=template_loader)
-        template = env.get_template('dot_prod_tb.v')
+        template = env.get_template('%s_tb.v' % (self.module_name()))
         out_tb = template.render(**t_dict)
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
