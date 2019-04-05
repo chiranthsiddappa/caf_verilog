@@ -12,7 +12,7 @@ def write_quantized_output(output_dir, filename, x, y=None):
     :param y:
     :return:
     """
-    y_vals = type(y) is not None
+    y_vals = type(y) is not type(None)
     with open(os.path.join(output_dir, filename), 'w+') as quant_file:
         quant_writer = csv.writer(quant_file, delimiter=',')
         for ii in range(0, len(x)):
