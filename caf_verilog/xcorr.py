@@ -55,14 +55,7 @@ class XCorr(CafVerilogBase):
         return submodules
 
     def template_dict(self):
-        t_dict = {'xi_bits': self.ref_i_bits,
-                  'xq_bits': self.ref_q_bits,
-                  'yi_bits': self.rec_i_bits,
-                  'yq_bits': self.rec_q_bits,
-                  'length': self.submodules['arg_max'].buffer_length,
-                  'length_counter_bits': self.submodules['arg_max'].index_bits,
-                  'sum_i_bits': self.submodules['dot_prod'].sum_i_bits,
-                  'sum_q_bits': self.submodules['dot_prod'].sum_q_bits}
+        t_dict = self.submodules['dot_prod'].template_dict('dp_x_corr')
         return t_dict
 
     def write_module(self):
