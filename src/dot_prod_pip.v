@@ -7,7 +7,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
                       parameter i_bits = 24,
                       parameter q_bits = 24,
                       parameter length = 5,
-                      parameter length_counter_size = 3,
+                      parameter length_counter_bits = 3,
                       parameter sum_i_bits = 24,
                       parameter sum_q_bits = 24
                       )
@@ -24,13 +24,13 @@ module dot_prod_pip #(parameter xi_bits = 12,
     output reg [q_bits-1:0]          q
     );
 
-   wire                              cpx_m_axis_tvalid;
+   wire                                 cpx_m_axis_tvalid;
    wire signed [xi_bits + yi_bits -1:0] mult_out_i;
    wire signed [xi_bits + yi_bits -1:0] mult_out_q;
    wire                                 m_axis_data_tvalid;
    reg signed [sum_i_bits - 1:0]        sum_i;
    reg signed [sum_q_bits - 1:0]        sum_q;
-   reg [length_counter_size:0]          length_counter;
+   reg [length_counter_bits:0]          length_counter;
    wire                                 s_axis_cpx_tvalid;
 
    initial begin

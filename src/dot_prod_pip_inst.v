@@ -5,7 +5,7 @@ dot_prod_pip #(.xi_bits({{ xi_bits }}),
                .i_bits({{ sum_i_bits }}),
                .q_bits({{ sum_q_bits }}),
                .length({{ length }}),
-               .length_counter_size({{ length_counter_size }}),
+               .length_counter_bits({{ length_counter_bits }}),
                .sum_i_bits({{ sum_i_bits }}),
                .sum_q_bits({{ sum_q_bits }})
                ) {{ dot_prod_name }} (.clk(clk),
