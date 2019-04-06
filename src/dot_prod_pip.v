@@ -8,8 +8,8 @@ module dot_prod_pip #(parameter xi_bits = 12,
                       parameter q_bits = 24,
                       parameter length = 5,
                       parameter length_counter_size = 3,
-                      parameter sum_i_size = 24,
-                      parameter sum_q_size = 24
+                      parameter sum_i_bits = 24,
+                      parameter sum_q_bits = 24
                       )
    (input clk,
     input                            m_axis_product_tready,
@@ -28,8 +28,8 @@ module dot_prod_pip #(parameter xi_bits = 12,
    wire signed [xi_bits + yi_bits -1:0] mult_out_i;
    wire signed [xi_bits + yi_bits -1:0] mult_out_q;
    wire                                 m_axis_data_tvalid;
-   reg signed [sum_i_size - 1:0]        sum_i;
-   reg signed [sum_q_size - 1:0]        sum_q;
+   reg signed [sum_i_bits - 1:0]        sum_i;
+   reg signed [sum_q_bits - 1:0]        sum_q;
    reg [length_counter_size:0]          length_counter;
    wire                                 s_axis_cpx_tvalid;
 
@@ -76,8 +76,8 @@ module dot_prod_pip #(parameter xi_bits = 12,
    always @(posedge clk) begin
       if(length_counter == length - 1) begin
          s_axis_product_tvalid <= 1'b1;
-         i <= sum_i;
-         q <= sum_q;
+         i <= sum_i >> (sum_i_bits - i_bits);
+         q <= sum_q >> (sum_q_bits - q_bits);
       end
       else begin
          s_axis_product_tvalid <= 1'b0;

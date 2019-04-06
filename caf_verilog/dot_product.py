@@ -32,15 +32,15 @@ class DotProduct(CafVerilogBase):
         self.y_i_bits = y_i_bits
         self.y_q_bits = y_q_bits if y_q_bits else self.y_i_bits
         if self.x_i_bits > self.y_i_bits:
-            self.sum_i_size = ((2**self.x_i_bits - 1)**2) * self.length
+            self.sum_i_bits = ((2 ** self.x_i_bits - 1) ** 2) * self.length
         else:
-            self.sum_i_size = ((2**self.y_i_bits - 1)**2) * self.length
-        self.sum_i_size = int(np.ceil(np.log2(self.sum_i_size)))
+            self.sum_i_bits = ((2 ** self.y_i_bits - 1) ** 2) * self.length
+        self.sum_i_bits = int(np.ceil(np.log2(self.sum_i_bits)))
         if self.x_q_bits > self.y_q_bits:
-            self.sum_q_size = ((2**self.x_q_bits - 1)**2) * self.length
+            self.sum_q_bits = ((2 ** self.x_q_bits - 1) ** 2) * self.length
         else:
-            self.sum_q_size = ((2**self.y_q_bits - 1)**2) * self.length
-        self.sum_q_size = int(np.ceil(np.log2(self.sum_q_size)))
+            self.sum_q_bits = ((2 ** self.y_q_bits - 1) ** 2) * self.length
+        self.sum_q_bits = int(np.ceil(np.log2(self.sum_q_bits)))
         self.x_quant = quantize(self.x, self.x_i_bits, self.x_q_bits)
         self.y_quant = quantize(self.y, self.y_i_bits, self.y_q_bits)
         self.output_dir = output_dir
@@ -56,11 +56,11 @@ class DotProduct(CafVerilogBase):
 
     def template_dict(self, inst_name=None):
         t_dict = {'xi_bits': self.x_i_bits, 'xq_bits': self.x_q_bits, 'yi_bits': self.y_i_bits,
-                  'yq_bits': self.y_q_bits, 'length': self.length, 'sum_i_size': self.sum_i_size,
-                  'sum_q_size': self.sum_q_size}
+                  'yq_bits': self.y_q_bits, 'length': self.length, 'sum_i_bits': self.sum_i_bits,
+                  'sum_q_bits': self.sum_q_bits}
         t_dict['dot_prod_input'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         t_dict['dot_prod_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
-        t_dict['dot_prod_name'] = inst_name if inst_name else 'dot_prod_tb'
+        t_dict['dot_prod_name'] = inst_name if inst_name else '%s_tb' % self.module_name()
         return t_dict
 
     def write_dot_product_tb_module(self):
