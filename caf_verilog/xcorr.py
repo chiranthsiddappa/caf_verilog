@@ -32,6 +32,7 @@ class XCorr(CafVerilogBase):
         self.rec_q_bits = rec_q_bits if rec_q_bits else rec_i_bits
         self.pip = pipeline
         self.output_dir = output_dir
+        self.tb_filename = '%s_tb.v' % self.module_name()
         self.ref_quant = quantize(self.ref, self.ref_i_bits, self.ref_q_bits)
         self.rec_quant = quantize(self.rec, self.rec_i_bits, self.rec_q_bits)
         self.submodules = self.gen_submodules()
@@ -56,6 +57,11 @@ class XCorr(CafVerilogBase):
 
     def template_dict(self):
         t_dict = self.submodules['dot_prod'].template_dict('dp_x_corr')
+        am_dict = self.submodules['arg_max'].template_dict()
+        t_dict['out_max_bits'] = am_dict['out_max_bits']
+        lcb = 'length_counter_bits'
+        if not lcb in t_dict:
+            t_dict[lcb] = am_dict['index_bits']
         return t_dict
 
     def write_module(self):
@@ -66,6 +72,16 @@ class XCorr(CafVerilogBase):
         module_inst = template.render(**t_dict)
         with open(os.path.join(self.output_dir, self.module_name() + '.v'), 'w+') as module_file:
             module_file.write(module_inst)
+
+    def gen_tb(self):
+        out_tb = None
+        t_dict = self.template_dict()
+        template_loader = FileSystemLoader(searchpath=self.tb_module_path())
+        env = Environment(loader=template_loader)
+        template = env.get_template(self.tb_filename)
+        out_tb = template.render(**t_dict)
+        with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
+            tb_file.write(out_tb)
 
     def gen_quantized_output(self):
         """

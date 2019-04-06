@@ -8,29 +8,28 @@ module x_corr #(parameter xi_bits = 12,
                 parameter q_bits = 24,
                 parameter length = 5,
                 parameter length_counter_bits = 3,
-                parameter out_max_bits = 5,
-                parameter index_bits = 4
+                parameter out_max_bits = 5
                 )
    (input clk,
-    output reg                      s_axis_tready,
-    input [xi_bits - 1:0]           xi,
-    input [xq_bits - 1:0]           xq,
-    input [yi_bits - 1:0]           yi,
-    input [yq_bits - 1:0]           yq,
-    input                           m_axis_tvalid,
-    input                           m_axis_tready,
-    output reg [out_max_bits - 1:0] out_max,
-    output reg [index_bits - 1:0]   index,
-    output reg                      s_axis_tvalid
+    output reg                             s_axis_tready,
+    input [xi_bits - 1:0]                  xi,
+    input [xq_bits - 1:0]                  xq,
+    input [yi_bits - 1:0]                  yi,
+    input [yq_bits - 1:0]                  yq,
+    input                                  m_axis_tvalid,
+    input                                  m_axis_tready,
+    output reg [out_max_bits - 1:0]        out_max,
+    output reg [length_counter_bits - 1:0] index,
+    output reg                             s_axis_tvalid
     );
 
-   wire                             s_axis_product_tvalid;
-   wire                             s_axis_product_tready;
-   wire                             m_axis_x_tvalid;
-   wire                             m_axis_y_tvalid;
-   wire                             m_axis_product_tready;
-   wire signed [i_bits - 1:0]       i;
-   wire signed [q_bits - 1:0]       q;
+   wire                                    s_axis_product_tvalid;
+   wire                                    s_axis_product_tready;
+   wire                                    m_axis_x_tvalid;
+   wire                                    m_axis_y_tvalid;
+   wire                                    m_axis_product_tready;
+   wire signed [i_bits - 1:0]              i;
+   wire signed [q_bits - 1:0]              q;
 
    assign m_axis_x_tvalid = m_axis_tvalid;
    assign m_axis_y_tvalid = m_axis_tvalid;
