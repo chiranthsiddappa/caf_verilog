@@ -1,13 +1,19 @@
 from . caf_verilog_base import CafVerilogBase
 from .quantizer import quantize
 from . dot_product import dot_product
+import os
+from jinja2 import Environment, FileSystemLoader, Template
+from . arg_max import ArgMax
+from . dot_prod_pip import DotProdPip
+from . dot_product import DotProduct
 
 
 class XCorr(CafVerilogBase):
 
-    def __init__(self, ref, rec, ref_i_bits=12, ref_q_bits=0,
+    def __init__(self, ref, rec,
+                 ref_i_bits=12, ref_q_bits=0,
                  rec_i_bits=12, rec_q_bits=0,
-                 pipeline=False):
+                 pipeline=False, output_dir='.'):
         """
 
         :param ref: Reference signal.
@@ -21,12 +27,52 @@ class XCorr(CafVerilogBase):
         self.ref = ref
         self.rec = rec
         self.ref_i_bits = ref_i_bits
-        self.ref_q_bits = ref_q_bits
+        self.ref_q_bits = ref_q_bits if ref_q_bits else ref_i_bits
         self.rec_i_bits = rec_i_bits
-        self.rec_q_bits = rec_q_bits
+        self.rec_q_bits = rec_q_bits if rec_q_bits else rec_i_bits
         self.pip = pipeline
+        self.output_dir = output_dir
         self.ref_quant = quantize(self.ref, self.ref_i_bits, self.ref_q_bits)
         self.rec_quant = quantize(self.rec, self.rec_i_bits, self.rec_q_bits)
+        self.submodules = self.gen_submodules()
+        self.write_module()
+
+    def gen_submodules(self):
+        submodules = dict()
+        dp_params = {'x': self.ref, 'y': self.ref,
+                     'x_i_bits': self.ref_i_bits, 'x_q_bits': self.ref_q_bits,
+                     'y_i_bits': self.rec_i_bits, 'y_q_bits': self.ref_q_bits,
+                     'output_dir': self.output_dir}
+        if self.pip:
+            submodules['dot_prod'] = DotProdPip(**dp_params)
+        else:
+            submodules['dot_prod'] = DotProduct(**dp_params)
+        dp_dict = submodules['dot_prod'].template_dict('dot_prod_%s' % (self.module_name()))
+        submodules['arg_max'] = ArgMax(self.ref,
+                                       dp_dict['sum_i_bits'],
+                                       dp_dict['sum_q_bits'],
+                                       self.output_dir)
+        return submodules
+
+    def template_dict(self):
+        t_dict = {'xi_bits': self.ref_i_bits,
+                  'xq_bits': self.ref_q_bits,
+                  'yi_bits': self.rec_i_bits,
+                  'yq_bits': self.rec_q_bits,
+                  'length': self.submodules['arg_max'].buffer_length,
+                  'length_counter_bits': self.submodules['arg_max'].index_bits,
+                  'sum_i_bits': self.submodules['dot_prod'].sum_i_bits,
+                  'sum_q_bits': self.submodules['dot_prod'].sum_q_bits}
+        return t_dict
+
+    def write_module(self):
+        t_dict = self.template_dict()
+        template_loader = FileSystemLoader(searchpath=self.tb_module_path())
+        env = Environment(loader=template_loader)
+        template = env.get_template(self.module_name() + '.v')
+        module_inst = template.render(**t_dict)
+        with open(os.path.join(self.output_dir, self.module_name() + '.v'), 'w+') as module_file:
+            module_file.write(module_inst)
 
     def gen_quantized_output(self):
         """
