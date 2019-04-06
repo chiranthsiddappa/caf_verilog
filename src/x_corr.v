@@ -37,21 +37,21 @@ module x_corr #(parameter xi_bits = 12,
 
    {% include "dot_prod_pip_inst.v" %}
 
-                                       argmax #(.buffer_length(length),
-                                                .index_bits(length_counter_bits),
-                                                .out_max_bits(out_max_bits),
-                                                .i_bits(i_bits),
-                                                .q_bits(q_bits)) arg_max_xc(.clk(clk),
-                                                                                  .m_axis_tvalid(s_axis_product_tvalid),
-                                                                                  .xi(i),
-                                                                                  .xq(q),
-                                                                                  .s_axis_tready(m_axis_product_tready),
-                                                                                  .m_axis_tready(m_axis_tready),
-                                                                                  .out_max(out_max),
-                                                                                  .index(index),
-                                                                                  .s_axis_tvalid(s_axis_tvalid)
-                                                                                  );
+                            argmax #(.buffer_length(length),
+                                     .index_bits(length_counter_bits),
+                                     .out_max_bits(out_max_bits),
+                                     .i_bits(i_bits),
+                                     .q_bits(q_bits)) arg_max_xc(.clk(clk),
+                                                                 .m_axis_tvalid(s_axis_product_tvalid),
+                                                                 .xi(i),
+                                                                 .xq(q),
+                                                                 .s_axis_tready(m_axis_product_tready),
+                                                                 .m_axis_tready(m_axis_tready),
+                                                                 .out_max(out_max),
+                                                                 .index(index),
+                                                                 .s_axis_tvalid(s_axis_tvalid)
+                                                                 );
    
 
-                                       endmodule // xcorr
+endmodule // xcorr
 
