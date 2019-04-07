@@ -6,6 +6,8 @@ from jinja2 import Environment, FileSystemLoader, Template
 from . arg_max import ArgMax
 from . dot_prod_pip import DotProdPip
 from . dot_product import DotProduct
+import numpy as np
+from .io_helper import write_quantized_output
 
 
 class XCorr(CafVerilogBase):
@@ -30,9 +32,13 @@ class XCorr(CafVerilogBase):
         self.ref_q_bits = ref_q_bits if ref_q_bits else ref_i_bits
         self.rec_i_bits = rec_i_bits
         self.rec_q_bits = rec_q_bits if rec_q_bits else rec_i_bits
+        self.ref_quant = quantize(self.ref, self.ref_i_bits, self.ref_q_bits)
+        self.rec_quant = quantize(self.rec, self.rec_i_bits, self.rec_q_bits)
         self.pip = pipeline
         self.output_dir = output_dir
         self.tb_filename = '%s_tb.v' % self.module_name()
+        self.test_value_filename = '%s_input_values.txt' % self.module_name()
+        self.test_output_filename = '%s_output_values.txt' % self.module_name()
         self.ref_quant = quantize(self.ref, self.ref_i_bits, self.ref_q_bits)
         self.rec_quant = quantize(self.rec, self.rec_i_bits, self.rec_q_bits)
         self.submodules = self.gen_submodules()
@@ -74,7 +80,10 @@ class XCorr(CafVerilogBase):
             module_file.write(module_inst)
 
     def gen_tb(self):
-        out_tb = None
+        self.write_tb_values()
+        self.write_xcorr_tb_module()
+
+    def write_xcorr_tb_module(self):
         t_dict = self.template_dict()
         template_loader = FileSystemLoader(searchpath=self.tb_module_path())
         env = Environment(loader=template_loader)
@@ -82,6 +91,16 @@ class XCorr(CafVerilogBase):
         out_tb = template.render(**t_dict)
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
+
+    def write_tb_values(self):
+        ref_tb = list()
+        rec_tb = list()
+        for roll_amt in range(0, len(self.ref_quant)):
+            ref_tb.extend(self.ref_quant)
+            rec_roll = np.roll(self.rec_quant, roll_amt)[:len(self.ref_quant)]
+            rec_tb.extend(rec_roll)
+        write_quantized_output(self.output_dir, self.test_value_filename, ref_tb, rec_tb)
+
 
     def gen_quantized_output(self):
         """

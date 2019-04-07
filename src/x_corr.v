@@ -18,7 +18,7 @@ module x_corr #(parameter xi_bits = 12,
     input [yq_bits - 1:0]                  yq,
     input                                  m_axis_tvalid,
     input                                  m_axis_tready,
-    output reg [out_max_bits - 1:0]        out_max,
+    output [out_max_bits - 1:0]            out_max,
     output reg [length_counter_bits - 1:0] index,
     output reg                             s_axis_tvalid
     );
