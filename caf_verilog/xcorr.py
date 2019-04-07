@@ -61,13 +61,15 @@ class XCorr(CafVerilogBase):
                                        self.output_dir)
         return submodules
 
-    def template_dict(self):
+    def template_dict(self, inst_name=None):
         t_dict = self.submodules['dot_prod'].template_dict('dp_x_corr')
         am_dict = self.submodules['arg_max'].template_dict()
         t_dict['out_max_bits'] = am_dict['out_max_bits']
         lcb = 'length_counter_bits'
         if not lcb in t_dict:
             t_dict[lcb] = am_dict['index_bits']
+        t_dict['x_corr_inst_name'] = inst_name if inst_name else '%s_tb' % self.module_name()
+        t_dict['x_corr_input_filename'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         return t_dict
 
     def write_module(self):
@@ -95,10 +97,9 @@ class XCorr(CafVerilogBase):
     def write_tb_values(self):
         ref_tb = list()
         rec_tb = list()
-        for roll_amt in range(0, len(self.ref_quant)):
+        for i in range(0, len(self.rec_quant) - len(self.ref_quant)):
             ref_tb.extend(self.ref_quant)
-            rec_roll = np.roll(self.rec_quant, roll_amt)[:len(self.ref_quant)]
-            rec_tb.extend(rec_roll)
+            rec_tb.extend(self.rec_quant[i:len(self.ref_quant) + i])
         write_quantized_output(self.output_dir, self.test_value_filename, ref_tb, rec_tb)
 
 

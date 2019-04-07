@@ -32,7 +32,7 @@ module argmax #(parameter buffer_length = 10,
 
    always @(posedge clk) begin
       if (icounter < buffer_length) begin
-         s_axis_tready <= m_axis_tready;
+         s_axis_tready <= 1'b1;
       end else begin
          s_axis_tready <= 1'b0;
       end
@@ -71,7 +71,7 @@ module argmax #(parameter buffer_length = 10,
          index <= 'd0;
       end else begin
          if (argsum > out_max) begin
-            index <= icounter - 'd2;
+            index <= icounter;
             out_max <= argsum;
          end
       end

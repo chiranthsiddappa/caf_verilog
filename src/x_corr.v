@@ -11,16 +11,16 @@ module x_corr #(parameter xi_bits = 12,
                 parameter out_max_bits = 5
                 )
    (input clk,
-    output reg                             s_axis_tready,
-    input [xi_bits - 1:0]                  xi,
-    input [xq_bits - 1:0]                  xq,
-    input [yi_bits - 1:0]                  yi,
-    input [yq_bits - 1:0]                  yq,
-    input                                  m_axis_tvalid,
-    input                                  m_axis_tready,
-    output [out_max_bits - 1:0]            out_max,
-    output reg [length_counter_bits - 1:0] index,
-    output reg                             s_axis_tvalid
+    output                             s_axis_tready,
+    input [xi_bits - 1:0]              xi,
+    input [xq_bits - 1:0]              xq,
+    input [yi_bits - 1:0]              yi,
+    input [yq_bits - 1:0]              yq,
+    input                              m_axis_tvalid,
+    input                              m_axis_tready,
+    output [out_max_bits - 1:0]        out_max,
+    output [length_counter_bits - 1:0] index,
+    output                             s_axis_tvalid
     );
 
    wire                                    s_axis_product_tvalid;
@@ -33,6 +33,7 @@ module x_corr #(parameter xi_bits = 12,
 
    assign m_axis_x_tvalid = m_axis_tvalid;
    assign m_axis_y_tvalid = m_axis_tvalid;
+   assign m_axis_product_tready = s_axis_tready;
 
    {% include "dot_prod_pip_inst.v" %}
 
@@ -44,7 +45,7 @@ module x_corr #(parameter xi_bits = 12,
                                                                  .m_axis_tvalid(s_axis_product_tvalid),
                                                                  .xi(i),
                                                                  .xq(q),
-                                                                 .s_axis_tready(m_axis_product_tready),
+                                                                 .s_axis_tready(s_axis_tready),
                                                                  .m_axis_tready(m_axis_tready),
                                                                  .out_max(out_max),
                                                                  .index(index),
@@ -53,4 +54,3 @@ module x_corr #(parameter xi_bits = 12,
    
 
 endmodule // xcorr
-
