@@ -32,7 +32,6 @@ module cpx_multiply_tb();
          $finish;
       end
       #10
-      m_axis_tvalid = 1'b1;
       m_axis_tready = 1'b1;
       @(negedge s_axis_tvalid) begin
          $fclose(cpx_multiply_output);
@@ -47,7 +46,10 @@ module cpx_multiply_tb();
    {% include "cpx_multiply_inst.v" %}
 
    always @(posedge clk) begin
-      scan_file = $fscanf(cpx_multiply_input, "%d,%d,%d,%d\n", xi,xq,yi,yq);
+      if (s_axis_tready) begin
+         scan_file = $fscanf(cpx_multiply_input, "%d,%d,%d,%d\n", xi,xq,yi,yq);
+         m_axis_tvalid = 1'b1;
+      end
       if (s_axis_tvalid) begin
          $fwrite(cpx_multiply_output, "%d,%d\n", i_out,q_out);
       end

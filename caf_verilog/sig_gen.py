@@ -16,13 +16,20 @@ class SigGen(CafVerilogBase):
         self.f = freq_res
         self.fs = fs
         self.n_bits = n_bits
-        self.phase_bits = phase_bits(fs, freq_res)
+        self.phase_bits = self.calc_smallest_phase_size()
         self.output_dir = output_dir
         self.tb_filename = 'sig_gen_tb.v'
         self.sig_gen_name = "sig_gen_%s_%s_%s" % (str(fs).replace('.', '')[:3], self.phase_bits, self.n_bits)
         self.lut_filename = "%s.txt" % (self.sig_gen_name)
         self.test_output_filename = "sig_gen_output_values.txt"
         self.write_module()
+
+    def calc_smallest_phase_size(self):
+        pb = phase_bits(self.fs, self.f)
+        if pb <= self.n_bits:
+            diff = self.n_bits - pb + 1
+            pb += diff
+        return pb
 
     def template_dict(self, inst_name=None):
         t_dict = {'phase_bits': self.phase_bits, 'n_bits': self.n_bits}
@@ -52,7 +59,7 @@ class SigGen(CafVerilogBase):
         des_freq = freq if freq else self.fs / 4
         increment = phase_increment(des_freq, self.phase_bits, self.fs)
         t_dict = self.template_dict('sig_gen_tb')
-        t_dict['freq_step_str'] = "%d'%s" % (self.phase_bits - 1, str(bin(increment))[1:])
+        t_dict['freq_step_str'] = freq_step_str(self.phase_bits, increment)
         template_loader = FileSystemLoader(searchpath=sig_gen_tb_module_path)
         env = Environment(loader=template_loader)
         template = env.get_template('sig_gen_tb.v')
@@ -79,6 +86,11 @@ class SigGen(CafVerilogBase):
             module_template = Template(module_file.read())
         with open(os.path.join(self.output_dir, self.sig_gen_name+".v"), "w+") as module_file:
             module_file.write(module_template.render(**t_dict))
+
+
+def freq_step_str(phase_bits, increment):
+    fss = "%d'%s" % (phase_bits - 1, str(bin(increment))[1:])
+    return fss
 
 
 def lut_values(n_bits):
