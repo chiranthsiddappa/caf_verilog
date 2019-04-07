@@ -15,7 +15,7 @@ class XCorr(CafVerilogBase):
     def __init__(self, ref, rec,
                  ref_i_bits=12, ref_q_bits=0,
                  rec_i_bits=12, rec_q_bits=0,
-                 pipeline=False, output_dir='.'):
+                 pipeline=True, output_dir='.'):
         """
 
         :param ref: Reference signal.
