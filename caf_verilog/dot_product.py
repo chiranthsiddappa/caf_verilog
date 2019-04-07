@@ -5,6 +5,7 @@ from jinja2 import Environment, FileSystemLoader, Template
 from shutil import copy
 from .caf_verilog_base import CafVerilogBase
 from .io_helper import write_quantized_output
+from .cpx_multiply import CpxMultiply
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 dot_product_tb_module_path = os.path.join(filedir, '..', 'src')
@@ -42,7 +43,16 @@ class DotProduct(CafVerilogBase):
         self.tb_filename = '%s_tb.v' % (self.module_name())
         self.test_value_filename = '%s_input_values.txt' % (self.module_name())
         self.test_output_filename = '%s_output_values.txt' % (self.module_name())
+        self.submodules = self.gen_submodules()
         copy(dot_product_module_path, self.output_dir)
+
+    def gen_submodules(self):
+        submodules = dict()
+        submodules['cpx_multiply'] = CpxMultiply(self.x, self.y,
+                                                 self.x_i_bits, self.x_q_bits,
+                                                 self.y_i_bits, self.y_q_bits,
+                                                 output_dir=self.output_dir)
+        return submodules
 
     def gen_tb(self):
         write_quantized_output(self.output_dir, self.test_value_filename, self.x_quant, self.y_quant)
