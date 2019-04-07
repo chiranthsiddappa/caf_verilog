@@ -8,18 +8,18 @@ module dot_prod_pip_tb();
    integer scan_counter;
    reg     m_axis_product_tready;
    reg     m_axis_x_tvalid;
-   reg [{{ xi_bits }} - 1:0] xi;
-   reg [{{ xq_bits }} - 1:0] xq;
+   reg [{{ xi_bits - 1 }}:0] xi;
+   reg [{{ xq_bits - 1 }}:0] xq;
    reg                                        m_axis_y_tvalid;
-   reg [{{ yi_bits }} - 1:0] yi;
-   reg [{{ yq_bits }} - 1:0] yq;
+   reg [{{ yi_bits - 1 }}:0] yi;
+   reg [{{ yq_bits - 1 }}:0] yq;
    wire                                       s_axis_product_tvalid;
-   wire [{{ sum_i_size }} - 1:0]              i;
-   wire [{{ sum_q_size }} - 1:0]              q;
-   reg signed [{{ xi_bits - 1}}:0]            xi_in;
-   reg signed [{{ xq_bits - 1}}:0]            xq_in;
-   reg signed [{{ yi_bits - 1}}:0]            yi_in;
-   reg signed [{{ yq_bits - 1}}:0]            yq_in;
+   wire [{{ sum_i_bits - 1 }}:0]              i;
+   wire [{{ sum_q_bits - 1 }}:0]              q;
+   reg signed [{{ xi_bits - 1 }}:0]            xi_in;
+   reg signed [{{ xq_bits - 1 }}:0]            xq_in;
+   reg signed [{{ yi_bits - 1 }}:0]            yi_in;
+   reg signed [{{ yq_bits - 1 }}:0]            yq_in;
 
    initial begin
       clk = 1'b0;
@@ -35,10 +35,10 @@ module dot_prod_pip_tb();
          $display("dot_prod_input was NULL");
          $finish;
       end
-      @(posedge s_axis_product_tvalid) begin
-         m_axis_product_tready = 1'b0;
+      @(posedge s_axis_product_tvalid);
+      @(posedge clk) begin
+                  m_axis_product_tready = 1'b0;
       end
-      @(posedge clk);
       @(posedge clk) begin
          $finish;
       end // UNMATCHED !!

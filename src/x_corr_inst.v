@@ -1,0 +1,21 @@
+x_corr #(.xi_bits({{ xi_bits }}),
+        .xq_bits({{ xq_bits }}),
+        .yi_bits({{ yi_bits }}),
+        .yq_bits({{ yq_bits }}),
+        .i_bits({{ sum_i_bits }}),
+        .q_bits({{ sum_q_bits }}),
+        .length({{ length }}),
+        .length_counter_bits({{ length_counter_bits }}),
+        .out_max_bits({{ out_max_bits }})
+        ) {{ x_corr_inst_name }} (.clk(clk),
+                                 .s_axis_tready(s_axis_tready),
+                                 .xi(xi),
+                                 .xq(xq),
+                                 .yi(yi),
+                                 .yq(yq),
+                                 .m_axis_tvalid(m_axis_tvalid),
+                                 .m_axis_tready(m_axis_tready),
+                                 .out_max(out_max),
+                                 .index(index),
+                                 .s_axis_tvalid(s_axis_tvalid)
+                                 );

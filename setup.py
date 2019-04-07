@@ -32,7 +32,7 @@ setup(name='caf_verilog',
       license='MIT',
       install_requires=requirements.split(),
       test_suite='nose.collector',
-      tests_require=['nose', 'tox', 'numpy'],
+      tests_require=['nose', 'tox', 'numpy', 'gps-helper'],
       extras_require={
       },
       python_requires='>=3.4',
