@@ -1,7 +1,9 @@
 include README.md
 include requirements.txt
+include src/arg_max.v
+include src/arg_max_tb.v
 include src/capture_buffer.v
-include src/captuer_buffer_inst.v
+include src/capture_buffer_inst.v
 include src/capture_buffer_tb.v
 include src/cpx_multiply.v
 include src/cpx_multiply_inst.v
@@ -21,3 +23,6 @@ include src/reference_buffer_tb.v
 include src/sig_gen.v
 include src/sig_gen_inst.v
 include src/sig_gen_tb.v
+include src/x_corr.v
+include src/x_corr_inst.v
+include src/x_corr_tb.v
