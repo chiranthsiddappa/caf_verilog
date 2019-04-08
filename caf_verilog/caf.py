@@ -1,25 +1,58 @@
 import numpy as np
 from sk_dsp_comm import digitalcom as dc
 from . caf_verilog_base import CafVerilogBase
+from . xcorr import XCorr
+from . reference_buffer import ReferenceBuffer
+from . capture_buffer import CaptureBuffer
+from . __version__ import __version__
+from jinja2 import Environment, FileSystemLoader, Template
+import os
 
 
 class CAF(CafVerilogBase):
 
-    def __init__(self, reference, received, foa, i_bits, q_bits, output_dir='.'):
+    def __init__(self, reference, received, foas,
+                 ref_i_bits=12, ref_q_bits=0,
+                 rec_i_bits=12, rec_q_bits=0,
+                 pipeline=True, output_dir='.'):
         """
 
         :param reference:
         :param received:
-        :param i_bits:
-        :param q_bits:
+        :param ref_i_bits:
+        :param ref_q_bits:
         :param output_dir:
         """
         self.reference = reference
         self.received = received
-        self.foa = foa
-        self.i_bits = i_bits
-        self.q_bits = q_bits
+        if not len(self.reference) == (len(self.received) / 2):
+            raise ValueError("Received signal must be twice the length of the reference signal")
+        self.foas = foas
+        self.ref_i_bits = ref_i_bits
+        self.ref_q_bits = ref_q_bits if ref_q_bits else self.ref_i_bits
+        self.rec_i_bits = rec_i_bits
+        self.rec_q_bits = rec_q_bits if rec_q_bits else self.rec_i_bits
+        self.pip = pipeline
+        if not self.pip:
+            raise NotImplementedError("A non-pipelined dot-product has not been implemented as of %s" % __version__)
         self.output_dir = output_dir
+        self.submodules = self.gen_submodules()
+        self.write_module()
+
+    def gen_submodules(self):
+        submodules = dict()
+        submodules['reference_buffer'] = ReferenceBuffer(self.reference, self.ref_i_bits, self.ref_q_bits,
+                                                 self.output_dir, 'ref')
+        submodules['capture_buffer'] = CaptureBuffer(len(self.received), self.rec_i_bits, self.rec_q_bits,
+                                               self.output_dir, 'cap')
+        submodules['x_corr'] = XCorr(self.reference, self.received, self.ref_i_bits, self.ref_q_bits,
+                                     self.rec_i_bits, self.rec_q_bits, pipeline=self.pip, output_dir=self.output_dir)
+        return submodules
+
+    def template_dict(self):
+        t_dict = {**self.submodules['reference_buffer'].template_dict(),
+                  **self.submodules['capture_buffer'].template_dict()}
+        return t_dict
 
 
 def simple_caf(x, y, foas, fs):

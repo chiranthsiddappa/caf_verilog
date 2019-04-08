@@ -72,15 +72,6 @@ class XCorr(CafVerilogBase):
         t_dict['x_corr_input_filename'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         return t_dict
 
-    def write_module(self):
-        t_dict = self.template_dict()
-        template_loader = FileSystemLoader(searchpath=self.tb_module_path())
-        env = Environment(loader=template_loader)
-        template = env.get_template(self.module_name() + '.v')
-        module_inst = template.render(**t_dict)
-        with open(os.path.join(self.output_dir, self.module_name() + '.v'), 'w+') as module_file:
-            module_file.write(module_inst)
-
     def gen_tb(self):
         self.write_tb_values()
         self.write_xcorr_tb_module()
