@@ -49,6 +49,16 @@ class CAF(CafVerilogBase):
                                      self.rec_i_bits, self.rec_q_bits, pipeline=self.pip, output_dir=self.output_dir)
         return submodules
 
+    def freq_res(self):
+        freqs = list()
+        for ff in self.foas:
+            if ff:
+                freqs.append(abs(ff))
+        freqs = np.floor(np.log10(freqs))
+        freqs = 10 ** freqs
+        min_res = min(freqs)
+        return min_res
+
     def template_dict(self):
         t_dict = {**self.submodules['reference_buffer'].template_dict(),
                   **self.submodules['capture_buffer'].template_dict()}
