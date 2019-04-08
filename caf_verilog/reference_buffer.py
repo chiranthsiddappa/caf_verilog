@@ -10,10 +10,10 @@ filedir = os.path.dirname(os.path.realpath(__file__))
 
 class ReferenceBuffer(CafVerilogBase):
 
-    def __init__(self, buffer, i_bits=12, q_bits=12, output_dir='.', name=None):
+    def __init__(self, buffer, i_bits=12, q_bits=0, output_dir='.', name=None):
         self.buffer = buffer
         self.i_bits = i_bits
-        self.q_bits = q_bits
+        self.q_bits = q_bits if q_bits else self.i_bits
         self.output_dir = output_dir
         self.tb_filename = '%s_tb.v' % (self.module_name())
         self.buffer_quant = quantize(self.buffer, self.i_bits, self.q_bits)
@@ -45,7 +45,12 @@ class ReferenceBuffer(CafVerilogBase):
     def template_dict(self):
         b_len = len(self.buffer)
         bits = int(np.ceil(np.log2(b_len)))
-        t_dict = {'buffer_length': b_len, 'index_bits': bits,'i_bits': self.i_bits, 'q_bits': self.q_bits}
+        mn = self.module_name().split('_')[0][:3]
+        t_dict = dict()
+        t_dict['%s_buffer_length' % mn] = b_len
+        t_dict['%s_index_bits' % mn] = bits
+        t_dict['%s_i_bits' % mn] = self.i_bits
+        t_dict['%s_q_bits' % mn] = self.q_bits
         rbf_path = os.path.join(self.output_dir, self.buffer_filename)
         t_dict['%s_filename' % self.module_name()] = os.path.abspath(rbf_path)
         t_dict['%s_name' % self.module_name()] = self.buffer_module_name
