@@ -2,7 +2,7 @@ from .caf_verilog_base import CafVerilogBase
 import os
 from . quantizer import quantize
 from jinja2 import Environment, FileSystemLoader, Template
-from caf_verilog.quantizer import bin_num
+from . io_helper import write_buffer_values
 import numpy as np
 
 filedir = os.path.dirname(os.path.realpath(__file__))
@@ -22,19 +22,8 @@ class ReferenceBuffer(CafVerilogBase):
         self.test_output_filename = "%s_output_values.txt" % (self.module_name())
         self.write_module()
 
-    def write_buffer_values(self):
-        """
-
-        :return:
-        """
-        with open(os.path.join(self.output_dir, self.buffer_filename), 'w+') as rbf:
-            for val in self.buffer_quant:
-                i_bin = bin_num(val.real, self.i_bits)
-                q_bin = bin_num(val.imag, self.q_bits)
-                rbf.write(i_bin + q_bin + "\n")
-
     def write_module(self):
-        self.write_buffer_values()
+        write_buffer_values(self.output_dir, self.buffer_filename, self.buffer_quant, self.i_bits, self.q_bits)
         module_template = None
         t_dict = self.template_dict()
         with open(self.module_path()) as module_file:
