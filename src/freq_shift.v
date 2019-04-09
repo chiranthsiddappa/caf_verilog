@@ -18,10 +18,10 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
                             );
 
    wire                                                  m_axis_sig_gen_tready;
-   wire signed [{{ n_bits - 1 }}:0]                      cosine;
-   reg signed [{{ n_bits - 1 }}:0]                       cosine_buff;
-   wire signed [{{ n_bits - 1 }}:0]                      sine;
-   reg signed [{{ n_bits - 1 }}:0]                       sine_buff;
+   wire signed [{{ freq_shift_n_bits - 1 }}:0]                      cosine;
+   reg signed [{{ freq_shift_n_bits - 1 }}:0]                       cosine_buff;
+   wire signed [{{ freq_shift_n_bits - 1 }}:0]                      sine;
+   reg signed [{{ freq_shift_n_bits - 1 }}:0]                       sine_buff;
    wire                                                  s_axis_sig_gen_tvalid;
    reg                                                   s_axis_sig_gen_tvalid_buff;
    wire                                                  m_axis_mult_tvalid;
@@ -67,8 +67,8 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    assign m_axis_mult_tvalid = m_axis_tvalid_buff & s_axis_sig_gen_tvalid_buff;
    assign m_axis_sig_gen_tready = m_axis_tvalid_buff;
 
-   {{ sig_gen_name }} #(.phase_bits({{ phase_bits }}),
-                        .n_bits({{ n_bits }}),
+   {{ sig_gen_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
+                        .freq_shift_n_bits({{ freq_shift_n_bits }}),
                         .lut_length({{ lut_length }})) {{ sig_gen_inst_name }}(.clk(clk),
                                                                                .m_axis_data_tready(m_axis_sig_gen_tready),
                                                                                .m_axis_freq_step_tvalid(m_axis_tvalid),
@@ -79,8 +79,8 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
 
    cpx_multiply #(.xi_bits(i_bits),
                   .xq_bits(q_bits),
-                  .yi_bits({{ n_bits }}),
-                  .yq_bits({{ n_bits }}),
+                  .yi_bits({{ freq_shift_n_bits }}),
+                  .yq_bits({{ freq_shift_n_bits }}),
                   .i_bits(i_bits),
                   .q_bits(q_bits)) freq_mult(.clk(clk),
                                              .m_axis_tready(m_axis_tready),
