@@ -8,6 +8,8 @@ from . __version__ import __version__
 from jinja2 import Environment, FileSystemLoader, Template
 import os
 from shutil import copy
+from . quantizer import quantize
+from . io_helper import write_buffer_values
 
 
 class CAF(CafVerilogBase):
@@ -33,6 +35,10 @@ class CAF(CafVerilogBase):
         self.ref_q_bits = ref_q_bits if ref_q_bits else self.ref_i_bits
         self.rec_i_bits = rec_i_bits
         self.rec_q_bits = rec_q_bits if rec_q_bits else self.rec_i_bits
+        self.ref_quant = quantize(self.reference, self.ref_i_bits, self.ref_q_bits)
+        self.rec_quant = quantize(self.received, self.rec_i_bits, self.rec_q_bits)
+        self.test_value_filename = '%s_input_values.txt' % (self.module_name())
+        self.test_output_filename = '%s_output_values.txt' % (self.module_name())
         self.pip = pipeline
         if not self.pip:
             raise NotImplementedError("A non-pipelined dot-product has not been implemented as of %s" % __version__)
@@ -60,15 +66,31 @@ class CAF(CafVerilogBase):
         min_res = min(freqs)
         return min_res
 
-    def template_dict(self):
+    def template_dict(self, inst_name=None):
         t_dict = {**self.submodules['reference_buffer'].template_dict(),
                   **self.submodules['capture_buffer'].template_dict()}
+        t_dict['%s_input' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
+                                                                               self.test_value_filename))
+        t_dict['%s_name' % self.module_name()] = inst_name if inst_name else '%s_tb' % self.module_name()
         return t_dict
 
     def write_module(self):
         super(CAF, self).write_module()
         params_path = os.path.abspath(os.path.join(self.tb_module_path(), 'caf_state_params.v'))
         copy(params_path, self.output_dir)
+
+    def gen_tb(self):
+        write_buffer_values(self.output_dir, self.test_value_filename, self.rec_quant, self.rec_i_bits, self.rec_q_bits)
+        self.write_tb_module()
+
+    def write_tb_module(self):
+        t_dict = self.template_dict()
+        template_loader = FileSystemLoader(searchpath=self.tb_module_path())
+        env = Environment(loader=template_loader)
+        template = env.get_template('%s_tb.v' % self.module_name())
+        out_tb = template.render(**t_dict)
+        with open(os.path.join(self.output_dir, '%s_tb.v' % self.module_name()), 'w+') as tb_file:
+            tb_file.write(out_tb)
 
 
 def simple_caf(x, y, foas, fs):

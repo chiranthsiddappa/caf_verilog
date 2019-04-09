@@ -38,7 +38,7 @@ module caf(input clk,
    wire [{{ cap_i_bits - 1 }}:0]   cap_i;
    wire [{{ cap_q_bits - 1 }}:0]   cap_q;
    wire                            s_axi_cap_rvalid;
-   reg                             m_axi_cap_waddr;
+   reg [{{ cap_index_bits - 1}}:0] m_axi_cap_waddr;
    reg                             m_axi_cap_wvalid;
    wire                            s_axi_cap_wready;
    reg [{{ cap_i_bits + cap_q_bits - 1 }}:0] m_axi_cap_wdata;
@@ -54,22 +54,53 @@ module caf(input clk,
       m_axi_cap_wdata = 'd0;
    end
 
-   {% include "capture_buffer_inst.v" %}
-
-     always @(posedge clk) begin
-        if (m_axis_tvalid && (state == CAPTURE)) begin
-           m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
-        end
-     end
-
-`include "caf_state_params.v";
+`include "caf_state_params.v"
    
-   reg [2:0] state;
+   reg [3:0] state;
 
    initial begin
-      state = 3'b0;
+      state = 4'b0;
    end
 
-   genvar ithFreq;
+   {% include "capture_buffer_inst.v" %}
+
+     genvar ithFreq;
+
+   reg [{{ ref_index_bits - 1 }}:0] cap_start;
+
+   initial begin
+      cap_start = 'd0;
+   end
+
+     always @(posedge clk) begin
+        case(state)
+          IDLE: 
+            if (m_axis_tvalid) begin
+               state <= CAPTURE;
+               m_axi_cap_wvalid <= 1'b1;
+               m_axi_cap_waddr <= 'd0;
+               m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
+            end
+            else begin
+               state <= state;
+            end
+          CAPTURE:
+            if (m_axis_tvalid) begin
+               m_axi_cap_waddr <= m_axi_cap_waddr + 1'b1;
+               m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
+               m_axi_cap_wvalid <= 1'b1;
+            end else if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }}) begin
+               state <= CORRELATE;
+               m_axi_cap_wvalid <= 1'b0;
+               m_axi_cap_waddr <= 'd0;
+               cap_start <= 'd0;
+            end
+            else begin
+               m_axi_cap_wvalid <= 1'b0;
+               m_axi_cap_waddr <= m_axi_cap_waddr;
+               m_axi_cap_wdata <= m_axi_cap_wdata;
+            end
+        endcase // case (state)
+     end
 
 endmodule // caf
