@@ -35,8 +35,8 @@ module caf(input clk,
    wire  m_axi_cap_rvalid;
    reg   m_axi_cap_raddr;
    wire  s_axi_cap_rready;
-   wire [{{ rec_i_bits - 1 }}:0] cap_i;
-   wire [{{ rec_q_bits - 1 }}:0] cap_q;
+   wire [{{ cap_i_bits - 1 }}:0] cap_i;
+   wire [{{ cap_q_bits - 1 }}:0] cap_q;
    wire                          s_axi_cap_rvalid;
    reg                           m_axi_cap_waddr;
    reg                           m_axi_cap_wvalid;
