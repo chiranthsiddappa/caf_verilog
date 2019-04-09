@@ -7,6 +7,7 @@ from . capture_buffer import CaptureBuffer
 from . __version__ import __version__
 from jinja2 import Environment, FileSystemLoader, Template
 import os
+from shutil import copy
 
 
 class CAF(CafVerilogBase):
@@ -63,6 +64,11 @@ class CAF(CafVerilogBase):
         t_dict = {**self.submodules['reference_buffer'].template_dict(),
                   **self.submodules['capture_buffer'].template_dict()}
         return t_dict
+
+    def write_module(self):
+        super(CAF, self).write_module()
+        params_path = os.path.abspath(os.path.join(self.tb_module_path(), 'caf_state_params.v'))
+        copy(params_path, self.output_dir)
 
 
 def simple_caf(x, y, foas, fs):
