@@ -72,6 +72,25 @@ module caf(input clk,
       cap_start = 'd0;
    end
 
+   generate
+      for (ithFreq = 0; ithFreq < {{ caf_foa_len }}; ithFreq = ithFreq + 1) begin: caf_freq_gen
+
+         {{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
+                                 .i_bits({{ freq_shift_i_bits }}),
+                                 .q_bits({{ freq_shift_q_bits }})) freq_shift_caf(.clk(clk),
+                                                                                  .m_axis_tvalid(m_axis_freq_tvalid[ithFreq]),
+                                                                                  .freq_step(freq_step[ithFreq]),
+                                                                                  .neg_shift(neg_shift[ithFreq]),
+                                                                                  .xi(freq_shift_xi[ithFreq]),
+                                                                                  .xq(freq_shift_xq[ithFreq]),
+                                                                                  .s_axis_tready(s_axis_freq_tready[ithFreq]),
+                                                                                  .m_axis_tready(m_axis_freq_tready[ithFreq]),
+                                                                                  .i(i_freq[ithFreq]),
+                                                                                  .q(q_freq[ithFreq]),
+                                                                                  .s_axis_tvalid(s_axis_freq_tvalid[ithFreq]));
+      end // block: caf_freq_gen
+      endgenerate
+
      always @(posedge clk) begin
         case(state)
           IDLE: 

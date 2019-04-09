@@ -4,6 +4,7 @@ from . caf_verilog_base import CafVerilogBase
 from . xcorr import XCorr
 from . reference_buffer import ReferenceBuffer
 from . capture_buffer import CaptureBuffer
+from . freq_shift import FreqShift
 from . __version__ import __version__
 from jinja2 import Environment, FileSystemLoader, Template
 import os
@@ -17,6 +18,7 @@ class CAF(CafVerilogBase):
     def __init__(self, reference, received, foas,
                  ref_i_bits=12, ref_q_bits=0,
                  rec_i_bits=12, rec_q_bits=0,
+                 fs=625e3, n_bits=8,
                  pipeline=True, output_dir='.'):
         """
 
@@ -31,6 +33,8 @@ class CAF(CafVerilogBase):
         if not len(self.reference) == (len(self.received) / 2):
             raise ValueError("Received signal must be twice the length of the reference signal")
         self.foas = foas
+        self.fs = fs
+        self.n_bits = n_bits
         self.ref_i_bits = ref_i_bits
         self.ref_q_bits = ref_q_bits if ref_q_bits else self.ref_i_bits
         self.rec_i_bits = rec_i_bits
@@ -52,6 +56,9 @@ class CAF(CafVerilogBase):
                                                  self.output_dir, 'ref')
         submodules['capture_buffer'] = CaptureBuffer(len(self.received), self.rec_i_bits, self.rec_q_bits,
                                                self.output_dir, 'cap')
+        submodules['freq_shift'] = FreqShift(self.received, self.freq_res(), self.fs, self.n_bits,
+                                             i_bits=self.rec_i_bits, q_bits=self.rec_q_bits,
+                                             output_dir=self.output_dir)
         submodules['x_corr'] = XCorr(self.reference, self.received, self.ref_i_bits, self.ref_q_bits,
                                      self.rec_i_bits, self.rec_q_bits, pipeline=self.pip, output_dir=self.output_dir)
         return submodules
@@ -68,7 +75,9 @@ class CAF(CafVerilogBase):
 
     def template_dict(self, inst_name=None):
         t_dict = {**self.submodules['reference_buffer'].template_dict(),
-                  **self.submodules['capture_buffer'].template_dict()}
+                  **self.submodules['capture_buffer'].template_dict(),
+                  **self.submodules['freq_shift'].template_dict()}
+        t_dict['caf_foa_len'] = len(self.foas)
         t_dict['%s_input' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
                                                                                self.test_value_filename))
         t_dict['%s_name' % self.module_name()] = inst_name if inst_name else '%s_tb' % self.module_name()
