@@ -119,6 +119,7 @@ class CAF(CafVerilogBase):
             for freq in self.foas:
                 nn_file.write(str(int(freq < 0)) + '\n')
 
+
 def simple_caf(x, y, foas, fs):
     """
     Produce values for a surface plot of the Complex Ambiguity Function.

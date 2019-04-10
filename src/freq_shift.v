@@ -68,7 +68,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    assign m_axis_sig_gen_tready = m_axis_tvalid_buff;
 
    {{ sig_gen_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
-                        .freq_shift_n_bits({{ freq_shift_n_bits }}),
+                        .n_bits({{ freq_shift_n_bits }}),
                         .lut_length({{ lut_length }})) {{ sig_gen_inst_name }}(.clk(clk),
                                                                                .m_axis_data_tready(m_axis_sig_gen_tready),
                                                                                .m_axis_freq_step_tvalid(m_axis_tvalid),
