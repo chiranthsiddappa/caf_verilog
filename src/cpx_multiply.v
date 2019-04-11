@@ -97,7 +97,7 @@ module cpx_multiply #(parameter xi_bits = 12,
    end // always @ (posedge clk)
 
    always @(posedge clk) begin
-      s_axis_tready <= m_axis_tready;
+      s_axis_tready <= m_axis_tready | ~pipeline[0];
    end
 
 endmodule // cpx_multiply
