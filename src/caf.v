@@ -44,7 +44,7 @@ module caf(input clk,
    reg [{{ cap_i_bits + cap_q_bits - 1 }}:0] m_axi_cap_wdata;
    wire                                      s_axi_cap_bresp;
    wire                                      s_axi_cap_bvalid;
-   wire                                      m_axi_cap_bready;
+   wire                                    m_axi_cap_bready;
 
    initial begin
       m_axi_cap_rready = 1'b0;
@@ -56,7 +56,7 @@ module caf(input clk,
 
 `include "caf_state_params.v"
    
-   reg [3:0] state;
+   reg [3:0]                               state;
 
    initial begin
       state = 4'b0;
@@ -66,8 +66,11 @@ module caf(input clk,
 
      genvar ithFreq;
 
-   reg [{{ ref_index_bits - 1 }}:0] cap_start;
-   reg [{{ caf_foa_len - 1 }}:0]  m_axis_freq_step_tvalid;
+   reg [{{ ref_index_bits - 1 }}:0]        cap_start;
+   reg [{{ ref_index_bits - 1 }}:0]        cap_iter;
+   reg [{{ caf_foa_len - 1 }}:0]           m_axis_freq_tvalid;
+   reg [{{ freq_shift_phase_bits - 1 }}:0] freq_step_lut [0:{{ caf_foa_len - 1 }}];
+   reg                                     neg_shift_lut [0:{{ caf_foa_len - 1 }}];
    reg [{{ freq_shift_phase_bits - 1 }}:0] freq_step [0:{{ caf_foa_len - 1 }}];
    reg                                     neg_shift [0:{{ caf_foa_len - 1 }}];
    reg [{{ cap_i_bits - 1 }}:0]            freq_shift_xi [{{ caf_foa_len - 1 }}:0];
@@ -77,25 +80,47 @@ module caf(input clk,
    wire [{{ cap_i_bits - 1 }}:0]           i_freq [{{ caf_foa_len - 1 }}:0];
    wire [{{ cap_q_bits - 1 }}:0]           q_freq [{{ caf_foa_len - 1 }}:0];
    wire [{{ caf_foa_len - 1 }}:0]          s_axis_freq_tvalid;
+   integer                                 freqAssign;
 
    initial begin
       cap_start = 'd0;
-      $readmemb("{{ caf_phase_increment_filename }}", freq_step);
-      $readmemb("{{ caf_neg_shift_filename }}", neg_shift);
+      cap_iter = 'd0;
+      m_axis_freq_tvalid = 'd0;
+      $readmemb("{{ caf_phase_increment_filename }}", freq_step_lut);
+      $readmemb("{{ caf_neg_shift_filename }}", neg_shift_lut);
    end
 
    generate
-      for (ithFreq = 0; ithFreq < {{ caf_foa_len }}; ithFreq = ithFreq + 1) begin: caf_freq_gen
+      for (ithFreq = 0; ithFreq < {{ caf_foa_len }}; ithFreq = ithFreq + 1) begin: caf_freq
 
          initial begin
-            m_axis_freq_step_tvalid[ithFreq] = 1'b0;
+            m_axis_freq_tvalid[ithFreq] = 1'b0;
             m_axis_freq_tready[ithFreq] = 1'b0;
+         end
+
+         always @(posedge clk) begin
+            if (state == IDLE) begin
+               m_axis_freq_tvalid[ithFreq] <= 1'b1;
+               freq_step[ithFreq] <= freq_step_lut[ithFreq];
+               neg_shift[ithFreq] <= neg_shift_lut[ithFreq];
+            end
+            else if (state == CORRELATE) begin
+               m_axis_freq_tvalid[ithFreq] <= s_axi_cap_rvalid;
+               freq_step[ithFreq] <= freq_step_lut[ithFreq];
+               neg_shift[ithFreq] <= neg_shift_lut[ithFreq];
+               freq_shift_xi[ithFreq] <= cap_i;
+               freq_shift_xq[ithFreq] <= cap_q;
+               m_axis_freq_tready[ithFreq] <= 1'b1;
+            end
+            else begin
+               m_axis_freq_tvalid <= 'd0;
+            end
          end
 
          {{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
                                  .i_bits({{ freq_shift_i_bits }}),
                                  .q_bits({{ freq_shift_q_bits }})) freq_shift_caf(.clk(clk),
-                                                                                  .m_axis_tvalid(m_axis_freq_step_tvalid[ithFreq]),
+                                                                                  .m_axis_tvalid(m_axis_freq_tvalid[ithFreq]),
                                                                                   .freq_step(freq_step[ithFreq]),
                                                                                   .neg_shift(neg_shift[ithFreq]),
                                                                                   .xi(freq_shift_xi[ithFreq]),
@@ -133,6 +158,10 @@ module caf(input clk,
                m_axi_cap_wvalid <= 1'b0;
                m_axi_cap_waddr <= 'd0;
                cap_start <= 'd0;
+               cap_iter <= 'd0;
+               m_axi_cap_raddr <= 'd0;
+               m_axi_cap_rvalid <= 1'b0;
+               m_axi_cap_rready <= 1'b1;
             end
             else begin
                m_axi_cap_wvalid <= 1'b0;
@@ -140,10 +169,22 @@ module caf(input clk,
                m_axi_cap_wdata <= m_axi_cap_wdata;
             end // else: !if(m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
           CORRELATE:
-            if(cap_start < {{ ref_buffer_length }}) begin
+            if(cap_start <= {{ ref_buffer_length }}) begin
+               if (cap_iter < {{ ref_buffer_length - 1}}) begin
+                  m_axi_cap_rvalid <= 1'b1;
+                  m_axi_cap_raddr <= m_axi_cap_raddr + (s_axi_cap_rvalid & s_axis_freq_tready);
+                  cap_iter <= cap_iter + (s_axi_cap_rvalid & s_axis_freq_tready);
+               end
+               else begin
+                  cap_iter <= 'd0;
+                  cap_start <= cap_start + 1'b1;
+                  m_axi_cap_raddr <= cap_start + 1'b1;
+               end
             end
             else begin
                // Some logic to transition to FIND_MAX
+               m_axi_cap_rvalid <= 1'b0;
+               m_axi_cap_rready <= 1'b0;
             end
         endcase // case (state)
      end
