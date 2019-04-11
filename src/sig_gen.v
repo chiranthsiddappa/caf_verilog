@@ -29,7 +29,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
 
    always @(posedge clk) begin
       if (m_axis_freq_step_tvalid) begin
-         freq_step_set = 1'b1;
+         freq_step_set <= 1'b1;
          if (freq_step_buff != freq_step) begin
             freq_step_buff <= freq_step;
          end
@@ -48,7 +48,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    end
 
    always @(posedge clk) begin
-      if (m_axis_data_tready & freq_step_set) begin
+      if (freq_step_set) begin
          sine <= lut[phase[phase_bits - 1:phase_bits - n_bits - 1]];
          cosine <= lut[phase_4[phase_bits - 1:phase_bits - n_bits - 1]];
          s_axis_data_tvalid <= 1'b1;
