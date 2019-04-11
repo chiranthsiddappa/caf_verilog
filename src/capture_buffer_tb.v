@@ -36,9 +36,17 @@ module capture_buffer_tb();
       m_axi_cap_wdata = buffer_values['d0];
       @(posedge clk) begin
          m_axi_cap_rvalid = 1'b1;
-         m_axi_cap_rready = 1'b1;
+         m_axi_cap_rready = 1'b0;
       end // UNMATCHED !!
-      @(posedge clk) m_axi_cap_raddr = 'd1;
+      @(posedge clk) begin
+         m_axi_cap_rready = 1'b1;
+      end
+      @(posedge clk) begin
+         m_axi_cap_rready = 1'b0;
+      end
+      @(posedge clk) begin
+         m_axi_cap_rready = 1'b1;
+      end
    end // initial begin
 
    {% include "capture_buffer_inst.v" %}
@@ -60,13 +68,10 @@ module capture_buffer_tb();
    end
 
    always @(posedge clk) begin
-      if (s_axi_cap_rvalid) begin
-         $fwrite(write_file, "%d,%d\n", cap_i, cap_q);
-      end
-      if (m_axi_cap_raddr < {{ cap_buffer_length }} && s_axi_cap_rvalid) begin
-         m_axi_cap_rready = 1'b1;
+      if (s_axi_cap_rvalid && m_axi_cap_rready) begin
          m_axi_cap_rvalid = 1'b1;
          m_axi_cap_raddr = m_axi_cap_raddr+ 1'b1;
+         $fwrite(write_file, "%d,%d\n", cap_i, cap_q);
       end
       else if (m_axi_cap_raddr == {{ cap_buffer_length }} && !s_axi_cap_rvalid) begin
          m_axi_cap_rvalid <= 1'b0;
