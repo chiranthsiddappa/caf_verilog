@@ -30,7 +30,10 @@ module freq_shift_tb();
       if (freq_shift_output == `NULL) begin
          $display("freq_shift_output handle was NULL");
       end
-      @(posedge clk);
+      @(posedge clk) begin
+         $fscanf(freq_shift_input, "%d,%d\n", xi,xq);
+         m_axis_tvalid = 1'b1;
+      end
       @(negedge s_axis_tvalid) begin
          $fclose(freq_shift_output);
          $finish;
