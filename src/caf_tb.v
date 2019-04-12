@@ -10,6 +10,7 @@ module caf_tb();
    wire [31:0] s_axis_tdata;
    reg         m_axis_tready;
    integer     caf_input;
+   integer     task_output;
 
    {% include "caf_inst.v" %}
 
@@ -22,6 +23,10 @@ module caf_tb();
          $display("caf_input was NULL");
          $finish;
       end
+      @(posedge clk) begin
+         task_output = $fscanf(caf_input, "%b\n", m_axis_tdata);
+         m_axis_tvalid = 1'b1;
+      end
    end
 
    always begin
@@ -29,11 +34,11 @@ module caf_tb();
    end
 
    always @(posedge clk) begin
-      if (!$feof(caf_input)) begin
+      if (!$feof(caf_input) && s_axis_tready) begin
          $fscanf(caf_input, "%b\n", m_axis_tdata);
          m_axis_tvalid = 1'b1;
       end
-      else begin
+      else if ($feof(caf_input)) begin
          m_axis_tvalid = 1'b0;
       end
    end

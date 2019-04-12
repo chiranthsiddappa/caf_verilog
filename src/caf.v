@@ -52,14 +52,16 @@ module caf(input clk,
       m_axi_cap_rvalid = 1'b0;
       m_axi_cap_waddr = 'd0;
       m_axi_cap_wdata = 'd0;
+      m_axi_cap_wvalid = 1'b0;
    end
 
 `include "caf_state_params.v"
    
-   reg [3:0]                               state;
+   reg [4:0]                               state;
 
    initial begin
-      state = 4'b0;
+      freq_assign = 'd0;
+      state = INIT;
    end
 
    {% include "capture_buffer_inst.v" %}
@@ -80,7 +82,7 @@ module caf(input clk,
    wire [{{ cap_i_bits - 1 }}:0]           i_freq [{{ caf_foa_len - 1 }}:0];
    wire [{{ cap_q_bits - 1 }}:0]           q_freq [{{ caf_foa_len - 1 }}:0];
    wire [{{ caf_foa_len - 1 }}:0]          s_axis_freq_tvalid;
-   integer                                 freqAssign;
+   reg [{{ caf_foa_len_bits - 1 }}:0]      freq_assign;
 
    initial begin
       cap_start = 'd0;
@@ -99,21 +101,15 @@ module caf(input clk,
          end
 
          always @(posedge clk) begin
-            if (state == IDLE) begin
-               m_axis_freq_tvalid[ithFreq] <= 1'b1;
-               freq_step[ithFreq] <= freq_step_lut[ithFreq];
-               neg_shift[ithFreq] <= neg_shift_lut[ithFreq];
-            end
-            else if (state == CORRELATE) begin
+            if (state == CORRELATE) begin
                m_axis_freq_tvalid[ithFreq] <= s_axi_cap_rvalid;
-               freq_step[ithFreq] <= freq_step_lut[ithFreq];
-               neg_shift[ithFreq] <= neg_shift_lut[ithFreq];
                freq_shift_xi[ithFreq] <= cap_i;
                freq_shift_xq[ithFreq] <= cap_q;
                m_axis_freq_tready[ithFreq] <= 1'b1;
             end
             else begin
-               m_axis_freq_tvalid <= 'd0;
+               m_axis_freq_tvalid[ithFreq] <= 1'b0;
+               m_axis_freq_tready[ithFreq] <= 1'b0;
             end
          end
 
@@ -135,38 +131,48 @@ module caf(input clk,
 
      always @(posedge clk) begin
         case(state)
-          IDLE:
-            if (m_axis_tvalid) begin
-               state <= CAPTURE;
-               m_axi_cap_wvalid <= 1'b1;
-               m_axi_cap_waddr <= 'd0;
-               m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
-               s_axis_tready <= 1'b1;
+          INIT:
+            if (freq_assign < {{ caf_foa_len }}) begin
+               freq_step[freq_assign] <= freq_step_lut[freq_assign];
+               neg_shift[freq_assign] <= neg_shift_lut[freq_assign];
+               freq_assign <= freq_assign + 1'b1;
             end
             else begin
-               state <= state;
+               freq_assign <= 'd0;
+               state <= IDLE;
+            end
+          IDLE:
+            begin
                s_axis_tready <= 1'b1;
+               if (m_axis_tvalid) begin
+                  state <= CAPTURE;
+                  m_axi_cap_wvalid <= 1'b1;
+                  m_axi_cap_waddr <= 'd0;
+                  m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
+               end
+               else begin
+                  state <= state;
+               end
             end
           CAPTURE:
-            if (m_axis_tvalid) begin
+            if (m_axis_tvalid && m_axi_cap_waddr < {{ cap_buffer_length - 1 }}) begin
                m_axi_cap_waddr <= m_axi_cap_waddr + 1'b1;
                m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
                m_axi_cap_wvalid <= 1'b1;
-            end else if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }}) begin
-               state <= CORRELATE;
+            end
+            else if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }}) begin
                s_axis_tready <= 1'b0;
                m_axi_cap_wvalid <= 1'b0;
                m_axi_cap_waddr <= 'd0;
+               state <= CORRELATE;
                cap_start <= 'd0;
                cap_iter <= 'd0;
                m_axi_cap_raddr <= 'd0;
-               m_axi_cap_rvalid <= 1'b0;
+               m_axi_cap_rvalid <= 1'b1;
                m_axi_cap_rready <= 1'b1;
-            end
+            end // if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
             else begin
                m_axi_cap_wvalid <= 1'b0;
-               m_axi_cap_waddr <= m_axi_cap_waddr;
-               m_axi_cap_wdata <= m_axi_cap_wdata;
             end // else: !if(m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
           CORRELATE:
             if(cap_start <= {{ ref_buffer_length }}) begin
