@@ -88,8 +88,9 @@ class XCorr(CafVerilogBase):
     def write_tb_values(self):
         ref_tb = list()
         rec_tb = list()
-        for i in range(0, len(self.rec_quant) - len(self.ref_quant)):
+        for i in range(0, len(self.rec_quant) - len(self.ref_quant) + 1):
             ref_tb.extend(self.ref_quant)
+            print(i, len(self.ref_quant) + i, len(self.rec_quant[i:len(self.ref_quant) + i]))
             rec_tb.extend(self.rec_quant[i:len(self.ref_quant) + i])
         write_quantized_output(self.output_dir, self.test_value_filename, ref_tb, rec_tb)
 
@@ -112,7 +113,7 @@ def dot_xcorr(ref, rec):
     :return:
     """
     dx = []
-    for i in range(0, len(rec) - len(ref)):
+    for i in range(0, len(rec) - len(ref) + 1):
         dx.append(dot_product(ref, rec[i:len(ref) + i]))
     return dx
 
