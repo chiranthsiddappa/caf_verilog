@@ -13,6 +13,8 @@ from . quantizer import quantize
 from . io_helper import write_buffer_values
 from . quantizer import bin_num
 from . sig_gen import phase_increment
+from math import log2, ceil
+
 
 class CAF(CafVerilogBase):
 
@@ -81,6 +83,7 @@ class CAF(CafVerilogBase):
                   **self.submodules['capture_buffer'].template_dict(),
                   **self.submodules['freq_shift'].template_dict()}
         t_dict['%s_foa_len' % self.module_name()] = len(self.foas)
+        t_dict['%s_foa_len_bits' % self.module_name()] = int(ceil(log2(len(self.foas))))
         t_dict['%s_phase_increment_filename' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
                                                                              self.phase_increment_filename))
         t_dict['%s_neg_shift_filename' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
