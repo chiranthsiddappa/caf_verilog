@@ -76,7 +76,12 @@ module argmax #(parameter buffer_length = 10,
          index <= 'd0;
       end else begin
          if (argsum > out_max) begin
-            index <= icounter - (pipeline[1] + pipeline[0]);
+            if (icounter >= buffer_length) begin
+               index <= buffer_length - 1;
+            end
+            else begin
+               index <= icounter - (pipeline[1] + pipeline[0]);
+            end
             out_max <= argsum;
          end
       end
