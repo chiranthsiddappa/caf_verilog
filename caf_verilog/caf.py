@@ -81,7 +81,8 @@ class CAF(CafVerilogBase):
     def template_dict(self, inst_name=None):
         t_dict = {**self.submodules['reference_buffer'].template_dict(),
                   **self.submodules['capture_buffer'].template_dict(),
-                  **self.submodules['freq_shift'].template_dict()}
+                  **self.submodules['freq_shift'].template_dict(),
+                  **self.submodules['x_corr'].template_dict()}
         t_dict['%s_foa_len' % self.module_name()] = len(self.foas)
         t_dict['%s_foa_len_bits' % self.module_name()] = int(ceil(log2(len(self.foas))))
         t_dict['%s_phase_increment_filename' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
