@@ -6,7 +6,6 @@ from jinja2 import Environment, FileSystemLoader, Template
 from . arg_max import ArgMax
 from . dot_prod_pip import DotProdPip
 from . dot_product import DotProduct
-import numpy as np
 from .io_helper import write_quantized_output
 
 
@@ -90,7 +89,6 @@ class XCorr(CafVerilogBase):
         rec_tb = list()
         for i in range(0, len(self.rec_quant) - len(self.ref_quant) + 1):
             ref_tb.extend(self.ref_quant)
-            print(i, len(self.ref_quant) + i, len(self.rec_quant[i:len(self.ref_quant) + i]))
             rec_tb.extend(self.rec_quant[i:len(self.ref_quant) + i])
         write_quantized_output(self.output_dir, self.test_value_filename, ref_tb, rec_tb)
 
