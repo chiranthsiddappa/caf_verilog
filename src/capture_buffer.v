@@ -35,14 +35,11 @@ module capture_buffer #(parameter buffer_length = 10,
    end
 
    always @(posedge clk) begin
-      if (m_axi_wvalid && m_axi_waddr == m_axi_raddr) begin
-         s_axi_rready <= 1'b0;
-      end
-      else if (m_axi_rvalid && (m_axi_raddr < buffer_length)) begin
+      s_axi_rready <= 1'b1;
+      if (m_axi_rvalid && (m_axi_raddr < buffer_length)) begin
          i <= buffer[m_axi_raddr][i_bits + q_bits - 1:q_bits];
          q <= buffer[m_axi_raddr][q_bits:0];
          s_axi_rvalid <= 1'b1;
-         s_axi_rready <= 1'b1;
       end
       else if (m_axi_rready) begin
          s_axi_rvalid <= 1'b0;

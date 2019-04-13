@@ -34,6 +34,8 @@ module capture_buffer_tb();
       m_axi_cap_waddr = 'd0;
       m_axi_cap_wvalid = 1'b1;
       m_axi_cap_wdata = buffer_values['d0];
+      @(posedge clk);
+      @(posedge clk);
       @(posedge clk) begin
          m_axi_cap_rvalid = 1'b1;
          m_axi_cap_rready = 1'b0;
