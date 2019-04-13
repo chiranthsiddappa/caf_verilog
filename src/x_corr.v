@@ -24,7 +24,6 @@ module x_corr #(parameter xi_bits = 12,
     );
 
    wire                                    s_axis_product_tvalid;
-   wire                                    s_axis_product_tready;
    wire                                    m_axis_x_tvalid;
    wire                                    m_axis_y_tvalid;
    wire                                    m_axis_product_tready;
