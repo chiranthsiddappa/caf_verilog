@@ -66,15 +66,15 @@ module caf(input clk,
 
      genvar ithFreq;
 
-   reg [{{ ref_index_bits }}:0]        cap_start;
-   reg [{{ ref_index_bits - 1 }}:0]        cap_iter;
-   wire [{{ caf_foa_len - 1 }}:0]          m_axis_freq_tvalid;
+   reg [{{ ref_index_bits }}:0] cap_start;
+   reg [{{ ref_index_bits - 1 }}:0] cap_iter;
+   wire [{{ caf_foa_len - 1 }}:0]   m_axis_freq_tvalid;
    reg [{{ freq_shift_phase_bits - 1 }}:0] freq_step_lut [0:{{ caf_foa_len - 1 }}];
    reg                                     neg_shift_lut [0:{{ caf_foa_len - 1 }}];
    reg [{{ freq_shift_phase_bits - 1 }}:0] freq_step [0:{{ caf_foa_len - 1 }}];
    reg                                     neg_shift [0:{{ caf_foa_len - 1 }}];
-   wire [{{ cap_i_bits - 1 }}:0]            freq_shift_xi [{{ caf_foa_len - 1 }}:0];
-   wire [{{ cap_q_bits - 1 }}:0]            freq_shift_xq [{{ caf_foa_len - 1 }}:0];
+   wire [{{ cap_i_bits - 1 }}:0]           freq_shift_xi [{{ caf_foa_len - 1 }}:0];
+   wire [{{ cap_q_bits - 1 }}:0]           freq_shift_xq [{{ caf_foa_len - 1 }}:0];
    wire [{{ caf_foa_len - 1 }}:0]          s_axis_freq_tready;
    wire [{{ caf_foa_len - 1 }}:0]          m_axis_freq_tready;
    wire [{{ cap_i_bits - 1 }}:0]           i_freq [{{ caf_foa_len - 1 }}:0];
@@ -92,7 +92,8 @@ module caf(input clk,
       freq_assign = 'd0;
    end
 
-   wire [{{ caf_foa_len - 1}}:0] s_axis_x_corr_tvalid;
+   wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tvalid;
+   wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tready;
    wire [{{ out_max_bits - 1 }}:0] out_max;
    wire [{{ length_counter_bits - 1 }}:0] x_corr_index [{{ caf_foa_len - 1 }}:0];
    reg                                    m_axis_x_corr_tready;
@@ -109,6 +110,7 @@ module caf(input clk,
          assign freq_shift_xi[ithFreq] = cap_i;
          assign freq_shift_xq[ithFreq] = cap_q;
          assign m_axis_x_corr_tvalid[ithFreq] = s_axis_freq_tvalid[ithFreq];
+         assign m_axis_freq_tready[ithFreq] = s_axis_x_corr_tready[ithFreq];
 
          {{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
                                  .i_bits({{ freq_shift_i_bits }}),
@@ -134,11 +136,11 @@ module caf(input clk,
                   .length_counter_bits({{ ref_index_bits }}),
                   .out_max_bits({{ out_max_bits }})
                   ) x_corr_caf (.clk(clk),
-                                .s_axis_tready(m_axis_freq_tready[ithFreq]),
+                                .s_axis_tready(s_axis_x_corr_tready[ithFreq]),
                                 .xi(ref_i),
                                 .xq(ref_q),
                                 .yi(i_freq[ithFreq]),
-                                .yq(i_freq[ithFreq]),
+                                .yq(q_freq[ithFreq]),
                                 .m_axis_tready(m_axis_x_corr_tready),
                                 .m_axis_tvalid(m_axis_x_corr_tvalid[ithFreq]),
                                 .out_max(out_max[ithFreq]),
