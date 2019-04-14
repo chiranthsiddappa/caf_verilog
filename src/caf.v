@@ -131,7 +131,8 @@ module caf(input clk,
                                                                                   .xi(freq_shift_xi[ithFreq]),
                                                                                   .xq(freq_shift_xq[ithFreq]),
                                                                                   .s_axis_tready(s_axis_freq_tready[ithFreq]),
-                                                                                  .m_axis_tready(m_axis_freq_tready[ithFreq]),
+//                                                                                  .m_axis_tready(m_axis_freq_tready[ithFreq]),
+                                                                                  .m_axis_tready(1'b1),
                                                                                   .i(i_freq[ithFreq]),
                                                                                   .q(q_freq[ithFreq]),
                                                                                   .s_axis_tvalid(s_axis_freq_tvalid[ithFreq]));
@@ -220,10 +221,6 @@ module caf(input clk,
                      m_axi_ref_raddr <= m_axi_ref_raddr + 1'b1;
                   end
                end else begin
-                  if (ref_iter == {{ ref_buffer_length }}) begin
-                     m_axi_ref_rvalid <= 1'b0;
-                     ref_count_trigger <= 1'b0;
-                  end
                   ref_iter <= ref_iter + 1'b1;
                   m_axi_ref_raddr <= 'd0;
                end
@@ -245,9 +242,9 @@ module caf(input clk,
                   if (s_axis_x_corr_tvalid) begin
                      state <= FIND_MAX;
                      m_axis_x_corr_tready <= 1'b0;
+                     m_axi_cap_rvalid <= 1'b0;
+                     m_axi_ref_rvalid <= 1'b0;
                   end
-                  m_axi_cap_rvalid <= 1'b0;
-                  m_axi_ref_rvalid <= 1'b0;
                end // else: !if(cap_start <= {{ ref_buffer_length }})
             end // case: CORRELATE
         endcase // case (state)
