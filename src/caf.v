@@ -118,8 +118,8 @@ module caf(input clk,
 
          always @(posedge clk) begin
             m_axis_x_corr_tvalid[ithFreq] <= s_axis_freq_tvalid[ithFreq] & s_axi_ref_rvalid;
-            x_corr_yi[ithFreq] <= i_freq[ithFreq] << 1;
-            x_corr_yq[ithFreq] <= q_freq[ithFreq] << 1;
+            x_corr_yi[ithFreq] <= i_freq[ithFreq];
+            x_corr_yq[ithFreq] <= q_freq[ithFreq];
          end
 
          {{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
