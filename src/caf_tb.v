@@ -27,6 +27,11 @@ module caf_tb();
          task_output = $fscanf(caf_input, "%b\n", m_axis_tdata);
          m_axis_tvalid = 1'b1;
       end
+      @(negedge s_axis_tready) m_axis_tready = 1'b1;
+      @(posedge s_axis_tvalid);
+      @(negedge s_axis_tvalid) m_axis_tready = 1'b0;
+      @(posedge clk);
+      @(posedge clk) $finish;
    end
 
    always begin

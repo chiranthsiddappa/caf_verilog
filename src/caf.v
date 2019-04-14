@@ -15,7 +15,6 @@ module caf(input clk,
    end
 
    reg [{{ ref_index_bits }}:0] ref_iter;
-   reg                          ref_count_trigger;
    wire                         m_axi_ref_rready;
    reg                          m_axi_ref_rvalid;
    reg [{{ ref_index_bits - 1}}:0] m_axi_ref_raddr;
@@ -81,9 +80,9 @@ module caf(input clk,
    wire [{{ cap_i_bits - 1 }}:0]           i_freq [{{ caf_foa_len - 1 }}:0];
    wire [{{ cap_q_bits - 1 }}:0]           q_freq [{{ caf_foa_len - 1 }}:0];
    wire [{{ caf_foa_len - 1 }}:0]          s_axis_freq_tvalid;
-   reg [{{ caf_foa_len_bits - 1 }}:0]      freq_assign;
+   reg [{{ caf_foa_len_bits }}:0]          freq_assign;
 
-   assign m_axi_cap_rready = s_axis_freq_tready;
+   assign m_axi_cap_rready = &s_axis_freq_tready;
 
    initial begin
       cap_start = 'd0;
@@ -95,12 +94,15 @@ module caf(input clk,
 
    wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tvalid;
    wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tready;
-   wire [{{ out_max_bits - 1 }}:0] out_max;
+   wire [{{ out_max_bits - 1 }}:0] out_max [{{ caf_foa_len - 1 }}:0];
+   reg [{{ out_max_bits - 1 }}:0]  out_max_buff [{{ caf_foa_len - 1 }}:0];
    reg [{{ cap_i_bits - 1 }}:0]    x_corr_yi [{{ caf_foa_len - 1 }}:0];
    reg [{{ cap_q_bits - 1 }}:0]    x_corr_yq [{{ caf_foa_len - 1 }}:0];
    wire [{{ length_counter_bits - 1 }}:0] x_corr_index [{{ caf_foa_len - 1 }}:0];
+   reg [{{ length_counter_bits - 1 }}:0]  x_corr_index_buff [{{ caf_foa_len - 1 }}:0];
    reg                                    m_axis_x_corr_tready;
    reg [{{ caf_foa_len - 1 }}:0]          m_axis_x_corr_tvalid;
+   reg [{{ caf_foa_len_bits - 1 }}:0]     freq_final;
 
    initial begin
       m_axis_x_corr_tready = 1'b0;
@@ -109,6 +111,9 @@ module caf(input clk,
    assign m_axi_ref_rready = s_axis_x_corr_tready;
    assign m_axis_freq_tvalid = { {{caf_foa_len}}{s_axi_cap_rvalid} };
 
+   reg [{{ out_max_bits - 1 }}:0] out_max_final;
+   reg [{{ length_counter_bits - 1}}:0] index_final;
+   
    generate
       for (ithFreq = 0; ithFreq < {{ caf_foa_len }}; ithFreq = ithFreq + 1) begin: caf_freq
 
@@ -116,10 +121,19 @@ module caf(input clk,
          assign freq_shift_xq[ithFreq] = cap_q;
          assign m_axis_freq_tready[ithFreq] = s_axis_x_corr_tready[ithFreq];
 
+         initial begin
+            out_max_buff[ithFreq] = 'd0;
+            x_corr_index_buff[ithFreq] = 'd0;
+         end
+
          always @(posedge clk) begin
             m_axis_x_corr_tvalid[ithFreq] <= s_axis_freq_tvalid[ithFreq] & s_axi_ref_rvalid;
             x_corr_yi[ithFreq] <= i_freq[ithFreq];
             x_corr_yq[ithFreq] <= q_freq[ithFreq];
+            if (&s_axis_x_corr_tvalid) begin
+               out_max_buff[ithFreq] <= out_max[ithFreq];
+               x_corr_index_buff[ithFreq] <= x_corr_index[ithFreq];
+            end
          end
 
          {{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
@@ -175,6 +189,7 @@ module caf(input clk,
           IDLE:
             begin
                s_axis_tready <= 1'b1;
+               s_axis_tvalid <= 1'b0;
                if (m_axis_tvalid) begin
                   state <= CAPTURE;
                   m_axi_cap_wvalid <= 1'b1;
@@ -242,9 +257,32 @@ module caf(input clk,
                if (s_axis_x_corr_tvalid) begin
                   state <= FIND_MAX;
                   m_axis_x_corr_tready <= 1'b0;
+                  out_max_final <= 'd0;
+                  index_final <= 'd0;
+                  freq_assign <= 'd0;
+                  freq_final <= 'd0;
                end
             end // case: CORRELATE
+          FIND_MAX:
+            begin
+               $display("freq_assign: %d, s_axis_tvalid: %b, m_axis_tready: %b", freq_assign, s_axis_tvalid, m_axis_tready);
+               
+               if (freq_assign < {{ caf_foa_len }}) begin
+                  freq_assign <= freq_assign + 1'b1;
+                  if (out_max_buff[freq_assign] > out_max_final) begin
+                     out_max_final <= out_max_buff[freq_assign];
+                     index_final <= x_corr_index[freq_assign];
+                     freq_final <= freq_assign;
+                  end
+               end else begin
+                  s_axis_tvalid <= 1'b1;
+                  s_axis_tdata <= {index_final, freq_final};
+               end // else: !if(freq_assign < {{ caf_foa_len }})
+               if (m_axis_tready && freq_assign >= {{ caf_foa_len }}) begin
+                  state <= IDLE;
+               end
+            end
         endcase // case (state)
-     end
+     end // always @ (posedge clk)
 
 endmodule // caf
