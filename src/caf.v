@@ -14,8 +14,10 @@ module caf(input clk,
       s_axis_tdata  = 'd0;
    end
 
-   reg                  m_axi_ref_rready;
-   reg                  m_axi_ref_rvalid;
+   reg [{{ ref_index_bits }}:0] ref_iter;
+   reg                          ref_count_trigger;
+   wire                         m_axi_ref_rready;
+   reg                          m_axi_ref_rvalid;
    reg [{{ ref_index_bits - 1}}:0] m_axi_ref_raddr;
    wire                            s_axi_ref_rready;
    wire [{{ ref_i_bits - 1 }}:0]   ref_i;
@@ -23,7 +25,6 @@ module caf(input clk,
    wire                            s_axi_ref_rvalid;
 
    initial begin
-      m_axi_ref_rready = 1'b0;
       m_axi_ref_rvalid = 1'b0;
       m_axi_ref_raddr = 'd0;
       m_axi_ref_raddr = 'd0;
@@ -95,22 +96,31 @@ module caf(input clk,
    wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tvalid;
    wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tready;
    wire [{{ out_max_bits - 1 }}:0] out_max;
+   reg [{{ cap_i_bits - 1 }}:0]    x_corr_yi [{{ caf_foa_len - 1 }}:0];
+   reg [{{ cap_q_bits - 1 }}:0]    x_corr_yq [{{ caf_foa_len - 1 }}:0];
    wire [{{ length_counter_bits - 1 }}:0] x_corr_index [{{ caf_foa_len - 1 }}:0];
    reg                                    m_axis_x_corr_tready;
-   wire [{{ caf_foa_len - 1 }}:0]         m_axis_x_corr_tvalid;
+   reg [{{ caf_foa_len - 1 }}:0]          m_axis_x_corr_tvalid;
 
    initial begin
       m_axis_x_corr_tready = 1'b0;
    end
 
+   assign m_axi_ref_rready = s_axis_x_corr_tready;
+   assign m_axis_freq_tvalid = { {{caf_foa_len}}{s_axi_cap_rvalid} };
+
    generate
       for (ithFreq = 0; ithFreq < {{ caf_foa_len }}; ithFreq = ithFreq + 1) begin: caf_freq
 
-         assign m_axis_freq_tvalid[ithFreq] = s_axi_cap_rvalid;
          assign freq_shift_xi[ithFreq] = cap_i;
          assign freq_shift_xq[ithFreq] = cap_q;
-         assign m_axis_x_corr_tvalid[ithFreq] = s_axis_freq_tvalid[ithFreq];
          assign m_axis_freq_tready[ithFreq] = s_axis_x_corr_tready[ithFreq];
+
+         always @(posedge clk) begin
+            m_axis_x_corr_tvalid[ithFreq] <= s_axis_freq_tvalid[ithFreq] & s_axi_ref_rvalid;
+            x_corr_yi[ithFreq] <= i_freq[ithFreq] << 1;
+            x_corr_yq[ithFreq] <= q_freq[ithFreq] << 1;
+         end
 
          {{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
                                  .i_bits({{ freq_shift_i_bits }}),
@@ -139,8 +149,8 @@ module caf(input clk,
                                 .s_axis_tready(s_axis_x_corr_tready[ithFreq]),
                                 .xi(ref_i),
                                 .xq(ref_q),
-                                .yi(i_freq[ithFreq]),
-                                .yq(q_freq[ithFreq]),
+                                .yi(x_corr_yi[ithFreq]),
+                                .yq(x_corr_yq[ithFreq]),
                                 .m_axis_tready(m_axis_x_corr_tready),
                                 .m_axis_tvalid(m_axis_x_corr_tvalid[ithFreq]),
                                 .out_max(out_max[ithFreq]),
@@ -191,13 +201,33 @@ module caf(input clk,
                m_axi_cap_raddr <= 'd0;
                m_axi_ref_raddr <= 'd0;
                m_axi_cap_rvalid <= 1'b1;
+               m_axi_ref_rvalid <= 1'b1;
                m_axis_x_corr_tready <= 1'b1;
+               ref_iter <= 'd0;
+               ref_count_trigger <= 1'b0;
             end // if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
             else begin
                m_axi_cap_wvalid <= 1'b0;
             end // else: !if(m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
           CORRELATE:
             begin
+               // ref logic
+               if (s_axis_freq_tvalid) begin
+                  ref_count_trigger <= 1'b1;
+               end
+               if (m_axi_ref_raddr < {{ ref_buffer_length - 1 }} && ref_iter <= {{ ref_buffer_length}}) begin
+                  if (s_axis_freq_tvalid || ref_count_trigger) begin
+                     m_axi_ref_raddr <= m_axi_ref_raddr + 1'b1;
+                  end
+               end else begin
+                  if (ref_iter == {{ ref_buffer_length }}) begin
+                     m_axi_ref_rvalid <= 1'b0;
+                     ref_count_trigger <= 1'b0;
+                  end
+                  ref_iter <= ref_iter + 1'b1;
+                  m_axi_ref_raddr <= 'd0;
+               end
+               // cap logic
                if(cap_start <= {{ ref_buffer_length }}) begin
                   if (cap_iter < {{ ref_buffer_length - 1 }}) begin
                      m_axi_cap_rvalid <= 1'b1;
@@ -212,9 +242,12 @@ module caf(input clk,
                end
                else begin
                   // Some logic to transition to FIND_MAX
-                  state <= FIND_MAX;
+                  if (s_axis_x_corr_tvalid) begin
+                     state <= FIND_MAX;
+                     m_axis_x_corr_tready <= 1'b0;
+                  end
                   m_axi_cap_rvalid <= 1'b0;
-                  m_axis_x_corr_tready <= 1'b0;
+                  m_axi_ref_rvalid <= 1'b0;
                end // else: !if(cap_start <= {{ ref_buffer_length }})
             end // case: CORRELATE
         endcase // case (state)
