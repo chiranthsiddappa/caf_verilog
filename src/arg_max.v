@@ -22,8 +22,10 @@ module argmax #(parameter buffer_length = 10,
    reg [q_bits + q_bits - 2:0]      q_square;
    reg [out_max_bits - 1:0]         argsum;
    reg [1:0]                        pipeline;
-
+   reg [out_max_bits - 1:0]         out_max_buff;
+   
    initial begin
+      out_max_buff = 'd0;
       index = 'd0;
       s_axis_tready = 1'b1;
       icounter = 'd0;
@@ -47,10 +49,10 @@ module argmax #(parameter buffer_length = 10,
             icounter <= icounter + 1'b1;
          end
       end
-      else if (m_axis_tready && s_axis_tvalid) begin
+      else if (icounter >= buffer_length && m_axis_tready) begin
          icounter <= 'd0;
       end
-      else if (m_axis_tready) begin
+      else if (!s_axis_tvalid) begin
          icounter <= icounter + 1'b1;
       end
    end // always @ (posedge clk)
@@ -69,16 +71,20 @@ module argmax #(parameter buffer_length = 10,
       argsum <= (i_square >> i_bits-1) + (q_square >> q_bits-1);
    end
 
-   always @(argsum) begin
-      if (argsum > out_max) begin
-         out_max <= argsum;
+   always @(icounter or argsum) begin
+      if (icounter == 'd0) begin
+         out_max_buff <= 'd0;
+      end
+      else if (argsum > out_max_buff) begin
+         out_max_buff <= argsum;
          index <= icounter - 1'b1;
       end
    end
 
    always @(posedge clk) begin
-      if ((icounter == buffer_length)) begin
+      if (icounter == buffer_length) begin
          s_axis_tvalid <= 1'b1;
+         out_max <= out_max_buff;
       end else begin
          s_axis_tvalid <= 1'b0;
       end
