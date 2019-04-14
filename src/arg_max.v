@@ -21,7 +21,6 @@ module argmax #(parameter buffer_length = 10,
    reg [i_bits + i_bits - 2:0]      i_square;
    reg [q_bits + q_bits - 2:0]      q_square;
    reg [out_max_bits - 1:0]         argsum;
-   reg [1:0]                        pipeline;
    reg [out_max_bits - 1:0]         out_max_buff;
    
    initial begin
@@ -31,7 +30,6 @@ module argmax #(parameter buffer_length = 10,
       icounter = 'd0;
       out_max = 'd0;
       s_axis_tvalid = 1'b0;
-      pipeline = 2'b0;
       argsum = 'd0;
    end
 
