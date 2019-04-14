@@ -204,7 +204,6 @@ module caf(input clk,
                m_axi_ref_rvalid <= 1'b1;
                m_axis_x_corr_tready <= 1'b1;
                ref_iter <= 'd0;
-               ref_count_trigger <= 1'b0;
             end // if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
             else begin
                m_axi_cap_wvalid <= 1'b0;
@@ -212,16 +211,17 @@ module caf(input clk,
           CORRELATE:
             begin
                // ref logic
-               if (s_axis_freq_tvalid) begin
-                  ref_count_trigger <= 1'b1;
-               end
-               if (m_axi_ref_raddr < {{ ref_buffer_length - 1 }} && ref_iter <= {{ ref_buffer_length}}) begin
-                  if (s_axis_freq_tvalid || ref_count_trigger) begin
-                     m_axi_ref_raddr <= m_axi_ref_raddr + 1'b1;
+               if (ref_iter <= ref_iter <= {{ ref_buffer_length }}) begin
+                  if (m_axi_ref_raddr < {{ ref_buffer_length - 1 }}) begin
+                     if (s_axis_freq_tvalid) begin
+                        m_axi_ref_raddr <= m_axi_ref_raddr + &s_axis_freq_tvalid;
+                     end
+                  end else begin
+                     ref_iter <= ref_iter + &s_axis_freq_tvalid;
+                     m_axi_ref_raddr <= 'd0;
                   end
                end else begin
-                  ref_iter <= ref_iter + 1'b1;
-                  m_axi_ref_raddr <= 'd0;
+                  m_axi_ref_rvalid <= 1'b0;
                end
                // cap logic
                if(cap_start <= {{ ref_buffer_length }}) begin
@@ -237,14 +237,12 @@ module caf(input clk,
                   end
                end
                else begin
-                  // Some logic to transition to FIND_MAX
-                  if (s_axis_x_corr_tvalid) begin
-                     state <= FIND_MAX;
-                     m_axis_x_corr_tready <= 1'b0;
-                     m_axi_cap_rvalid <= 1'b0;
-                     m_axi_ref_rvalid <= 1'b0;
-                  end
+                  m_axi_cap_rvalid <= 1'b0;
                end // else: !if(cap_start <= {{ ref_buffer_length }})
+               if (s_axis_x_corr_tvalid) begin
+                  state <= FIND_MAX;
+                  m_axis_x_corr_tready <= 1'b0;
+               end
             end // case: CORRELATE
         endcase // case (state)
      end
