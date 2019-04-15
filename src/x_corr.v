@@ -24,7 +24,6 @@ module x_corr #(parameter xi_bits = 12,
     );
 
    wire                                    s_axis_product_tvalid;
-   wire                                    s_axis_product_tready;
    wire                                    m_axis_x_tvalid;
    wire                                    m_axis_y_tvalid;
    wire                                    m_axis_product_tready;
@@ -37,8 +36,8 @@ module x_corr #(parameter xi_bits = 12,
 
    {% include "dot_prod_pip_inst.v" %}
 
-                            argmax #(.buffer_length(length),
-                                     .index_bits(length_counter_bits),
+                            argmax #(.buffer_length(length + 1),
+                                     .index_bits(length_counter_bits + 1),
                                      .out_max_bits(out_max_bits),
                                      .i_bits(i_bits),
                                      .q_bits(q_bits)) arg_max_xc(.clk(clk),

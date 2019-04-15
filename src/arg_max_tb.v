@@ -10,7 +10,7 @@ module argmax_tb();
    wire                          s_axis_tready;
    reg                           m_axis_tready;
    wire [{{ out_max_bits - 1}}:0]   out_max;
-   wire [{{index_bits - 1}}:0]   index;
+   wire [{{ index_bits }}:0]   index;
    wire                          s_axis_tvalid;
 
    initial begin

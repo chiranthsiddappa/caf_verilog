@@ -21,36 +21,37 @@ module argmax #(parameter buffer_length = 10,
    reg [i_bits + i_bits - 2:0]      i_square;
    reg [q_bits + q_bits - 2:0]      q_square;
    reg [out_max_bits - 1:0]         argsum;
-   reg [1:0]                        pipeline;
-
+   reg [out_max_bits - 1:0]         out_max_buff;
+   
    initial begin
+      out_max_buff = 'd0;
       index = 'd0;
       s_axis_tready = 1'b1;
       icounter = 'd0;
       out_max = 'd0;
       s_axis_tvalid = 1'b0;
-      pipeline = 2'b0;
+      argsum = 'd0;
    end
 
    always @(posedge clk) begin
-      if (icounter < buffer_length) begin
+      if (icounter < buffer_length - 1) begin
          s_axis_tready <= 1'b1;
-      end else begin
+      end else if ((icounter == buffer_length - 1) && m_axis_tvalid) begin
          s_axis_tready <= 1'b0;
       end
    end
 
    always @(posedge clk) begin
-      if (m_axis_tvalid & s_axis_tready) begin
-         if (icounter < buffer_length) begin
+      if (icounter < buffer_length) begin
+         if (m_axis_tvalid && s_axis_tready) begin
             icounter <= icounter + 1'b1;
          end
-      end else if(m_axis_tready) begin
-         if ((icounter > buffer_length - 1) && (icounter <= buffer_length)) begin
-            icounter <= icounter + 1'b1;
-         end else if (icounter == buffer_length + 1)  begin
-            icounter <= 'd0;
-         end
+      end
+      else if (icounter >= buffer_length && m_axis_tready) begin
+         icounter <= 'd0;
+      end
+      else if (!s_axis_tvalid) begin
+         icounter <= icounter + 1'b1;
       end
    end // always @ (posedge clk)
 
@@ -64,28 +65,24 @@ module argmax #(parameter buffer_length = 10,
       end
    end
 
-   always @(posedge clk) begin
-      if ((icounter <= buffer_length + 1'b1) & m_axis_tready) begin
-         argsum <= (i_square >> i_bits-1) + (q_square >> q_bits-1);
+   always @(i_square or q_square) begin
+      argsum <= (i_square >> i_bits-1) + (q_square >> q_bits-1);
+   end
+
+   always @(icounter or argsum) begin
+      if (icounter == 'd0) begin
+         out_max_buff <= 'd0;
+      end
+      else if (argsum > out_max_buff) begin
+         out_max_buff <= argsum;
+         index <= icounter - 1'b1;
       end
    end
 
    always @(posedge clk) begin
-      if (icounter < 'd1) begin
-         out_max <= 'd0;
-         index <= 'd0;
-      end else begin
-         if (argsum > out_max) begin
-            index <= icounter - (pipeline[1] + pipeline[0]);
-            out_max <= argsum;
-         end
-      end
-      pipeline <= (pipeline << 1) | m_axis_tvalid;
-   end // always @ (posedge clk)
-
-   always @(posedge clk) begin
-      if ((icounter == buffer_length + 1)) begin
+      if (icounter == buffer_length) begin
          s_axis_tvalid <= 1'b1;
+         out_max <= out_max_buff;
       end else begin
          s_axis_tvalid <= 1'b0;
       end

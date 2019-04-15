@@ -1,6 +1,7 @@
 include README.md
 include requirements.txt
 include src/arg_max.v
+include src/arg_max_inst.v
 include src/arg_max_tb.v
 include src/capture_buffer.v
 include src/capture_buffer_inst.v

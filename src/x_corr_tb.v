@@ -11,14 +11,16 @@ module x_corr_tb();
    reg                       m_axis_tvalid;
    reg                       m_axis_tready;
    wire [{{ out_max_bits - 1 }}:0] out_max;
-   wire [{{ length_counter_bits - 1 }}:0] index;
+   wire [{{ length_counter_bits }}:0] index;
    wire                                   s_axis_tvalid;
    integer                                x_corr_input;
+   integer                                counter;
 
    initial begin
       clk = 1'b0;
       m_axis_tvalid = 1'b0;
       m_axis_tready = 1'b0;
+      counter = 'd0;
       x_corr_input = $fopen("{{ x_corr_input_filename }}", "r");
       if (x_corr_input == `NULL) begin
          $display("x_corr_input was NULL");
@@ -46,6 +48,7 @@ module x_corr_tb();
         if (!$feof(x_corr_input)) begin
            $fscanf(x_corr_input, "%d,%d,%d,%d\n", xi, xq, yi, yq);
            m_axis_tvalid = 1'b1;
+           counter = counter + 1'b1;
         end else begin
            m_axis_tvalid = 1'b0;
         end
