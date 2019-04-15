@@ -25,13 +25,14 @@ module capture_buffer #(parameter buffer_length = 10,
     input                            m_axi_bready
     );
 
-   reg [i_bits + q_bits - 1:0]       buffer [0:buffer_length - 1];
+   (* ram_style = "block" *) reg [i_bits + q_bits - 1:0]       buffer [0:buffer_length - 1];
 
    initial begin
       s_axi_rready = 1'b0;
       s_axi_rvalid = 1'b0;
       s_axi_wready = 1'b0;
       s_axi_bvalid = 1'b0;
+      s_axi_bresp = 1'b0;
    end
 
    always @(posedge clk) begin

@@ -98,11 +98,11 @@ module caf(input clk,
    reg [{{ out_max_bits - 1 }}:0]  out_max_buff [{{ caf_foa_len - 1 }}:0];
    reg [{{ cap_i_bits - 1 }}:0]    x_corr_yi [{{ caf_foa_len - 1 }}:0];
    reg [{{ cap_q_bits - 1 }}:0]    x_corr_yq [{{ caf_foa_len - 1 }}:0];
-   wire [{{ length_counter_bits - 1 }}:0] x_corr_index [{{ caf_foa_len - 1 }}:0];
-   reg [{{ length_counter_bits - 1 }}:0]  x_corr_index_buff [{{ caf_foa_len - 1 }}:0];
-   reg                                    m_axis_x_corr_tready;
-   reg [{{ caf_foa_len - 1 }}:0]          m_axis_x_corr_tvalid;
-   reg [{{ caf_foa_len_bits - 1 }}:0]     freq_final;
+   wire [{{ length_counter_bits }}:0] x_corr_index [{{ caf_foa_len - 1 }}:0];
+   reg [{{ length_counter_bits }}:0]  x_corr_index_buff [{{ caf_foa_len - 1 }}:0];
+   reg                                m_axis_x_corr_tready;
+   reg [{{ caf_foa_len - 1 }}:0]      m_axis_x_corr_tvalid;
+   reg [{{ caf_foa_len_bits - 1 }}:0] freq_final;
 
    initial begin
       m_axis_x_corr_tready = 1'b0;
@@ -188,7 +188,7 @@ module caf(input clk,
             end
           IDLE:
             begin
-               s_axis_tready <= 1'b1;
+               s_axis_tready <= s_axi_cap_wready;
                s_axis_tvalid <= 1'b0;
                if (m_axis_tvalid) begin
                   state <= CAPTURE;

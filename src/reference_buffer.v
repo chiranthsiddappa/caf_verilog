@@ -15,7 +15,7 @@ module reference_buffer #(parameter buffer_length = 10,
     output reg                       s_axi_rvalid
     );
 
-   reg [i_bits + q_bits - 1:0]       buffer [0:buffer_length - 1];
+   (* ram_style = "block" *) reg [i_bits + q_bits - 1:0]       buffer [0:buffer_length - 1];
 
    initial begin
       $readmemb("{{ reference_buffer_filename }}", buffer);
