@@ -3,6 +3,10 @@ include requirements.txt
 include src/arg_max.v
 include src/arg_max_inst.v
 include src/arg_max_tb.v
+include src/caf.v
+include src/caf_inst.v
+include src/caf_state_params.v
+include src/caf_tb.v
 include src/capture_buffer.v
 include src/capture_buffer_inst.v
 include src/capture_buffer_tb.v
