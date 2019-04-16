@@ -13,9 +13,9 @@ include src/capture_buffer_tb.v
 include src/cpx_multiply.v
 include src/cpx_multiply_inst.v
 include src/cpx_multiply_tb.v
-include src/dot_prod.v
+include src/dot_product.v
 include src/dot_prod_inst.v
-include src/dot_prod_tb.v
+include src/dot_product_tb.v
 include src/dot_prod_pip.v
 include src/dot_prod_pip_inst.v
 include src/dot_prod_pip_tb.v
