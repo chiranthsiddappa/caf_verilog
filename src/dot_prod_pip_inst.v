@@ -1,0 +1,22 @@
+dot_prod_pip #(.xi_bits({{ xi_bits }}),
+               .xq_bits({{ xq_bits }}),
+               .yi_bits({{ yi_bits }}),
+               .yq_bits({{ yq_bits }}),
+               .i_bits({{ sum_i_bits }}),
+               .q_bits({{ sum_q_bits }}),
+               .length({{ length }}),
+               .length_counter_bits({{ length_counter_bits }}),
+               .sum_i_bits({{ sum_i_bits }}),
+               .sum_q_bits({{ sum_q_bits }})
+               ) {{ dot_prod_name }} (.clk(clk),
+                                      .m_axis_product_tready(m_axis_product_tready),
+                                      .m_axis_x_tvalid(m_axis_x_tvalid),
+                                      .xi(xi),
+                                      .xq(xq),
+                                      .m_axis_y_tvalid(m_axis_y_tvalid),
+                                      .yi(yi),
+                                      .yq(yq),
+                                      .s_axis_product_tvalid(s_axis_product_tvalid),
+                                      .i(i),
+                                      .q(q)
+                                      );

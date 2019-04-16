@@ -1,0 +1,13 @@
+{{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
+                        .i_bits({{ freq_shift_i_bits }}),
+                        .q_bits({{ freq_shift_q_bits }})) freq_shift_tb(.clk(clk),
+                                                             .m_axis_tvalid(m_axis_tvalid),
+                                                             .freq_step(freq_step),
+                                                             .neg_shift(neg_shift),
+                                                             .xi(xi),
+                                                             .xq(xq),
+                                                             .s_axis_tready(s_axis_tready),
+                                                             .m_axis_tready(m_axis_tready),
+                                                             .i(i),
+                                                             .q(q),
+                                                             .s_axis_tvalid(s_axis_tvalid));

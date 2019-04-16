@@ -70,3 +70,18 @@ def is_complex(data):
     for dd in data:
         cpx_check |= isinstance(dd, complex)
     return cpx_check
+
+
+def bin_num(n, n_bits):
+    """
+    Produce a signed representation of the number n using n_bits.
+
+    :param n: Number n
+    :param n_bits: Number of bits
+    :return:
+    """
+    mask = (2 << n_bits - 1) - 1
+    num = int(n) & mask
+    f_str = '{:0' + str(n_bits) + 'b}'
+    f_res = f_str.format(int(num))
+    return f_res

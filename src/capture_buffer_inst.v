@@ -1,0 +1,20 @@
+capture_buffer #(.buffer_length({{ cap_buffer_length }}),
+                 .index_bits({{ cap_index_bits }}),
+                 .i_bits({{ cap_i_bits }}),
+                 .q_bits({{ cap_q_bits }}))
+                 {{ capture_buffer_name }} (.clk(clk),
+                                            .m_axi_rready(m_axi_cap_rready),
+                                            .m_axi_rvalid(m_axi_cap_rvalid),
+                                            .m_axi_raddr(m_axi_cap_raddr),
+                                            .s_axi_rready(s_axi_cap_rready),
+                                            .i(cap_i),
+                                            .q(cap_q),
+                                            .s_axi_rvalid(s_axi_cap_rvalid),
+                                            .m_axi_waddr(m_axi_cap_waddr),
+                                            .m_axi_wvalid(m_axi_cap_wvalid),
+                                            .s_axi_wready(s_axi_cap_wready),
+                                            .m_axi_wdata(m_axi_cap_wdata),
+                                            .s_axi_bresp(s_axi_cap_bresp),
+                                            .s_axi_bvalid(s_axi_cap_bvalid),
+                                            .m_axi_bready(m_axi_cap_bready)
+                                            );

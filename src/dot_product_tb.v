@@ -12,16 +12,16 @@ module dot_prod_tb();
    reg     m_axis_x_tvalid;
    reg [({{ xi_bits }} * {{ length }}) - 1:0] xi;
    reg [({{ xq_bits }} * {{ length }}) - 1:0] xq;
-   reg                                               m_axis_y_tvalid;
+   reg                                        m_axis_y_tvalid;
    reg [({{ yi_bits }} * {{ length }}) - 1:0] yi;
    reg [({{ yq_bits }} * {{ length }}) - 1:0] yq;
-   wire                                              s_axis_product_tvalid;
-   wire [{{ sum_i_size }} - 1:0]                     i;
-   wire [{{ sum_q_size }} - 1:0]                     q;
-   reg signed [{{ xi_bits - 1}}:0]                   xi_in;
-   reg signed [{{ xq_bits - 1}}:0]                   xq_in;
-   reg signed [{{ yi_bits - 1}}:0]                   yi_in;
-   reg signed [{{ yq_bits - 1}}:0]                   yq_in;
+   wire                                       s_axis_product_tvalid;
+   wire [{{ sum_i_size }} - 1:0]              i;
+   wire [{{ sum_q_size }} - 1:0]              q;
+   reg signed [{{ xi_bits - 1}}:0]            xi_in;
+   reg signed [{{ xq_bits - 1}}:0]            xq_in;
+   reg signed [{{ yi_bits - 1}}:0]            yi_in;
+   reg signed [{{ yq_bits - 1}}:0]            yq_in;
 
    initial begin
       clk = 1'b0;
@@ -41,10 +41,10 @@ module dot_prod_tb();
    end
 
    {% include "dot_prod_inst.v" %}
-   
-   always begin
-      #10 clk = ~clk;
-   end
+
+     always begin
+        #10 clk = ~clk;
+     end
 
    always @(posedge clk) begin
       if (!$feof(dot_prod_input)) begin
