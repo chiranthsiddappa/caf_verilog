@@ -19,6 +19,7 @@ Welcome to CAF Verilog's documentation!
    dot_product
    io_helper
    quantizer
+   sig_gen
 
 
 Indices and tables
