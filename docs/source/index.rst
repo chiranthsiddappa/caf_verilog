@@ -20,6 +20,7 @@ Welcome to CAF Verilog's documentation!
    io_helper
    quantizer
    sig_gen
+   sim_helper
 
 
 Indices and tables
