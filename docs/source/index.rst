@@ -14,6 +14,7 @@ Welcome to CAF Verilog's documentation!
    :maxdepth: 2
    :caption: Modules
 
+   caf
    caf_verilog_base
    cpx_multiply
    dot_product
