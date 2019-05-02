@@ -22,6 +22,7 @@ Welcome to CAF Verilog's documentation!
    quantizer
    sig_gen
    sim_helper
+   xcorr
 
 
 Indices and tables
