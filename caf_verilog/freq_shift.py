@@ -8,7 +8,9 @@ from . io_helper import write_quantized_output
 
 class FreqShift(CafVerilogBase):
 
-    def __init__(self, x, freq_res, fs, n_bits, i_bits=12, q_bits=0, neg_shift=False, output_dir='.'):
+    def __init__(self, x, freq_res, fs, n_bits,
+                 i_bits=12, q_bits=0,
+                 neg_shift=False, output_dir='.'):
         self.freq_res = freq_res
         self.fs = fs
         self.i_bits = i_bits

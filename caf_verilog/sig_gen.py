@@ -12,7 +12,8 @@ sig_gen_module_path = os.path.join(filedir, '..', 'src', 'sig_gen.v')
 
 class SigGen(CafVerilogBase):
 
-    def __init__(self, freq_res, fs, n_bits, output_dir='.'):
+    def __init__(self, freq_res, fs, n_bits,
+                 output_dir='.'):
         self.f = freq_res
         self.fs = fs
         self.n_bits = n_bits
