@@ -14,6 +14,7 @@ Welcome to CAF Verilog's documentation!
    :maxdepth: 2
    :caption: Modules
 
+   caf
    caf_verilog_base
    cpx_multiply
    dot_product
@@ -21,6 +22,7 @@ Welcome to CAF Verilog's documentation!
    quantizer
    sig_gen
    sim_helper
+   xcorr
 
 
 Indices and tables
