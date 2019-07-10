@@ -32,6 +32,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
    reg signed [sum_q_bits - 1:0]        sum_q;
    reg [length_counter_bits:0]          length_counter;
    wire                                 s_axis_cpx_tvalid;
+   wire                                 s_axis_cpx_tready;
 
    initial begin
       s_axis_product_tvalid = 1'b0;
@@ -54,6 +55,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
                                                                    .xq(xq),
                                                                    .yi(yi),
                                                                    .yq(yq),
+                                                                   .s_axis_tready(s_axis_cpx_tready),
                                                                    .i(mult_out_i),
                                                                    .q(mult_out_q),
                                                                    .s_axis_tvalid(s_axis_cpx_tvalid));
