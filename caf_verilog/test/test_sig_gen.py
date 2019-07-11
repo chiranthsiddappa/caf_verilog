@@ -28,10 +28,6 @@ class TestSigGen(TestCase):
         self.assertEqual(inc, test_inc)
 
     def test_sig_gen_gen_tb(self):
-        """
-        Test that the files are written out
-        :return:
-        """
         tmpdir = mkdtemp()
         sig_gen = sg.SigGen(1200, 625e3, 8, output_dir=tmpdir)
         sig_gen.gen_tb()

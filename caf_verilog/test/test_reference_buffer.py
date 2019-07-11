@@ -7,10 +7,6 @@ import os
 class TestReferenceBuffer(TestCase):
 
     def test_reference_buffer(self):
-        """
-        Test that the files are written out for instantation and testbench.
-        :return:
-        """
         tmpdir = mkdtemp()
         x = [ii for ii in range(0, 10)]
         rb = ref_buff.ReferenceBuffer(x, output_dir=tmpdir)

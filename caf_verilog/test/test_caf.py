@@ -8,10 +8,6 @@ from numpy import arange
 class TestCAF(TestCase):
 
     def test_caf_tb_length(self):
-        """
-        Test that the files are all written out.
-        :return:
-        """
         tmpdir = mkdtemp()
         x = [ii for ii in range(0, 10)]
         y = [ii for ii in range(0, 10)]
