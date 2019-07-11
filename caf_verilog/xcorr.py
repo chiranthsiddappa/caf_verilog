@@ -63,10 +63,8 @@ class XCorr(CafVerilogBase):
     def template_dict(self, inst_name=None):
         t_dict = self.submodules['dot_prod'].template_dict('dp_x_corr')
         am_dict = self.submodules['arg_max'].template_dict()
-        t_dict['out_max_bits'] = am_dict['out_max_bits']
+        t_dict = {**t_dict, **am_dict}
         lcb = 'length_counter_bits'
-        if not lcb in t_dict:
-            t_dict[lcb] = am_dict['index_bits']
         t_dict['x_corr_inst_name'] = inst_name if inst_name else '%s_tb' % self.module_name()
         t_dict['x_corr_input_filename'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         return t_dict
