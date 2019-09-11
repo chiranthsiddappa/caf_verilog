@@ -22,8 +22,14 @@ module argmax #(parameter buffer_length = 10,
    reg [q_bits + q_bits - 2:0]      q_square;
    reg [out_max_bits - 1:0]         argsum;
    reg [out_max_bits - 1:0]         out_max_buff;
+   reg [2:0]                        state;
+   parameter INIT = 3'b000;
+   parameter IDLE = 3'b001;
+   parameter COUNTING = 3'b010;
+   parameter VALID = 3'b100;
    
    initial begin
+      state = INIT;
       out_max_buff = 'd0;
       index = 'd0;
       s_axis_tready = 1'b1;
@@ -86,5 +92,27 @@ module argmax #(parameter buffer_length = 10,
       end else begin
          s_axis_tvalid <= 1'b0;
       end
+   end
+
+   always @(posedge clk) begin
+      case (state)
+        INIT: begin
+           icounter <= 'd0;
+           s_axis_tready <= 1'b0;
+           s_axis_tvalid <= 1'b0;
+           state <= IDLE;
+        end
+        IDLE: begin
+           icounter <= 'd0;
+           s_axis_tready <= 1'b1;
+           s_axis_tvalid <= 1'b0;
+        end
+        COUNTING: begin
+        end
+        VALID: begin
+           out_max_buff <= argsum;
+           s_axis_tvalid <= 1'b1;
+        end
+      endcase // case (state)
    end
 endmodule // argmax
