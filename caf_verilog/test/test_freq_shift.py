@@ -8,10 +8,6 @@ import numpy as np
 class TestFreqShift(TestCase):
 
     def test_freq_shift_gen_tb(self):
-        """
-        Test that the files are written out
-        :return:
-        """
         tmpdir = mkdtemp()
         fs = 625e3
         freq_res = 200

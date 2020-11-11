@@ -1,18 +1,15 @@
-from .. caf_verilog_base import CafVerilogBase
 from unittest import TestCase
 
 
-class TestCafVerilogBase(TestCase):
+class TestCAFBase(TestCase):
 
-    def test_instantiation(self):
-        CafVerilogBase()
+    def test_prepended_keys(self):
+        if self.__class__.__name__ == 'TestCAFBase':
+            return True
+        test_class = self.default_base_case()
+        test_name = test_class.module_name()
+        ttd = test_name.template_dict()
 
-    def test_gen_tb_not_implemented(self):
-        cvb = CafVerilogBase()
-        with self.assertRaisesRegexp(NotImplementedError, 'This class has not implemented a testbench'):
-            cvb.gen_tb()
-
-    def test_template_dict_not_implemented(self):
-        cvb = CafVerilogBase()
-        with self.assertRaisesRegex(NotImplementedError, "This class has not implemented a template dictionary"):
-            cvb.template_dict()
+    def default_base_case(self):
+        raise NotImplementedError("The %s class has not implemented the prepended keys check" %
+                                  type(self).__name__)

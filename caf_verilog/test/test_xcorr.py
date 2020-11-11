@@ -1,4 +1,4 @@
-from .test_base import TestCafVerilogBase
+from unittest import TestCase
 from gps_helper.prn import PRN
 from sk_dsp_comm import sigsys as ss
 from numpy import array
@@ -6,6 +6,7 @@ from ..sim_helper import sim_shift
 from .. import xcorr as xc
 from tempfile import mkdtemp
 import os
+from .test_caf_verilog_base import TestCafVerilogBase
 
 
 class TestXCorr(TestCafVerilogBase):

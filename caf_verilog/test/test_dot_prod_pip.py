@@ -7,10 +7,6 @@ import os
 class TestDotProdPip(TestCase):
 
     def test_dot_prod_pip_tb(self):
-        """
-        Test that the files are written out.
-        :return:
-        """
         tmpdir = mkdtemp()
         x = [ii for ii in range(0, 10)]
         y = [ii for ii in range(0, 10)]

@@ -7,10 +7,6 @@ import os
 class ArgMax(TestCase):
 
     def test_arg_max_tb(self):
-        """
-        Test that the files are written out
-        :return:
-        """
         tmpdir = mkdtemp()
         x = [ii for ii in range(0, 100)]
         arg_max = am.ArgMax(x, output_dir=tmpdir)

@@ -7,10 +7,6 @@ import os
 class TestCaptureBuffer(TestCase):
 
     def test_capture_buffer(self):
-        """
-        Test that the files are written out for instantiation and testbench.
-        :return:
-        """
         tmpdir = mkdtemp()
         cb = capt_buff.CaptureBuffer(100, output_dir=tmpdir)
         cb.gen_tb()
@@ -20,10 +16,6 @@ class TestCaptureBuffer(TestCase):
             self.assertIn(file, files)
 
     def test_capture_buffer_values_file(self):
-        """
-        Test the file length of capture buffer values file.
-        :return:
-        """
         tmpdir = mkdtemp()
         cb = capt_buff.CaptureBuffer(100, output_dir=tmpdir)
         with open(os.path.join(tmpdir, 'capture_buffer_values.txt')) as cbv:

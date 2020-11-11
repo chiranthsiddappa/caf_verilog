@@ -15,13 +15,13 @@ def quantize(data, n_bits, n_bits_imag=0):
     n_bits_1 = n_bits + 1
     if not cpx_check:
         x_max = get_max(data)
-        q_data = simpleQuant(data, n_bits_1, x_max, 'sat')
+        q_data = simpleQuant(np.array(data), n_bits_1, x_max, 'sat')
         q_data = scale(q_data, n_bits, x_max)
         return q_data
     else:
         cpx_data = np.array(data)
-        cpx_data_real = cpx_data.real
-        cpx_data_imag = cpx_data.imag
+        cpx_data_real = np.array(cpx_data.real)
+        cpx_data_imag = np.array(cpx_data.imag)
         x_max_real = get_max(cpx_data_real)
         x_max_imag = get_max(cpx_data_imag)
         q_data_real = simpleQuant(cpx_data_real, n_bits_1, x_max_real, 'sat')

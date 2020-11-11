@@ -34,10 +34,6 @@ class TestCpxMultiply(TestCase):
         npt.assert_almost_equal(cpx_multiply.y_quant.imag, self.test_x)
 
     def test_cpx_multiply_gen_tb(self):
-        """
-        Only tests that the files are written out.
-        :return:
-        """
         tmpdir = mkdtemp()
         cpx_multiply = CpxMultiply(self.x, self.x, output_dir=tmpdir)
         cpx_multiply.gen_tb()

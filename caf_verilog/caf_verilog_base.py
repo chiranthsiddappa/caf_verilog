@@ -8,6 +8,11 @@ class CafVerilogBase:
     def gen_tb(self):
         raise NotImplementedError("This class has not implemented a testbench")
 
+    def prepend_dict_w_name(self, t_dict):
+        mn = self.module_name() + '_'
+        pdn = {mn + k: v for k, v in t_dict.items()}
+        return pdn
+
     def template_dict(self):
         raise NotImplementedError("This class has not implemented a template dictionary")
 

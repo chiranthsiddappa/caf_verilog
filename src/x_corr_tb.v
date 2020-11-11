@@ -10,11 +10,11 @@ module x_corr_tb();
    reg [{{ yq_bits - 1 }}:0] yq;
    reg                       m_axis_tvalid;
    reg                       m_axis_tready;
-   wire [{{ out_max_bits - 1 }}:0] out_max;
-   wire [{{ length_counter_bits }}:0] index;
-   wire                                   s_axis_tvalid;
-   integer                                x_corr_input;
-   integer                                counter;
+   wire [{{ arg_max_out_max_bits - 1 }}:0] out_max;
+   wire [{{ length_counter_bits }}:0]      index;
+   wire                                    s_axis_tvalid;
+   integer                                 x_corr_input;
+   integer                                 counter;
 
    initial begin
       clk = 1'b0;

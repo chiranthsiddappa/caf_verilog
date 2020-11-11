@@ -32,7 +32,7 @@ module caf(input clk,
    {% include "reference_buffer_inst.v" %}
 
      wire m_axi_cap_rready;
-   reg   m_axi_cap_rvalid;
+   reg    m_axi_cap_rvalid;
    reg [{{ cap_index_bits - 1}}:0] m_axi_cap_raddr;
    wire                            s_axi_cap_rready;
    wire [{{ cap_i_bits - 1 }}:0]   cap_i;
@@ -94,15 +94,15 @@ module caf(input clk,
 
    wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tvalid;
    wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tready;
-   wire [{{ out_max_bits - 1 }}:0] out_max [{{ caf_foa_len - 1 }}:0];
-   reg [{{ out_max_bits - 1 }}:0]  out_max_buff [{{ caf_foa_len - 1 }}:0];
-   reg [{{ cap_i_bits - 1 }}:0]    x_corr_yi [{{ caf_foa_len - 1 }}:0];
-   reg [{{ cap_q_bits - 1 }}:0]    x_corr_yq [{{ caf_foa_len - 1 }}:0];
-   wire [{{ length_counter_bits }}:0] x_corr_index [{{ caf_foa_len - 1 }}:0];
-   reg [{{ length_counter_bits }}:0]  x_corr_index_buff [{{ caf_foa_len - 1 }}:0];
-   reg                                m_axis_x_corr_tready;
-   reg [{{ caf_foa_len - 1 }}:0]      m_axis_x_corr_tvalid;
-   reg [{{ caf_foa_len_bits - 1 }}:0] freq_final;
+   wire [{{ arg_max_out_max_bits - 1 }}:0] out_max [{{ caf_foa_len - 1 }}:0];
+   reg [{{ arg_max_out_max_bits - 1 }}:0]  out_max_buff [{{ caf_foa_len - 1 }}:0];
+   reg [{{ cap_i_bits - 1 }}:0]            x_corr_yi [{{ caf_foa_len - 1 }}:0];
+   reg [{{ cap_q_bits - 1 }}:0]            x_corr_yq [{{ caf_foa_len - 1 }}:0];
+   wire [{{ length_counter_bits }}:0]      x_corr_index [{{ caf_foa_len - 1 }}:0];
+   reg [{{ length_counter_bits }}:0]       x_corr_index_buff [{{ caf_foa_len - 1 }}:0];
+   reg                                     m_axis_x_corr_tready;
+   reg [{{ caf_foa_len - 1 }}:0]           m_axis_x_corr_tvalid;
+   reg [{{ caf_foa_len_bits - 1 }}:0]      freq_final;
 
    initial begin
       m_axis_x_corr_tready = 1'b0;
@@ -111,7 +111,7 @@ module caf(input clk,
    assign m_axi_ref_rready = s_axis_x_corr_tready;
    assign m_axis_freq_tvalid = { {{caf_foa_len}}{s_axi_cap_rvalid} };
 
-   reg [{{ out_max_bits - 1 }}:0] out_max_final;
+   reg [{{ arg_max_out_max_bits - 1 }}:0] out_max_final;
    reg [{{ length_counter_bits - 1}}:0] index_final;
    
    generate
@@ -172,117 +172,117 @@ module caf(input clk,
                                 .s_axis_tvalid(s_axis_x_corr_tvalid[ithFreq])
                                 );
       end // block: caf_freq_gen
-      endgenerate
+   endgenerate
 
-     always @(posedge clk) begin
-        case(state)
-          INIT:
-            if (freq_assign < {{ caf_foa_len }}) begin
-               freq_step[freq_assign] <= freq_step_lut[freq_assign];
-               neg_shift[freq_assign] <= neg_shift_lut[freq_assign];
-               freq_assign <= freq_assign + 1'b1;
-            end
-            else begin
-               freq_assign <= 'd0;
-               state <= IDLE;
-            end
-          IDLE:
-            begin
-               s_axis_tready <= s_axi_cap_wready;
-               s_axis_tvalid <= 1'b0;
-               if (m_axis_tvalid) begin
-                  state <= CAPTURE;
-                  m_axi_cap_wvalid <= 1'b1;
-                  m_axi_cap_waddr <= 'd0;
-                  m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
-               end
-               else begin
-                  state <= state;
-               end
-            end
-          CAPTURE:
-            if (m_axis_tvalid && m_axi_cap_waddr < {{ cap_buffer_length - 1 }}) begin
-               m_axi_cap_waddr <= m_axi_cap_waddr + 1'b1;
-               m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
-               m_axi_cap_wvalid <= 1'b1;
-            end
-            else if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }}) begin
-               s_axis_tready <= 1'b0;
-               m_axi_cap_wvalid <= 1'b0;
-               m_axi_cap_waddr <= 'd0;
-               state <= CORRELATE;
-               cap_start <= 'd0;
-               cap_iter <= 'd0;
-               m_axi_cap_raddr <= 'd0;
-               m_axi_ref_raddr <= 'd0;
-               m_axi_cap_rvalid <= 1'b1;
-               m_axi_ref_rvalid <= 1'b1;
-               m_axis_x_corr_tready <= 1'b1;
-               ref_iter <= 'd0;
-            end // if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
-            else begin
-               m_axi_cap_wvalid <= 1'b0;
-            end // else: !if(m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
-          CORRELATE:
-            begin
-               // ref logic
-               if (ref_iter <= ref_iter <= {{ ref_buffer_length }}) begin
-                  if (m_axi_ref_raddr < {{ ref_buffer_length - 1 }}) begin
-                     if (s_axis_freq_tvalid) begin
-                        m_axi_ref_raddr <= m_axi_ref_raddr + &s_axis_freq_tvalid;
-                     end
-                  end else begin
-                     ref_iter <= ref_iter + &s_axis_freq_tvalid;
-                     m_axi_ref_raddr <= 'd0;
-                  end
-               end else begin
-                  m_axi_ref_rvalid <= 1'b0;
-               end
-               // cap logic
-               if(cap_start <= {{ ref_buffer_length }}) begin
-                  if (cap_iter < {{ ref_buffer_length - 1 }}) begin
-                     m_axi_cap_rvalid <= 1'b1;
-                     m_axi_cap_raddr <= m_axi_cap_raddr + s_axi_cap_rvalid;
-                     cap_iter <= cap_iter + s_axi_cap_rvalid;
-                  end
-                  else begin
-                     cap_iter <= 'd0;
-                     cap_start <= cap_start + 1'b1;
-                     m_axi_cap_raddr <= cap_start + 1'b1;
-                  end
-               end
-               else begin
-                  m_axi_cap_rvalid <= 1'b0;
-               end // else: !if(cap_start <= {{ ref_buffer_length }})
-               if (s_axis_x_corr_tvalid) begin
-                  state <= FIND_MAX;
-                  m_axis_x_corr_tready <= 1'b0;
-                  out_max_final <= 'd0;
-                  index_final <= 'd0;
-                  freq_assign <= 'd0;
-                  freq_final <= 'd0;
-               end
-            end // case: CORRELATE
-          FIND_MAX:
-            begin
-               $display("freq_assign: %d, s_axis_tvalid: %b, m_axis_tready: %b", freq_assign, s_axis_tvalid, m_axis_tready);
-               
-               if (freq_assign < {{ caf_foa_len }}) begin
-                  freq_assign <= freq_assign + 1'b1;
-                  if (out_max_buff[freq_assign] > out_max_final) begin
-                     out_max_final <= out_max_buff[freq_assign];
-                     index_final <= x_corr_index[freq_assign];
-                     freq_final <= freq_assign;
-                  end
-               end else begin
-                  s_axis_tvalid <= 1'b1;
-                  s_axis_tdata <= {index_final, freq_final};
-               end // else: !if(freq_assign < {{ caf_foa_len }})
-               if (m_axis_tready && freq_assign >= {{ caf_foa_len }}) begin
-                  state <= IDLE;
-               end
-            end
-        endcase // case (state)
-     end // always @ (posedge clk)
+   always @(posedge clk) begin
+      case(state)
+        INIT:
+          if (freq_assign < {{ caf_foa_len }}) begin
+             freq_step[freq_assign] <= freq_step_lut[freq_assign];
+             neg_shift[freq_assign] <= neg_shift_lut[freq_assign];
+             freq_assign <= freq_assign + 1'b1;
+          end
+          else begin
+             freq_assign <= 'd0;
+             state <= IDLE;
+          end
+        IDLE:
+          begin
+             s_axis_tready <= s_axi_cap_wready;
+             s_axis_tvalid <= 1'b0;
+             if (m_axis_tvalid) begin
+                state <= CAPTURE;
+                m_axi_cap_wvalid <= 1'b1;
+                m_axi_cap_waddr <= 'd0;
+                m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
+             end
+             else begin
+                state <= state;
+             end
+          end
+        CAPTURE:
+          if (m_axis_tvalid && m_axi_cap_waddr < {{ cap_buffer_length - 1 }}) begin
+             m_axi_cap_waddr <= m_axi_cap_waddr + 1'b1;
+             m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
+             m_axi_cap_wvalid <= 1'b1;
+          end
+          else if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }}) begin
+             s_axis_tready <= 1'b0;
+             m_axi_cap_wvalid <= 1'b0;
+             m_axi_cap_waddr <= 'd0;
+             state <= CORRELATE;
+             cap_start <= 'd0;
+             cap_iter <= 'd0;
+             m_axi_cap_raddr <= 'd0;
+             m_axi_ref_raddr <= 'd0;
+             m_axi_cap_rvalid <= 1'b1;
+             m_axi_ref_rvalid <= 1'b1;
+             m_axis_x_corr_tready <= 1'b1;
+             ref_iter <= 'd0;
+          end // if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
+          else begin
+             m_axi_cap_wvalid <= 1'b0;
+          end // else: !if(m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
+        CORRELATE:
+          begin
+             // ref logic
+             if (ref_iter <= ref_iter <= {{ ref_buffer_length }}) begin
+                if (m_axi_ref_raddr < {{ ref_buffer_length - 1 }}) begin
+                   if (s_axis_freq_tvalid) begin
+                      m_axi_ref_raddr <= m_axi_ref_raddr + &s_axis_freq_tvalid;
+                   end
+                end else begin
+                   ref_iter <= ref_iter + &s_axis_freq_tvalid;
+                   m_axi_ref_raddr <= 'd0;
+                end
+             end else begin
+                m_axi_ref_rvalid <= 1'b0;
+             end
+             // cap logic
+             if(cap_start <= {{ ref_buffer_length }}) begin
+                if (cap_iter < {{ ref_buffer_length - 1 }}) begin
+                   m_axi_cap_rvalid <= 1'b1;
+                   m_axi_cap_raddr <= m_axi_cap_raddr + s_axi_cap_rvalid;
+                   cap_iter <= cap_iter + s_axi_cap_rvalid;
+                end
+                else begin
+                   cap_iter <= 'd0;
+                   cap_start <= cap_start + 1'b1;
+                   m_axi_cap_raddr <= cap_start + 1'b1;
+                end
+             end
+             else begin
+                m_axi_cap_rvalid <= 1'b0;
+             end // else: !if(cap_start <= {{ ref_buffer_length }})
+             if (s_axis_x_corr_tvalid) begin
+                state <= FIND_MAX;
+                m_axis_x_corr_tready <= 1'b0;
+                out_max_final <= 'd0;
+                index_final <= 'd0;
+                freq_assign <= 'd0;
+                freq_final <= 'd0;
+             end
+          end // case: CORRELATE
+        FIND_MAX:
+          begin
+             $display("freq_assign: %d, s_axis_tvalid: %b, m_axis_tready: %b", freq_assign, s_axis_tvalid, m_axis_tready);
+             
+             if (freq_assign < {{ caf_foa_len }}) begin
+                freq_assign <= freq_assign + 1'b1;
+                if (out_max_buff[freq_assign] > out_max_final) begin
+                   out_max_final <= out_max_buff[freq_assign];
+                   index_final <= x_corr_index[freq_assign];
+                   freq_final <= freq_assign;
+                end
+             end else begin
+                s_axis_tvalid <= 1'b1;
+                s_axis_tdata <= {index_final, freq_final};
+             end // else: !if(freq_assign < {{ caf_foa_len }})
+             if (m_axis_tready && freq_assign >= {{ caf_foa_len }}) begin
+                state <= IDLE;
+             end
+          end
+      endcase // case (state)
+   end // always @ (posedge clk)
 
 endmodule // caf
