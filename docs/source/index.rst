@@ -24,6 +24,10 @@ Welcome to CAF Verilog's documentation!
    sim_helper
    xcorr
 
+.. toctree::
+   :titlesonly:
+
+   nb_examples
 
 Indices and tables
 ==================
