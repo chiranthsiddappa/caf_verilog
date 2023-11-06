@@ -1,7 +1,7 @@
 FROM python:3.9.18
 
-COPY --from=verilator/verilator:4.204 /usr/local/bin /usr/local/bin
-COPY --from=verilator/verilator:4.204 /usr/local/share/verilator /usr/local/share/verilator
+COPY --from=verilator/verilator:v5.016 /usr/local/bin /usr/local/bin
+COPY --from=verilator/verilator:v5.016 /usr/local/share/verilator /usr/local/share/verilator
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive \
