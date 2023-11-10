@@ -9,9 +9,6 @@ RUN apt-get update \
     ccache \
     perl-doc
 
-RUN python3 -m venv venv
-RUN /venv/bin/pip install cocotb==1.8.1
-
 ARG developer
 ARG uid
 ENV developer $developer
@@ -23,4 +20,10 @@ RUN adduser $developer && \
         usermod -u $uid $developer
 
 RUN groupmod $developer -g $gid
+
+USER $developer
+
+RUN python3 -m venv /home/$developer/venv
+RUN /home/$developer/venv/bin/pip install cocotb==1.8.1 pytest
+
 CMD su - $developer
