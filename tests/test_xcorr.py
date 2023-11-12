@@ -13,7 +13,7 @@ class TestXCorr(TestCafVerilogBase):
     def setUp(self):
         prn = PRN(10)
         prn_seq = prn.prn_seq()
-        prn_seq, b = ss.NRZ_bits2(array(prn_seq), 5)
+        prn_seq, b = ss.nrz_bits2(array(prn_seq), 5)
         self.prn_seq = prn_seq
 
     def test_dot_xcorr(self):
