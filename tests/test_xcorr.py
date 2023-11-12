@@ -4,7 +4,7 @@ from sk_dsp_comm import sigsys as ss
 from numpy import array
 from caf_verilog.sim_helper import sim_shift
 from caf_verilog import xcorr as xc
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 import os
 
 
@@ -25,13 +25,13 @@ class TestXCorr(TestCafVerilogBase):
         self.assertAlmostEquals(rr[100 - 10], 200)
 
     def test_x_corr_tb(self):
-        tmpdir = mkdtemp()
         center = 300
         corr_length = 200
         ref, rec = sim_shift(self.prn_seq, center, corr_length, shift=10)
-        xcorr = xc.XCorr(ref, rec, output_dir=tmpdir)
-        xcorr.gen_tb()
-        files = os.listdir(tmpdir)
-        test_files = ['x_corr_tb.v', 'x_corr.v', 'arg_max.v', 'dot_prod_pip.v', 'cpx_multiply.v']
-        for file in test_files:
-            self.assertIn(file, test_files)
+        with TemporaryDirectory() as tmpdir:
+            xcorr = xc.XCorr(ref, rec, output_dir=tmpdir)
+            xcorr.gen_tb()
+            files = os.listdir(tmpdir)
+            test_files = ['x_corr_tb.v', 'x_corr.v', 'arg_max.v', 'dot_prod_pip.v', 'cpx_multiply.v']
+            for file in test_files:
+                self.assertIn(file, test_files)

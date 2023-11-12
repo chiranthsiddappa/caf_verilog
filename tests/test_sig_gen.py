@@ -1,6 +1,6 @@
 from unittest import TestCase
 from caf_verilog import sig_gen as sg
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 import os
 
 
@@ -32,11 +32,11 @@ class TestSigGen(TestCase):
         Test that the files are written out
         :return:
         """
-        tmpdir = mkdtemp()
-        sig_gen = sg.SigGen(1200, 625e3, 8, output_dir=tmpdir)
-        sig_gen.gen_tb()
-        files = os.listdir(tmpdir)
-        test_files = ['sig_gen_tb.v', 'sig_gen_625_10_8.txt', 'sig_gen_625_10_8.v']
-        for file in test_files:
-            self.assertIn(file, files)
+        with TemporaryDirectory() as tmpdir:
+            sig_gen = sg.SigGen(1200, 625e3, 8, output_dir=tmpdir)
+            sig_gen.gen_tb()
+            files = os.listdir(tmpdir)
+            test_files = ['sig_gen_tb.v', 'sig_gen_625_10_8.txt', 'sig_gen_625_10_8.v']
+            for file in test_files:
+                self.assertIn(file, files)
 

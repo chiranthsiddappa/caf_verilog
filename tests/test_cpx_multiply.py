@@ -3,7 +3,7 @@ import numpy.testing as npt
 import numpy as np
 from caf_verilog.cpx_multiply import CpxMultiply
 import os
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 
 
 class TestCpxMultiply(TestCase):
@@ -38,13 +38,13 @@ class TestCpxMultiply(TestCase):
         Only tests that the files are written out.
         :return:
         """
-        tmpdir = mkdtemp()
-        cpx_multiply = CpxMultiply(self.x, self.x, output_dir=tmpdir)
-        cpx_multiply.gen_tb()
-        files = os.listdir(tmpdir)
-        test_files = ['cpx_multiply_tb.v', 'cpx_multiply_input_values.txt', 'cpx_multiply.v']
-        for file in test_files:
-            self.assertIn(file, files)
+        with TemporaryDirectory() as tmpdir:
+            cpx_multiply = CpxMultiply(self.x, self.x, output_dir=tmpdir)
+            cpx_multiply.gen_tb()
+            files = os.listdir(tmpdir)
+            test_files = ['cpx_multiply_tb.v', 'cpx_multiply_input_values.txt', 'cpx_multiply.v']
+            for file in test_files:
+                self.assertIn(file, files)
 
     def test_cpx_multiply_gen_quantized_output(self):
         n = np.arange(0, 10)
