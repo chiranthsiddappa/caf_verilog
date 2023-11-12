@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .. import capture_buffer as capt_buff
+from caf_verilog import capture_buffer as capt_buff
 from tempfile import mkdtemp
 import os
 

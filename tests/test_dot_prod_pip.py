@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .. import dot_prod_pip as dpp
+from caf_verilog import dot_prod_pip as dpp
 from tempfile import mkdtemp
 import os
 

@@ -1,7 +1,7 @@
 from unittest import TestCase
 import numpy.testing as npt
 import numpy as np
-from ..cpx_multiply import CpxMultiply
+from caf_verilog.cpx_multiply import CpxMultiply
 import os
 from tempfile import mkdtemp
 

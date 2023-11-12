@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .. import arg_max as am
+from caf_verilog import arg_max as am
 from tempfile import mkdtemp
 import os
 

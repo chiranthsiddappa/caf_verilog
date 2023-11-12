@@ -2,8 +2,8 @@ from .test_base import TestCafVerilogBase
 from gps_helper.prn import PRN
 from sk_dsp_comm import sigsys as ss
 from numpy import array
-from ..sim_helper import sim_shift
-from .. import xcorr as xc
+from caf_verilog.sim_helper import sim_shift
+from caf_verilog import xcorr as xc
 from tempfile import mkdtemp
 import os
 

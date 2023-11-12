@@ -1,7 +1,7 @@
 from unittest import TestCase
 import numpy.testing as npt
 import numpy as np
-from .. import quantizer
+from caf_verilog import quantizer
 
 
 class TestQuantizer(TestCase):

@@ -1,4 +1,4 @@
-from .. caf_verilog_base import CafVerilogBase
+from caf_verilog.caf_verilog_base import CafVerilogBase
 from unittest import TestCase
 
 

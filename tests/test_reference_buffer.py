@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .. import reference_buffer as ref_buff
+from caf_verilog import reference_buffer as ref_buff
 from tempfile import mkdtemp
 import os
 

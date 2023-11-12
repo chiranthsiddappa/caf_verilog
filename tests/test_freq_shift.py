@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .. import freq_shift
+from caf_verilog import freq_shift
 from tempfile import mkdtemp
 import os
 import numpy as np

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .. import caf
+from caf_verilog import caf
 from tempfile import mkdtemp
 import os
 from numpy import arange

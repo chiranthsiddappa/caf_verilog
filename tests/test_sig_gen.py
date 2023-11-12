@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .. import sig_gen as sg
+from caf_verilog import sig_gen as sg
 from tempfile import mkdtemp
 import os
 
