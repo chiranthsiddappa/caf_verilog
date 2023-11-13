@@ -22,7 +22,7 @@ class TestXCorr(TestCafVerilogBase):
         ref, rec = sim_shift(self.prn_seq, center, corr_length, shift=10)
         rr = xc.dot_xcorr(ref, rec)
         self.assertAlmostEqual(max(rr), 200)
-        self.assertAlmostEquals(rr[100 - 10], 200)
+        self.assertAlmostEqual(rr[100 - 10], 200)
 
     def test_x_corr_tb(self):
         center = 300
