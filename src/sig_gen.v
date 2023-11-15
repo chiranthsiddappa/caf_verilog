@@ -1,7 +1,7 @@
 `timescale 1ns/1ns
 
 module {{ sig_gen_name }} #(parameter phase_bits = 32,
-                 parameter n_bits = 8,
+                 parameter n_bits = 7,
                  parameter lut_length = 255
                  )
    (input clk,
