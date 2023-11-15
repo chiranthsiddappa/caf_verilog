@@ -8,7 +8,10 @@ class CafVerilogBase:
     def gen_tb(self):
         raise NotImplementedError("This class has not implemented a testbench")
 
-    def template_dict(self):
+    def params_dict(self) -> dict:
+        raise NotImplementedError("This class has not implemented a params dictionary")
+
+    def template_dict(self) -> dict:
         raise NotImplementedError("This class has not implemented a template dictionary")
 
     def cpx_input_length_check(self):

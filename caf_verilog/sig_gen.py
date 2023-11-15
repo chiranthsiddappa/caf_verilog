@@ -32,12 +32,16 @@ class SigGen(CafVerilogBase):
             pb += diff
         return pb
 
-    def template_dict(self, inst_name=None):
+    def params_dict(self) -> dict:
         t_dict = {'phase_bits': self.phase_bits, 'n_bits': self.n_bits}
+        t_dict['lut_length'] = 2 ** (self.n_bits + 1) - 1
+        return t_dict
+
+    def template_dict(self, inst_name=None):
+        t_dict = self.params_dict()
         t_dict['lut_filename'] = os.path.abspath(os.path.join(self.output_dir, self.lut_filename))
         t_dict['sig_gen_inst_name'] = inst_name
         t_dict['sig_gen_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
-        t_dict['lut_length'] = 2 ** (self.n_bits + 1) - 1
         t_dict['sig_gen_name'] = self.sig_gen_name
         return t_dict
 
