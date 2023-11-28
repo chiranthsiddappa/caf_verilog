@@ -116,3 +116,6 @@ docs/source/nb_examples/*.v
 docs/source/nb_examples/*_values.txt
 docs/source/nb_examples/*.png
 caf_verilog/test/*.v
+
+# cocotb
+sim_build/
