@@ -24,7 +24,7 @@ USER $developer
 WORKDIR /home/$developer/
 
 COPY requirements.txt requirements.txt
-RUN python3 -m venv venv
+RUN python3 -m venv /home/$developer/venv
 RUN /home/$developer/venv/bin/pip install "cocotb>=1.8,<1.9" "pytest>=7.4,<7.5"
 RUN /home/$developer/venv/bin/pip install -r requirements.txt
 
