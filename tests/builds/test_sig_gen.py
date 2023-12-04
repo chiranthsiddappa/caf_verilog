@@ -3,8 +3,9 @@ from tempfile import TemporaryDirectory
 import os
 import unittest
 import cocotb
-from .sim_helper import sim_get_runner
-from pathlib import Path
+from cocotb.clock import Clock
+from cocotb.triggers import RisingEdge
+from caf_verilog.sim_helper import sim_get_runner
 import glob
 
 class TestSigGen(unittest.TestCase):
@@ -29,6 +30,7 @@ class TestSigGen(unittest.TestCase):
                 hdl_toplevel=hdl_toplevel,
                 always=True,
             )
+
 
 
 if __name__ == '__main__':

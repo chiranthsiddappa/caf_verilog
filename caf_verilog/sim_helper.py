@@ -1,3 +1,19 @@
+from logging import getLogger
+
+__log__ = getLogger()
+
+try:
+    from cocotb.runner import get_runner, Simulator
+except ImportError as ie:
+    __log__.warn("Could not import cocotb")
+import os
+
+__hdl_toplevel_lang__ = os.getenv("HDL_TOPLEVEL_LANG", "verilog")
+__sim__ = os.getenv("SIM", "verilator")
+
+def sim_get_runner() -> Simulator:
+    return get_runner(__sim__)
+
 def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False):
     """
 
@@ -30,3 +46,4 @@ def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False):
     else:
         rec_ret = ref[sim_center - ref_length: sim_center + ref_length]
     return ref_ret, rec_ret
+
