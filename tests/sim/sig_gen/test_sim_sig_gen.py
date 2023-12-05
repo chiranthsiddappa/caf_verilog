@@ -12,25 +12,25 @@ async def gen_signal_via_sim(dut):
     output_file = open('sig_gen_output.txt', mode='+w')
     clock = Clock(dut.clk, 10, units="us")  # Create a 10ns period clock on port clk
 
-    dut.freq_step = int('100000000', 2)
-    dut.m_axis_data_tready = 0
-    dut.m_axis_freq_step_tvalid = 0
+    dut.freq_step.value = int('100000000', 2)
+    dut.m_axis_data_tready.value = 0
+    dut.m_axis_freq_step_tvalid.value = 0
     # Start the clock. Start it low to avoid issues on the first RisingEdge
     cocotb.start_soon(clock.start(start_high=False))
 
-    dut.m_axis_data_tready = 1
-    dut.m_axis_freq_step_tvalid = 1
+    dut.m_axis_data_tready.value = 1
+    dut.m_axis_freq_step_tvalid.value = 1
 
 
     await RisingEdge(dut.clk)
     
     for i in range(0, 512*10):
         await RisingEdge(dut.clk)
-        assert dut.s_axis_data_tvalid == 1
+        assert dut.s_axis_data_tvalid.value == 1
         if i == 0: # Make sure we start at cos 1, sine 0
             assert dut.cosine.value == 127 # 8 bits signed
             assert dut.sine.value == 0
-        output_file.write("%s,%s\n" % (int(dut.cosine.value), int(dut.sine.value)))
+        output_file.write("%d,%d\n" % (int(dut.cosine.value.signed_integer), int(dut.sine.value)))
 
 
 def test_via_cocotb():
