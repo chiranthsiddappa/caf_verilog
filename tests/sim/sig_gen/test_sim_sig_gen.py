@@ -30,7 +30,7 @@ async def gen_signal_via_sim(dut):
         if i == 0: # Make sure we start at cos 1, sine 0
             assert dut.cosine.value == 127 # 8 bits signed
             assert dut.sine.value == 0
-        output_file.write("%d,%d\n" % (int(dut.cosine.value.signed_integer), int(dut.sine.value)))
+        output_file.write("%d,%d\n" % (int(dut.cosine.value.signed_integer), int(dut.sine.value.signed_integer)))
 
 
 def test_via_cocotb():
