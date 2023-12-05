@@ -49,7 +49,7 @@ def test_via_cocotb():
         hdl_toplevel=hdl_toplevel,
         always=True
     )
-    runner.test(hdl_toplevel="%s" % sig_gen.sig_gen_name, test_module="test_sig_gen,")
+    runner.test(hdl_toplevel="%s" % sig_gen.sig_gen_name, test_module="test_sim_sig_gen,")
 
 if __name__ == '__main__':
     test_via_cocotb()
