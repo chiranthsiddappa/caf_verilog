@@ -7,6 +7,9 @@ from caf_verilog.sim_helper import sim_get_runner
 from cocotb.triggers import RisingEdge
 import glob
 import numpy as np
+import pandas as pd
+from sk_dsp_comm.digitalcom import my_psd
+
 
 @cocotb.test()
 async def gen_signal_20e3_via_sim(dut):
@@ -33,7 +36,10 @@ async def gen_signal_20e3_via_sim(dut):
     sin_validate = np.sin(2 * np.pi * (f_out / f_clk) * i_vals)
     cosine_validate_q = quantize(cosine_validate, n_bits)
     sin_validate_q = quantize(sin_validate, n_bits)
-    output_file.write("cosine_out,sine_out,cosine_q,sine_q,cosine_validate,sine_validate\n")
+
+    cosine_generated_values = []
+    sine_generated_values = []
+    output_df = pd.DataFrame()
 
     await RisingEdge(dut.clk)
     
@@ -43,9 +49,25 @@ async def gen_signal_20e3_via_sim(dut):
         if i == 0: # Make sure we start at cos 1, sine 0
             assert dut.cosine.value == 127 # 8 bits signed
             assert dut.sine.value == 0
-        output_file.write("%d,%d,%d,%d,%f,%f\n" % (int(dut.cosine.value.signed_integer), int(dut.sine.value.signed_integer), 
-                                                   cosine_validate_q[i], sin_validate_q[i],
-                                                   cosine_validate[i], sin_validate[i]))
+        cosine_generated_values.append(int(dut.cosine.value.signed_integer))
+        sine_generated_values.append(int(dut.sine.value.signed_integer))
+    
+    output_df['cosine_out'] = cosine_generated_values
+    output_df['sine_out'] = sine_generated_values
+    output_df['cosine_q'] = cosine_validate_q
+    output_df['sine_q'] = sin_validate_q
+    output_df['cosine_validate'] = cosine_validate
+    output_df['cosine_validate'] = sin_validate
+    output_df.to_csv(output_file)
+
+    # Verify Cosine signal location
+    Px_gen, f_gen = my_psd(cosine_generated_values, 2**12, f_clk)
+    Px_q, f_q = my_psd(cosine_validate_q, 2**12, f_clk)
+    assert np.argmax(Px_gen) == np.argmax(Px_q)
+    #Verify Sine signal location
+    Px_gen, f_gen = my_psd(sine_generated_values, 2**12, f_clk)
+    Px_q, f_q = my_psd(sin_validate_q, 2**12, f_clk)
+    assert np.argmax(Px_gen) == np.argmax(Px_q)
 
 def test_via_cocotb():
     """
