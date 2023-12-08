@@ -11,7 +11,7 @@ module caf(input clk,
    initial begin
       s_axis_tready = 1'b0;
       s_axis_tvalid = 1'b0;
-      s_axis_tdata  = 'd0;
+      s_axis_tdata  = 32'd0;
    end
 
    reg [{{ ref_index_bits }}:0] ref_iter;
@@ -25,8 +25,7 @@ module caf(input clk,
 
    initial begin
       m_axi_ref_rvalid = 1'b0;
-      m_axi_ref_raddr = 'd0;
-      m_axi_ref_raddr = 'd0;
+      m_axi_ref_raddr = {{ ref_index_bits }}'d0;
    end
 
    {% include "reference_buffer_inst.v" %}

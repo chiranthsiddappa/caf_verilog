@@ -58,9 +58,9 @@ class CAF(CafVerilogBase):
     def gen_submodules(self):
         submodules = dict()
         submodules['reference_buffer'] = ReferenceBuffer(self.reference, self.ref_i_bits, self.ref_q_bits,
-                                                 self.output_dir, 'ref')
+                                                 self.output_dir, 'ref_buff')
         submodules['capture_buffer'] = CaptureBuffer(len(self.received), self.rec_i_bits, self.rec_q_bits,
-                                               self.output_dir, 'cap')
+                                               self.output_dir, 'capt_buff')
         submodules['freq_shift'] = FreqShift(self.received, self.freq_res(), self.fs, self.n_bits,
                                              i_bits=self.rec_i_bits, q_bits=self.rec_q_bits,
                                              output_dir=self.output_dir)
