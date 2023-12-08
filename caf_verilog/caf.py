@@ -92,6 +92,7 @@ class CAF(CafVerilogBase):
         t_dict['%s_input' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
                                                                                self.test_value_filename))
         t_dict['%s_name' % self.module_name()] = inst_name if inst_name else '%s_tb' % self.module_name()
+        t_dict['caf_state_params_filename'] = os.path.abspath(os.path.join(self.output_dir, 'caf_state_params.v'))
         return t_dict
 
     def write_module(self):

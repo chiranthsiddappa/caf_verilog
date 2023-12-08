@@ -54,7 +54,7 @@ module caf(input clk,
       m_axi_cap_wvalid = 1'b0;
    end
 
-`include "caf_state_params.v"
+`include "{{ caf_state_params_filename }}"
 
    reg [4:0]                               state;
 
