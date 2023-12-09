@@ -23,7 +23,7 @@ module cpx_multiply #(parameter xi_bits = 12,
    reg [3:0]                       pipeline;
 
    initial begin
-      pipeline = 5'b0;
+      pipeline = 4'b0;
       s_axis_tready = 1'b0;
       s_axis_tvalid = 1'b0;
    end
@@ -34,9 +34,9 @@ module cpx_multiply #(parameter xi_bits = 12,
     * (x + yi)(u + vi) = (xu - yv) + (xv + yu)i
     */
    reg signed [xi_bits + yi_bits:0] 	   i_sub;
-   reg signed [xi_bits + yi_bits - 1:0]    i_sub_out;
+   reg signed [xi_bits + yi_bits:0]    i_sub_out;
    reg signed [xq_bits + yq_bits:0] 	   q_add;
-   reg signed [xq_bits + yq_bits - 1:0]    q_add_out;
+   reg signed [xq_bits + yq_bits:0]    q_add_out;
    reg signed [xi_bits + yi_bits:0] 	   xu;
    reg signed [xi_bits + yi_bits:0]        xu_out;
    reg signed [xq_bits + yq_bits:0] 	   yv;
@@ -89,7 +89,7 @@ module cpx_multiply #(parameter xi_bits = 12,
 
    always @(posedge clk) begin
       if(m_axis_tvalid & s_axis_tready) begin
-         pipeline <= (pipeline << 1) | m_axis_tready;
+         pipeline <= (pipeline << 1) | {3'b000, m_axis_tready};
       end else if (m_axis_tready) begin
          pipeline <= (pipeline << 1);
       end
