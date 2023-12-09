@@ -18,7 +18,7 @@ class TestBuildCpxMultiply(unittest.TestCase):
             hdl_toplevel = "%s" % cpx_multiply.module_name()
             runner.build(
                 verilog_sources=verilog_sources,
-                parameters={},
+                parameters=cpx_multiply.params_dict(),
                 vhdl_sources=[],
                 hdl_toplevel=hdl_toplevel,
                 always=True
