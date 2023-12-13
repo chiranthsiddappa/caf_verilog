@@ -34,6 +34,11 @@ async def verify_cpx_calcs(dut):
     assert dut.s_axis_tvalid.value == 0
     assert dut.s_axis_tready.value == 0
 
+    for _ in range(0, 2):
+        await RisingEdge(dut.clk)
+        assert dut.s_axis_tvalid.value == 0
+        assert dut.s_axis_tready.value == 1
+
 
 def test_via_cocotb():
     """
