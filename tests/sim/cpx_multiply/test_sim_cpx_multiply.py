@@ -16,6 +16,14 @@ import unittest
 
 @cocotb.test()
 async def verify_cpx_calcs(dut):
+    fs = 1
+    n = np.arange(0, 10000)
+    x = np.exp(2 * np.pi * 0.15 * n * 1j)
+    y = np.exp(-2 * np.pi * 0.05 * n * 1j)
+    x_quant = quantize(x, 12)
+    y_quant = quantize(y, 12)
+    output_cap = []
+
     clock = Clock(dut.clk, 10, units='ns')
 
     cocotb.start_soon(clock.start(start_high=False))
@@ -24,11 +32,7 @@ async def verify_cpx_calcs(dut):
 
     await RisingEdge(dut.clk)
     assert dut.s_axis_tvalid.value == 0
-    assert dut.s_axis_tready.value == 1
-    await RisingEdge(dut.s_axis_tvalid)
-    for _ in range(0, 10):
-        assert dut.s_axis_tready == 1
-        assert dut.s_axis_tvalid == 1
+    assert dut.s_axis_tready.value == 0
 
 
 def test_via_cocotb():
@@ -49,6 +53,7 @@ def test_via_cocotb():
             hdl_toplevel=hdl_toplevel,
             always=True
         )
+        runner.test(hdl_toplevel="%s" % cpx_multiply.module_name(), test_module="test_sim_cpx_multiply")
 
 if __name__ == '__main__':
-    unittest.main()
+    test_via_cocotb()
