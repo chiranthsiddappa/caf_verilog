@@ -10,49 +10,31 @@ import glob
 from tempfile import TemporaryDirectory
 
 import numpy as np
-import pandas as pd
-import unittest
+from numpy import testing as npt
 
 
-async def capture_test_output_data(dut, num_expected_values) -> list:
-    captured_values = []
-    captured_output_file = 'cpx_multiply_output.csv'
-    captured_output_file = open(captured_output_file, mode='+w')
-    captured_output_file.write('captured_output\n')
+async def capture_test_output_data(dut):
+    captured_output = dut.i.value.signed_integer + dut.q.value.signed_integer * 1j
     dut.m_axis_tready.value = 1
-    for _ in range(0, num_expected_values):
-        while(dut.s_axis_tvalid == 0):
-            await RisingEdge(dut.clk)
-        if dut.s_axis_tvalid == 1:
-            captured_i = dut.i.value.signed_integer
-            captured_q = dut.q.value.signed_integer
-            last_complex = captured_i + captured_q*1j
-            captured_values.append(last_complex)
-            captured_output_file.write("%s\n" % last_complex)
-    dut.m_axis_tready.value = 0
-    captured_output_file.close()
-    await RisingEdge(dut.clk)
-    return captured_values
+    if dut.s_axis_tvalid.value == 1:
+        return captured_output
+    else:
+        return None
 
 
 async def send_test_input_data(dut, x, y):
-
-    while(dut.s_axis_tready.value == 0):
-        await RisingEdge(dut.clk)
     
-    for x_val, y_val in zip(x, y):
-        x_i = x_val.real
-        x_q = x_val.imag
-        y_i = y_val.real
-        y_q = y_val.imag
-        await RisingEdge(dut.clk)
-        dut.m_axis_tvalid.value = 1
-        dut.xi.value = int(x_i)
-        dut.xq.value = int(x_q)
-        dut.yi.value = int(y_i)
-        dut.yq.value = int(y_q)
-    await RisingEdge(dut.clk)
-    dut.m_axis_tvalid.value = 0
+    assert dut.s_axis_tready.value == 1 # Just to double check
+    x_i = int(x.real)
+    x_q = int(x.imag)
+    y_i = int(y.real)
+    y_q = int(y.imag)
+
+    dut.xi.value = int(x_i)
+    dut.xq.value = int(x_q)
+    dut.yi.value = int(y_i)
+    dut.yq.value = int(y_q)
+    dut.m_axis_tvalid.value = 1
 
 @cocotb.test()
 async def verify_cpx_calcs(dut):
@@ -63,6 +45,7 @@ async def verify_cpx_calcs(dut):
     y = np.exp(-2 * np.pi * 0.05 * n * 1j)
     x_quant = quantize(x, 12)
     y_quant = quantize(y, 12)
+    zipped_input_values = list(zip(x_quant, y_quant))
     output_cap = []
 
     clock = Clock(dut.clk, 10, units='ns')
@@ -75,16 +58,30 @@ async def verify_cpx_calcs(dut):
     assert dut.s_axis_tvalid.value == 0
     assert dut.s_axis_tready.value == 0
 
-    cocotb.start_soon(send_test_input_data(dut, x_quant, y_quant))
-    cocotb.start_soon(capture_test_output_data(dut, vals))
-
-    for _ in range(0, 2):
+    # Send and capture data
+    while (len(zipped_input_values) or len(output_cap) < vals):
+    #while( len(zipped_input_values) ):
         await RisingEdge(dut.clk)
-        assert dut.s_axis_tvalid.value == 0
         assert dut.s_axis_tready.value == 1
+        if len(zipped_input_values):
+            next_input_vals = zipped_input_values.pop(0)
+            await send_test_input_data(dut, next_input_vals[0], next_input_vals[1])
+        else:
+            dut.m_axis_tvalid.value = 0
+        if len(output_cap) < vals:
+            last_capture = await capture_test_output_data(dut)
+            if last_capture:
+                output_cap.append(last_capture)
+        else:
+            dut.m_axis_tready.value = 0
 
+    # Verify the values are correct via numpy testing
+    npt.assert_equal(x_quant * y_quant, output_cap)
+    
     for _ in range(0, vals+1000):
         await RisingEdge(dut.clk)
+    assert dut.s_axis_tvalid.value == 0
+    assert dut.s_axis_tready.value == 1
 
 def test_via_cocotb():
     """
