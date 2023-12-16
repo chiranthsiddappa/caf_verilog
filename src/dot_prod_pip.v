@@ -20,8 +20,8 @@ module dot_prod_pip #(parameter xi_bits = 12,
     input [yi_bits - 1:0] yi,
     input [yq_bits - 1:0] yq,
     output reg                       s_axis_product_tvalid,
-    output reg [i_bits-1:0]          i,
-    output reg [q_bits-1:0]          q
+    output reg signed [i_bits-1:0]          i,
+    output reg signed [q_bits-1:0]          q
     );
 
    wire                                 cpx_m_axis_tvalid;
@@ -99,7 +99,7 @@ module dot_prod_pip #(parameter xi_bits = 12,
          sum_i_rs = sum_i >> (sum_i_bits - i_bits);
          sum_q_rs = sum_q >> (sum_q_bits - q_bits);
          i <= sum_i_rs[sum_i_bits - 1:(sum_i_bits - i_bits)];
-         q <= sum_q_rs[sum_i_bits - 1:(sum_q_bits - q_bits)];
+         q <= sum_q_rs[sum_q_bits - 1:(sum_q_bits - q_bits)];
       end
       else begin
          s_axis_product_tvalid <= 1'b0;
