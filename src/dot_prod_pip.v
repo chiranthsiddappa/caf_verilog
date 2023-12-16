@@ -26,11 +26,18 @@ module dot_prod_pip #(parameter xi_bits = 12,
 
    wire                                 cpx_m_axis_tvalid;
    wire signed [xi_bits + yi_bits -1:0] mult_out_i;
-   wire signed [xi_bits + yi_bits -1:0] mult_out_q;
+   wire signed [xq_bits + yq_bits -1:0] mult_out_q;
+   wire signed [sum_i_bits - 1:0]       mult_out_i_extended;
+   wire signed [sum_q_bits - 1:0]       mult_out_q_extended;
+
    wire                                 m_axis_data_tvalid;
    reg signed [sum_i_bits - 1:0]        sum_i;
+   reg signed [sum_i_bits - 1:0]        sum_i_rs;
    reg signed [sum_q_bits - 1:0]        sum_q;
+   reg signed [sum_q_bits - 1:0]        sum_q_rs;
+
    reg [length_counter_bits:0]          length_counter;
+   wire [31:0]                          length_counter_extended;
    wire                                 s_axis_cpx_tvalid;
    wire                                 s_axis_cpx_tready;
 
@@ -41,7 +48,11 @@ module dot_prod_pip #(parameter xi_bits = 12,
       sum_q = 'd0;
    end
 
+   // Internal sign-extensions
    assign cpx_m_axis_tvalid = m_axis_x_tvalid & m_axis_y_tvalid;
+   assign mult_out_i_extended = { {(sum_i_bits - (xi_bits + yi_bits)){mult_out_i[xi_bits + yi_bits - 1]}}, mult_out_i};
+   assign mult_out_q_extended = { {(sum_q_bits - (xq_bits + yq_bits)){mult_out_q[xq_bits + yq_bits - 1]}}, mult_out_q};
+   assign length_counter_extended = { {(31 - length_counter_bits){length_counter[length_counter_bits-1]}}, length_counter};
 
    cpx_multiply #(.xi_bits(xi_bits),
                   .xq_bits(xq_bits),
@@ -62,19 +73,19 @@ module dot_prod_pip #(parameter xi_bits = 12,
 
    always @(posedge clk) begin
       if (s_axis_cpx_tvalid && m_axis_product_tready) begin
-         if (length_counter < length - 1) begin
+         if (length_counter_extended < length - 1) begin
             length_counter <= length_counter + 1'b1;
-            sum_i <= sum_i + mult_out_i;
-            sum_q <= sum_q + mult_out_q;
+            sum_i <= sum_i + mult_out_i_extended;
+            sum_q <= sum_q + mult_out_q_extended;
          end
          else begin
             length_counter <= 'd0;
-            sum_i <= mult_out_i;
-            sum_q <= mult_out_q;
+            sum_i <= mult_out_i_extended;
+            sum_q <= mult_out_q_extended;
          end // else: !if(length_counter < length)
       end // if (s_axis_product_tvalid)
       else if (m_axis_product_tready) begin
-         if(length_counter == length - 1) begin
+         if(length_counter_extended == length - 1) begin
             length_counter <= 'd0;
             sum_i <= 'd0;
             sum_q <= 'd0;
@@ -83,10 +94,12 @@ module dot_prod_pip #(parameter xi_bits = 12,
    end // always @ (posedge clk)
 
    always @(posedge clk) begin
-      if(length_counter == length - 1) begin
+      if(length_counter_extended == length - 1) begin
          s_axis_product_tvalid <= 1'b1;
-         i <= sum_i >> (sum_i_bits - i_bits);
-         q <= sum_q >> (sum_q_bits - q_bits);
+         sum_i_rs = sum_i >> (sum_i_bits - i_bits);
+         sum_q_rs = sum_q >> (sum_q_bits - q_bits);
+         i <= sum_i_rs[sum_i_bits - 1:(sum_i_bits - i_bits)];
+         q <= sum_q_rs[sum_i_bits - 1:(sum_q_bits - q_bits)];
       end
       else begin
          s_axis_product_tvalid <= 1'b0;
