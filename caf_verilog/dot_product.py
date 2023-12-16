@@ -27,7 +27,7 @@ class DotProduct(CafVerilogBase):
         self.x = x
         self.y = y
         self.cpx_input_length_check()
-        self.length = len(self.x)
+        self.length = len(list(zip(self.x,self.y)))
         self.x_i_bits = x_i_bits
         self.x_q_bits = x_q_bits if x_q_bits else self.x_i_bits
         self.y_i_bits = y_i_bits
