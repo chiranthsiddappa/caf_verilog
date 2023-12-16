@@ -33,9 +33,9 @@ class DotProduct(CafVerilogBase):
         self.y_i_bits = y_i_bits
         self.y_q_bits = y_q_bits if y_q_bits else self.y_i_bits
         self.sum_i_bits = (self.x_i_bits + self.y_i_bits) + np.ceil(np.log2(self.length))
-        self.sum_i_bits = int(self.sum_i_bits) - 1
+        self.sum_i_bits = int(self.sum_i_bits)
         self.sum_q_bits = (self.x_q_bits + self.y_q_bits) + np.ceil(np.log2(self.length))
-        self.sum_q_bits = int(self.sum_q_bits) - 1
+        self.sum_q_bits = int(self.sum_q_bits)
         self.x_quant = quantize(self.x, self.x_i_bits, self.x_q_bits)
         self.y_quant = quantize(self.y, self.y_i_bits, self.y_q_bits)
         self.output_dir = output_dir
