@@ -18,7 +18,7 @@ class TestBuildDotProdPip(unittest.TestCase):
             hdl_toplevel = "%s" % dot_prod_pip.module_name()
             runner.build(
                 verilog_sources=verilog_sources,
-                parameters={},
+                parameters=dot_prod_pip.params_dict(),
                 vhdl_sources=[],
                 hdl_toplevel=hdl_toplevel,
                 always=True
