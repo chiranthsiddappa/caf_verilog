@@ -1,4 +1,4 @@
-from caf_verilog.dot_prod_pip import DotProdPip
+from caf_verilog.dot_prod_pip import DotProdPip, send_test_input_data, capture_test_output_data
 from caf_verilog.quantizer import quantize
 from caf_verilog.sim_helper import sim_get_runner
 
@@ -34,6 +34,7 @@ async def verify_cpx_calcs(dut):
     x_quant = quantize(prn, 12)
     y_quant = quantize(prn2, 12)
     zipped_input_values = list(zip(x_quant, y_quant))
+    expected_outputs = int(len(zipped_input_values) / 10)
 
     cpx_became_valid = False
     prod_became_valid = False
@@ -57,6 +58,40 @@ async def verify_cpx_calcs(dut):
     assert dut.length_counter.value.signed_integer == -1
     prev_length_counter = -1
     assert dut.length_counter_extended.value.signed_integer == -1
+
+    while len(zipped_input_values) or len(output_cap) < expected_outputs:
+        await RisingEdge(dut.clk)
+        assert int(dut.length_counter.value.signed_integer) == int(dut.length_counter_extended.value.signed_integer)
+        cpx_became_valid |= dut.s_axis_cpx_tvalid.value == 1
+        if dut.s_axis_cpx_tvalid.value == 1:
+            cpx_output_i.append(dut.mult_out_i.value.signed_integer)
+            cpx_output_q.append(dut.mult_out_q.value.signed_integer)
+        prod_became_valid |= dut.s_axis_product_tvalid.value == 1
+        max_length_counter = max(max_length_counter, dut.length_counter.value.signed_integer)
+        if len(zipped_input_values):
+            x_uz, y_uz = zipped_input_values.pop(0)
+            await send_test_input_data(dut, x_uz, y_uz)
+        if len(output_cap) < expected_outputs:
+            output_val = await capture_test_output_data(dut)
+            if output_val:
+                output_cap.append(output_val)
+        else:
+            dut.m_axis_product_tready.value = 0
+
+    await RisingEdge(dut.clk)
+    dut.m_axis_x_tvalid.value = 0
+    dut.m_axis_y_tvalid.value = 0
+    dut.m_axis_product_tready.value = 0
+
+    assert len(output_cap) > 0
+    assert cpx_became_valid
+    assert max_length_counter == 9
+    assert prod_became_valid
+    assert len(output_cap) == expected_outputs
+
+    inner_cpx_output = [i + q *1j for i, q in zip(cpx_output_i, cpx_output_q)]
+    verification_cpx = x_quant * y_quant
+    npt.assert_equal(verification_cpx, inner_cpx_output[:len(verification_cpx)])
 
 
 def test_via_cocotb():
