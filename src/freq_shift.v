@@ -25,6 +25,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    wire                                                  s_axis_sig_gen_tvalid;
    reg                                                   s_axis_sig_gen_tvalid_buff;
    wire                                                  m_axis_mult_tvalid;
+   reg                                                   m_axis_tvalid_buff;
    wire                                                  s_axis_mult_tready;
    reg                                                   s_axis_mult_tready_buff;
    reg [i_bits - 1:0]                                    xi_buff;
@@ -34,25 +35,24 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    always @(posedge clk) begin
       s_axis_sig_gen_tvalid_buff <= s_axis_sig_gen_tvalid;
       s_axis_mult_tready_buff <= s_axis_mult_tready;
+      m_axis_tvalid_buff <= m_axis_tvalid;
    end
 
    // Buffer inputs
    always @(posedge clk) begin
-      if (s_axis_sig_gen_tvalid && m_axis_tvalid) begin
-         cosine_buff <= cosine;
-         if (neg_shift) begin
-            sine_buff <= sine * -'d1;
-         end else begin
-            sine_buff <= sine;
-         end
+      if (m_axis_tvalid) begin
          xi_buff <= xi;
-         xq_buff <= xq;
+         if (neg_shift) begin
+            xq_buff <= xq_buff * -'d1;
+         end else begin
+            xq_buff <= xq;
+         end
       end
    end // always @ (posedge clk)
 
    assign m_axis_sig_gen_tready = ~s_axis_sig_gen_tvalid | (m_axis_tvalid & s_axis_mult_tready);
    assign s_axis_tready = s_axis_mult_tready_buff;
-   assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid_buff & m_axis_tvalid;
+   assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid & m_axis_tvalid_buff;
 
    {{ sig_gen_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
                         .n_bits({{ freq_shift_n_bits }}),
@@ -74,8 +74,8 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
                                              .m_axis_tvalid(m_axis_mult_tvalid),
                                              .xi(xi_buff),
                                              .xq(xq_buff),
-                                             .yi(cosine_buff),
-                                             .yq(sine_buff),
+                                             .yi(cosine),
+                                             .yq(sine),
                                              .s_axis_tready(s_axis_mult_tready),
                                              .i(i),
                                              .q(q),
@@ -83,7 +83,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
 
    initial begin
       $dumpfile("{{ freq_shift_name }}.vcd");
-      $dumpvars(1, {{ freq_shift_name }});
+      $dumpvars(2, {{ freq_shift_name }});
    end
 
 endmodule //

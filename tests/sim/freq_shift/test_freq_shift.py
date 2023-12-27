@@ -40,11 +40,8 @@ async def verify_freq_shift(dut):
         assert dut.s_axis_mult_tready.value == 1
 
     # Send and capture data
-    #while (x_val_iter < vals or len(output_cap) < vals): # TODO: Output Capture length should match
-    while (x_val_iter < vals or dut.s_axis_tvalid.value == 1):
+    while (x_val_iter < vals or len(output_cap) < vals): # TODO: Output Capture length should match
         await RisingEdge(dut.clk)
-        #assert dut.s_axis_tready.value == 1
-        #assert dut.s_axis_mult_tready.value == 1
         if x_val_iter < vals:
             next_input_vals = x_quant[x_val_iter]
             await send_test_input_data(dut, next_input_vals)
@@ -58,14 +55,13 @@ async def verify_freq_shift(dut):
         else:
             dut.m_axis_tready.value = 0
 
-    await RisingEdge(dut.clk)
-    dut.m_axis_tready.value = 0
-    dut.m_axis_tvalid.value = 0
-
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
     assert dut.s_axis_tvalid.value == 0
     assert dut.s_axis_tready.value == 1
+
+    assert len(output_cap) == vals
+    npt.assert_equal(output_cap[0].real, 1015)
 
 
 def test_via_cocotb():
@@ -86,7 +82,7 @@ def test_via_cocotb():
             parameters = fq.params_dict(),
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
-            always=True,
+            always=False,
             build_args=["--trace", "--trace-structs"]
         )
         runner.test(hdl_toplevel=hdl_toplevel, test_module='test_freq_shift', waves=True)
