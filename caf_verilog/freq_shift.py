@@ -7,6 +7,25 @@ from . quantizer import quantize
 from . io_helper import write_quantized_output
 
 
+async def capture_test_output_data(dut):
+    captured_output = dut.i.value.signed_integer + dut.q.value.signed_integer * 1j
+    dut.m_axis_tready.value = 1
+    if dut.s_axis_tvalid.value == 1:
+        return captured_output
+    else:
+        return False
+
+
+async def send_test_input_data(dut, x):
+    
+    assert dut.s_axis_tready.value == 1 # Just to double check
+    x_i = int(x.real)
+    x_q = int(x.imag)
+
+    dut.xi.value = int(x_i)
+    dut.xq.value = int(x_q)
+    dut.m_axis_tvalid.value = 1
+
 class FreqShift(CafVerilogBase):
 
     def __init__(self, x, freq_res, fs, n_bits,
