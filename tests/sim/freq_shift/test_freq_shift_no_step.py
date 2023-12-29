@@ -31,7 +31,7 @@ async def verify_freq_shift(dut):
 
     # Setup test values
     cosine_validate = x.real
-    cosine_validate_q = quantize(cosine_validate, n_bits=n_bits)
+    cosine_validate_q = np.array(quantize(cosine_validate, n_bits=n_bits))
 
     cocotb.start_soon(clock.start(start_high=False))
     dut.m_axis_tready.value = 0
@@ -41,6 +41,7 @@ async def verify_freq_shift(dut):
     await RisingEdge(dut.clk)
     assert dut.s_axis_tvalid == 0
     assert dut.s_axis_tready == 0
+    dut.freq_step.value = 0
 
     while (dut.s_axis_tready.value == 0):
         await RisingEdge(dut.clk)
@@ -72,7 +73,7 @@ async def verify_freq_shift(dut):
 
     # Verify that cosine has not been shifted in frequency
     Px_gen, f_gen = my_psd(cosine_validate_q, 2**12, fs)
-    Px_q, f_q = my_psd(output_cap.real, 2*12, fs)
+    Px_q, f_q = my_psd(np.array(output_cap).real, 2**12, fs)
     assert np.argmax(Px_gen) == np.argmax(Px_q)
 
 
@@ -103,7 +104,7 @@ def test_via_cocotb():
             always=False,
             build_args=["--trace", "--trace-structs"]
         )
-        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_freq_shift', waves=True)
+        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_freq_shift_no_step', waves=True)
 
 if __name__ == '__main__':
     test_via_cocotb()
