@@ -13,10 +13,10 @@ module cpx_multiply_tb();
    reg signed [{{ xq_bits - 1 }}:0] xq;
    reg signed [{{ yi_bits - 1 }}:0] yi;
    reg signed [{{ yq_bits - 1 }}:0] yq;
-   wire signed [{{ i_out_bits - 1 }}:0] i_out;
+   wire signed [{{ i_bits - 1 }}:0] i_out;
    wire                                 s_axis_tvalid;
    wire                                 s_axis_tready;
-   wire signed [{{ q_out_bits - 1 }}:0] q_out;
+   wire signed [{{ q_bits - 1 }}:0] q_out;
 
    initial begin
       clk = 1'b0;
