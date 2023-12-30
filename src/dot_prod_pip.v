@@ -107,4 +107,9 @@ module dot_prod_pip #(parameter xi_bits = 12,
          q <= q;
       end
    end
+
+   initial begin
+      $dumpfile("dot_prod_pip.vcd");
+      $dumpvars(2, dot_prod_pip);
+   end
 endmodule // dot_prod
