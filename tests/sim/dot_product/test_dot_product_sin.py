@@ -13,12 +13,13 @@ import numpy as np
 from numpy import testing as npt
 
 
+fs = 1
+vals = 10000
+dot_length = 1000
+expected_outputs = vals / dot_length
+
 @cocotb.test()
 async def verify_cpx_calcs(dut):
-    fs = 1
-    vals = 10000
-    dot_length = 1000
-    expected_outputs = vals / dot_length
     n = np.arange(0, vals)
     x = np.exp(2 * np.pi * 0.15 * n * 1j)
     y = np.exp(-2 * np.pi * 0.05 * n * 1j)
@@ -63,7 +64,7 @@ async def verify_cpx_calcs(dut):
             await send_test_input_data(dut, x_uz, y_uz)
         if len(output_cap) < expected_outputs:
             output_val = await capture_test_output_data(dut)
-            if output_val:
+            if output_val or dut.s_axis_product_tvalid == 1:
                 output_cap.append(output_val)
         else:
             dut.m_axis_product_tready.value = 0
@@ -87,12 +88,15 @@ async def verify_cpx_calcs(dut):
     expected_dot_results = []
     for i in range(0, int(expected_outputs)):
         start_index = i * dot_length
-        end_index = (i + 1) * dot_length - 1
-        expected_dot = np.dot(x[start_index:end_index], y[start_index:end_index])
+        end_index = (i + 1) * dot_length
+        xs_lookup = x_quant[start_index:end_index]
+        assert len(xs_lookup) == dot_length
+        ys_lookup = y_quant[start_index:end_index]
+        assert len(ys_lookup) == dot_length
+        expected_dot = np.dot(xs_lookup, ys_lookup)
         expected_dot_results.append(expected_dot)
     expected_dot_results = quantize(expected_dot_results, 24)
-    #npt.assert_equal(expected_dot_results, output_cap)
-    
+    npt.assert_equal(expected_dot_results, output_cap)
 
 
 def test_via_cocotb():
