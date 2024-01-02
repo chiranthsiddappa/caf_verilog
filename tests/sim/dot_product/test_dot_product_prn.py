@@ -13,6 +13,8 @@ import numpy as np
 from numpy import testing as npt
 from sk_dsp_comm import sigsys as ss
 
+fs = 1
+dot_length = 10
 
 def generate_test_signals():
     """
@@ -34,7 +36,7 @@ async def verify_cpx_calcs(dut):
     x_quant = quantize(prn, 12)
     y_quant = quantize(prn2, 12)
     zipped_input_values = list(zip(x_quant, y_quant))
-    expected_outputs = int(len(zipped_input_values) / 10)
+    expected_outputs = int(len(zipped_input_values) / dot_length)
 
     cpx_became_valid = False
     prod_became_valid = False
@@ -72,7 +74,7 @@ async def verify_cpx_calcs(dut):
             await send_test_input_data(dut, x_uz, y_uz)
         if len(output_cap) < expected_outputs:
             output_val = await capture_test_output_data(dut)
-            if output_val != False:
+            if output_val or dut.s_axis_product_tvalid == 1:
                 output_cap.append(output_val)
         else:
             dut.m_axis_product_tready.value = 0
@@ -90,7 +92,22 @@ async def verify_cpx_calcs(dut):
 
     inner_cpx_output = [i + q *1j for i, q in zip(cpx_output_i, cpx_output_q)]
     verification_cpx = x_quant * y_quant
-    npt.assert_equal(verification_cpx, inner_cpx_output[:len(verification_cpx)])
+    npt.assert_equal(verification_cpx[:len(inner_cpx_output)], inner_cpx_output)
+
+    # Validate the dot product results
+    expected_dot_results = []
+    for i in range(0, int(expected_outputs)):
+        start_index = i * dot_length
+        end_index = (i + 1) * dot_length
+        xs_lookup = x_quant[start_index:end_index]
+        assert len(xs_lookup) == dot_length
+        ys_lookup = y_quant[start_index:end_index]
+        assert len(ys_lookup) == dot_length
+        expected_dot = np.dot(xs_lookup, ys_lookup)
+        expected_dot_results.append(expected_dot)
+    # Right shift all outputs
+    expected_dot_results_rs = [int(edr) >> 4 for edr in expected_dot_results]
+    npt.assert_equal(expected_dot_results_rs[:expected_outputs], output_cap)
 
 
 def test_via_cocotb():
@@ -99,7 +116,7 @@ def test_via_cocotb():
     """
     with TemporaryDirectory() as tmpdir:
         prn_seq, prn_seq2 = generate_test_signals()
-        dot_prod_pip = DotProdPip(prn_seq[:10], prn_seq2[:10], output_dir=tmpdir)
+        dot_prod_pip = DotProdPip(prn_seq[:dot_length], prn_seq2[:dot_length], output_dir=tmpdir)
         verilog_sources = [os.path.join(tmpdir, filename) for filename in glob.glob("%s/*.v" % tmpdir)]
         assert len(verilog_sources) > 0
         runner = sim_get_runner()
