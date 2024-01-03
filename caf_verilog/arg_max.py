@@ -36,10 +36,14 @@ class ArgMax(CafVerilogBase):
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
 
-    def template_dict(self):
-        t_dict = {'i_bits': self.i_bits, 'q_bits': self.q_bits, 'arg_max_index_bits': self.index_bits,}
-        t_dict['arg_max_buffer_length'] = self.buffer_length
+    def params_dict(self) -> dict:
+        t_dict = {'i_bits': self.i_bits, 'q_bits': self.q_bits, 'index_bits': self.index_bits,}
+        t_dict['buffer_length'] = self.buffer_length
         t_dict['out_max_bits'] = int((self.i_bits + self.q_bits) / 2)
+        return t_dict
+
+    def template_dict(self):
+        t_dict = self.params_dict()
         t_dict['arg_max_input'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         t_dict['arg_max_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
         return t_dict

@@ -1,6 +1,6 @@
 `timescale 1ns/1ns
 
-module argmax #(parameter buffer_length = 10,
+module arg_max #(parameter buffer_length = 10,
                 parameter index_bits = 4,
                 parameter out_max_bits = 4,
                 parameter i_bits = 12,
