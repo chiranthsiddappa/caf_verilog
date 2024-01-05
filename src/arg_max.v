@@ -1,56 +1,75 @@
 `timescale 1ns/1ns
 
 module arg_max #(parameter buffer_length = 10,
-                parameter index_bits = 4,
-                parameter out_max_bits = 4,
-                parameter i_bits = 12,
-                parameter q_bits = 12
-                )
+                 parameter index_bits = 4,
+                 parameter out_max_bits = 4,
+                 parameter i_bits = 12,
+                 parameter q_bits = 12
+                 )
    (input clk,
-    input                           m_axis_tvalid,
-    input signed [i_bits - 1:0]     xi,
-    input signed [q_bits - 1:0]     xq,
-    output reg                      s_axis_tready,
-    input                           m_axis_tready,
-    output reg [out_max_bits - 1:0] out_max,
-    output reg [index_bits:0]       index,
-    output reg                      s_axis_tvalid
+    input                              m_axis_tvalid,
+    input signed [i_bits - 1:0]        xi,
+    input signed [q_bits - 1:0]        xq,
+    output reg                         s_axis_tready,
+    input                              m_axis_tready,
+    output reg [i_bits + q_bits - 1:0] out_max,
+    output reg [index_bits:0]          index,
+    output reg                         s_axis_tvalid
     );
 
-   reg [index_bits:0]               icounter;
-   wire [31:0]                      icounter_extended;
-   reg [i_bits + i_bits - 2:0]      i_square;
-   reg [q_bits + q_bits - 2:0]      q_square;
-   reg [out_max_bits - 1:0]         argsum;
-   reg [out_max_bits - 1:0]         out_max_buff;
-   
+   reg [1:0]                           m_axis_tvalid_buff;
+   reg [index_bits:0]                  icounter;
+   reg [index_bits:0]                  icounter_buff;
+   wire [31:0]                         icounter_extended;
+   wire [31:0]                         icounter_buff_extended;
+   reg [i_bits + i_bits - 2:0]         i_square;
+   reg [i_bits + i_bits - 2:0]         i_square_rs;
+   reg [q_bits + q_bits - 2:0]         q_square;
+   reg [q_bits + q_bits - 2:0]         q_square_rs;
+   reg [i_bits + q_bits - 1:0]            argsum;
+   reg [i_bits + q_bits - 1:0]            out_max_buff;
+
    initial begin
       out_max_buff = 'd0;
       index = 'd0;
-      s_axis_tready = 1'b1;
+      s_axis_tready = 1'b0;
       icounter = 'd0;
       out_max = 'd0;
       s_axis_tvalid = 1'b0;
       argsum = 'd0;
    end
 
-   assign icounter_extended = { {(31 - index_bits){icounter[index_bits]}}, icounter};
-
+   // Buffered timing signals
    always @(posedge clk) begin
-      if (icounter_extended < buffer_length - 1) begin
+      m_axis_tvalid_buff[0] <= m_axis_tvalid;
+      m_axis_tvalid_buff[1] <= m_axis_tvalid_buff[0];
+      icounter_buff <= icounter;
+   end
+
+   assign icounter_extended = { {(31 - index_bits){icounter[index_bits]}}, icounter};
+   assign icounter_buff_extended = { {(31 - index_bits){icounter_buff[index_bits]}}, icounter_buff};
+
+   // s_axis_tready block with catch
+   always @(posedge clk) begin
+      if (icounter_extended < buffer_length) begin
          s_axis_tready <= 1'b1;
-      end else if ((icounter_extended == buffer_length - 1) && m_axis_tvalid) begin
+      end
+      else if (icounter_extended == buffer_length & m_axis_tready) begin
+         s_axis_tready <= 1'b1;
+      end
+      else begin
          s_axis_tready <= 1'b0;
       end
    end
 
+   // icounter increment block
    always @(posedge clk) begin
       if (icounter_extended < buffer_length) begin
-         if (m_axis_tvalid && s_axis_tready) begin
+         if (m_axis_tvalid_buff[0]) begin
             icounter <= icounter + 1'b1;
          end
       end
-      else if (icounter_extended >= buffer_length && m_axis_tready) begin
+      else if (icounter_extended == buffer_length && m_axis_tready) begin
          icounter <= 'd0;
       end
       else if (!s_axis_tvalid) begin
@@ -68,29 +87,38 @@ module arg_max #(parameter buffer_length = 10,
       end
    end
 
-   always @(i_square or q_square) begin
-      argsum <= (i_square >> i_bits-1) + (q_square >> q_bits-1);
-   end
-
-   always @(icounter or argsum) begin
-      if (icounter_extended == 'd0) begin
-         out_max_buff <= 'd0;
-      end
-      else if (argsum > out_max_buff) begin
-         out_max_buff <= argsum;
-         index <= icounter - 1'b1;
-      end else begin
-         out_max_buff <= out_max_buff;
-         index <= index;
+   always @(posedge clk) begin
+      if (m_axis_tvalid_buff[0] == 1'b1) begin
+         argsum <= i_square + q_square;
       end
    end
 
    always @(posedge clk) begin
+      if (icounter_buff_extended == buffer_length) begin
+         out_max <= argsum;
+         index <= icounter;
+      end
+      else if (argsum > out_max) begin
+         out_max <= argsum;
+         index <= icounter_buff;
+      end
+      else begin
+         out_max <= out_max;
+         index <= index;
+      end
+   end // always @ (posedge clk)
+
+   always @(posedge clk) begin
       if (icounter_extended == buffer_length) begin
          s_axis_tvalid <= 1'b1;
-         out_max <= out_max_buff;
       end else begin
          s_axis_tvalid <= 1'b0;
       end
    end
+
+   initial begin
+      $dumpfile("arg_max.vcd");
+      $dumpvars(2, arg_max);
+   end
+
 endmodule // argmax
