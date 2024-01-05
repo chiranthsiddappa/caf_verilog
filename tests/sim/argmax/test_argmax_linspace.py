@@ -37,12 +37,12 @@ async def verify_arg_max(dut):
         await RisingEdge(dut.clk)
         assert dut.s_axis_tready.value == 1
         dut.m_axis_tvalid.value = 1
-        dut.m_axis_tready.value = 1
         dut.xi.value = int(x_val.real)
         dut.xq.value = int(x_val.imag)
 
     while (dut.s_axis_tvalid.value == 0):
         await RisingEdge(dut.clk)
+        dut.m_axis_tready.value = 1
         dut.m_axis_tvalid.value = 0
 
     assert dut.s_axis_tvalid.value == 1
