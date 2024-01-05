@@ -60,7 +60,6 @@ async def verify_cpx_calcs(dut):
 
     # Send and capture data
     while (len(zipped_input_values) or len(output_cap) < vals):
-    #while( len(zipped_input_values) ):
         await RisingEdge(dut.clk)
         assert dut.s_axis_tready.value == 1
         if len(zipped_input_values):
