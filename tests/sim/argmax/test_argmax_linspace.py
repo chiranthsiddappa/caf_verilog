@@ -15,6 +15,11 @@ import numpy as np
 from numpy import testing as npt
 
 
+async def empty_cycles(dut):
+    for _ in range(0, 5):
+        dut.m_axis_tready.value = 0
+        await RisingEdge(dut.clk)
+
 @cocotb.test()
 async def verify_arg_max(dut):
     i_random = np.arange(2048)
@@ -38,10 +43,14 @@ async def verify_arg_max(dut):
     captured_max = await capture_test_output_data(dut)
     assert captured_max == 2047
 
-    for _ in range(0, 5):
-        dut.m_axis_tready.value = 0
-        await RisingEdge(dut.clk)
-            
+    await empty_cycles(dut)
+
+    await send_test_input_data(dut, reversed(x_vals))
+
+    captured_max = await capture_test_output_data(dut)
+    assert captured_max == 0
+
+    await empty_cycles(dut)            
     
 
 def test_via_cocotb():
