@@ -1,4 +1,4 @@
-from caf_verilog.arg_max import ArgMax, send_test_input_data, capture_test_output_data
+from caf_verilog.arg_max import ArgMax, send_test_input_data, capture_test_output_data, empty_cycles
 from caf_verilog.quantizer import quantize
 from tempfile import TemporaryDirectory
 import os
@@ -15,16 +15,12 @@ import numpy as np
 from numpy import testing as npt
 
 
-async def empty_cycles(dut):
-    for _ in range(0, 5):
-        dut.m_axis_tready.value = 0
-        await RisingEdge(dut.clk)
-
 @cocotb.test()
 async def verify_arg_max(dut):
     i_random = np.arange(2048)
     q_random = np.arange(2048)
     x_vals = i_random + q_random*-1j
+    expected_max_output_val = 2 * 2047 **2
     output_cap = []
 
     clock = Clock(dut.clk, 10, units='ns')
@@ -40,15 +36,17 @@ async def verify_arg_max(dut):
     # Send and receive capture data
     await send_test_input_data(dut, x_vals)
 
-    captured_max = await capture_test_output_data(dut)
-    assert captured_max == 2047
+    index, captured_max = await capture_test_output_data(dut)
+    assert index == 2047
+    assert captured_max == expected_max_output_val
 
     await empty_cycles(dut)
 
     await send_test_input_data(dut, reversed(x_vals))
 
-    captured_max = await capture_test_output_data(dut)
-    assert captured_max == 0
+    index, captured_max = await capture_test_output_data(dut)
+    assert index == 0
+    assert captured_max == expected_max_output_val
 
     await empty_cycles(dut)            
     
