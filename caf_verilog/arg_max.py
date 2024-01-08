@@ -6,6 +6,25 @@ from . io_helper import write_quantized_output
 from shutil import copy
 from jinja2 import Environment, FileSystemLoader
 
+from cocotb.triggers import RisingEdge
+
+
+async def send_test_input_data(dut, x_vals):
+    for x_val in x_vals:
+        await RisingEdge(dut.clk)
+        assert dut.s_axis_tready.value == 1
+        dut.m_axis_tvalid.value = 1
+        dut.xi.value = int(x_val.real)
+        dut.xq.value = int(x_val.imag)
+
+
+async def capture_test_output_data(dut):
+    while (dut.s_axis_tvalid.value == 0):
+        await RisingEdge(dut.clk)
+        dut.m_axis_tready.value = 1
+        dut.m_axis_tvalid.value = 0
+    assert dut.s_axis_tvalid.value == 1
+    return dut.index.value
 
 class ArgMax(CafVerilogBase):
 

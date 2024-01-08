@@ -1,4 +1,4 @@
-from caf_verilog.arg_max import ArgMax
+from caf_verilog.arg_max import ArgMax, send_test_input_data, capture_test_output_data
 from caf_verilog.quantizer import quantize
 from tempfile import TemporaryDirectory
 import os
@@ -32,21 +32,11 @@ async def verify_arg_max(dut):
     assert dut.s_axis_tready.value == 0
     assert dut.s_axis_tvalid.value == 0
 
-    # Send and capture data
-    for x_val in x_vals:
-        await RisingEdge(dut.clk)
-        assert dut.s_axis_tready.value == 1
-        dut.m_axis_tvalid.value = 1
-        dut.xi.value = int(x_val.real)
-        dut.xq.value = int(x_val.imag)
+    # Send and receive capture data
+    await send_test_input_data(dut, x_vals)
 
-    while (dut.s_axis_tvalid.value == 0):
-        await RisingEdge(dut.clk)
-        dut.m_axis_tready.value = 1
-        dut.m_axis_tvalid.value = 0
-
-    assert dut.s_axis_tvalid.value == 1
-    assert dut.index.value == 2047
+    captured_max = await capture_test_output_data(dut)
+    assert captured_max == 2047
 
     for _ in range(0, 5):
         dut.m_axis_tready.value = 0
