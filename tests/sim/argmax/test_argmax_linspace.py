@@ -46,7 +46,7 @@ async def verify_arg_max(dut):
         dut.m_axis_tvalid.value = 0
 
     assert dut.s_axis_tvalid.value == 1
-    assert dut.index == 2047
+    assert dut.index.value == 2047
 
     for _ in range(0, 5):
         dut.m_axis_tready.value = 0
