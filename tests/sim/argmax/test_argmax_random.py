@@ -17,10 +17,6 @@ from numpy import testing as npt
 
 @cocotb.test()
 async def verify_arg_max(dut):
-    i_random = np.random.rand(1024) - 0.5
-    q_random = np.random.rand(1024) - 0.5
-    x_vals = i_random + q_random*1j
-    x_quant = quantize(x_vals, 12)
 
     clock = Clock(dut.clk, 10, units='ns')
 
@@ -32,15 +28,21 @@ async def verify_arg_max(dut):
     assert dut.s_axis_tready.value == 0
     assert dut.s_axis_tvalid.value == 0
 
-    # Send and capture data
-    await send_test_input_data(dut, x_quant)
-    
-    index, captured_max = await capture_test_output_data(dut)
+    for _ in range(0, 10):
+        i_random = np.random.rand(1024) - 0.5
+        q_random = np.random.rand(1024) - 0.5
+        x_vals = i_random + q_random*1j
+        x_quant = quantize(x_vals, 12)
 
-    input_abs = np.abs(x_quant)
-    assert index.value == np.argmax(input_abs)
+        # Send and capture data
+        await send_test_input_data(dut, x_quant)
     
-    await empty_cycles(dut)
+        index, captured_max = await capture_test_output_data(dut)
+
+        input_abs = np.abs(x_quant)
+        assert index.value == np.argmax(input_abs)
+    
+        await empty_cycles(dut)
     
     
 
