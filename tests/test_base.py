@@ -10,7 +10,7 @@ class TestCafVerilogBase(TestCase):
 
     def test_gen_tb_not_implemented(self):
         cvb = CafVerilogBase()
-        with self.assertRaisesRegexp(NotImplementedError, 'This class has not implemented a testbench'):
+        with self.assertRaisesRegex(NotImplementedError, 'This class has not implemented a testbench'):
             cvb.gen_tb()
 
     def test_template_dict_not_implemented(self):
