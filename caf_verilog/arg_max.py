@@ -64,7 +64,7 @@ class ArgMax(CafVerilogBase):
     def params_dict(self) -> dict:
         t_dict = {'i_bits': self.i_bits, 'q_bits': self.q_bits, 'index_bits': self.index_bits,}
         t_dict['buffer_length'] = self.buffer_length
-        t_dict['out_max_bits'] = int((self.i_bits + self.q_bits) / 2)
+        t_dict['out_max_bits'] = self.i_bits + self.q_bits
         return t_dict
 
     def template_dict(self):

@@ -7,14 +7,14 @@ module arg_max #(parameter buffer_length = 10,
                  parameter q_bits = 12
                  )
    (input clk,
-    input                              m_axis_tvalid,
-    input signed [i_bits - 1:0]        xi,
-    input signed [q_bits - 1:0]        xq,
-    output reg                         s_axis_tready,
-    input                              m_axis_tready,
-    output reg [i_bits + q_bits - 1:0] out_max,
-    output reg [index_bits:0]          index,
-    output reg                         s_axis_tvalid
+    input                           m_axis_tvalid,
+    input signed [i_bits - 1:0]     xi,
+    input signed [q_bits - 1:0]     xq,
+    output reg                      s_axis_tready,
+    input                           m_axis_tready,
+    output reg [out_max_bits - 1:0] out_max,
+    output reg [index_bits:0]       index,
+    output reg                      s_axis_tvalid
     );
 
    reg [1:0]                           m_axis_tvalid_buff;
@@ -26,8 +26,8 @@ module arg_max #(parameter buffer_length = 10,
    reg [i_bits + i_bits - 2:0]         i_square_rs;
    reg [q_bits + q_bits - 2:0]         q_square;
    reg [q_bits + q_bits - 2:0]         q_square_rs;
-   reg [i_bits + q_bits - 1:0]            argsum;
-   reg [i_bits + q_bits - 1:0]            out_max_buff;
+   reg [out_max_bits - 1:0]            argsum;
+   reg [out_max_bits - 1:0]            out_max_buff;
 
    initial begin
       out_max_buff = 'd0;
