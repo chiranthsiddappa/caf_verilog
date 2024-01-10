@@ -13,21 +13,21 @@ module arg_max #(parameter buffer_length = 10,
     output reg                      s_axis_tready,
     input                           m_axis_tready,
     output reg [out_max_bits - 1:0] out_max,
-    output reg [index_bits:0]       index,
+    output reg [index_bits-1:0]     index,
     output reg                      s_axis_tvalid
     );
 
-   reg [1:0]                           m_axis_tvalid_buff;
-   reg [index_bits:0]                  icounter;
-   reg [index_bits:0]                  icounter_buff;
-   wire [31:0]                         icounter_extended;
-   wire [31:0]                         icounter_buff_extended;
-   reg [i_bits + i_bits - 2:0]         i_square;
-   reg [i_bits + i_bits - 2:0]         i_square_rs;
-   reg [q_bits + q_bits - 2:0]         q_square;
-   reg [q_bits + q_bits - 2:0]         q_square_rs;
-   reg [out_max_bits - 1:0]            argsum;
-   reg [out_max_bits - 1:0]            out_max_buff;
+   reg [1:0]                        m_axis_tvalid_buff;
+   reg signed [index_bits:0]        icounter;
+   reg signed [index_bits:0]        icounter_buff;
+   wire signed [31:0]               icounter_extended;
+   wire signed [31:0]               icounter_buff_extended;
+   reg [i_bits + i_bits - 2:0]      i_square;
+   reg [i_bits + i_bits - 2:0]      i_square_rs;
+   reg [q_bits + q_bits - 2:0]      q_square;
+   reg [q_bits + q_bits - 2:0]      q_square_rs;
+   reg [out_max_bits - 1:0]         argsum;
+   reg [out_max_bits - 1:0]         out_max_buff;
 
    initial begin
       out_max_buff = 'd0;
@@ -64,12 +64,12 @@ module arg_max #(parameter buffer_length = 10,
 
    // icounter increment block
    always @(posedge clk) begin
-      if (icounter_extended < buffer_length) begin
-         if (m_axis_tvalid_buff[0]) begin
+      if (icounter_extended < (buffer_length - 1)) begin
+         if (m_axis_tvalid_buff[1]) begin
             icounter <= icounter + 1'b1;
          end
       end
-      else if (icounter_extended == buffer_length && m_axis_tready) begin
+      else if (icounter_extended == (buffer_length - 1) && m_axis_tready) begin
          icounter <= 'd0;
       end
       else if (!s_axis_tvalid) begin
@@ -94,13 +94,13 @@ module arg_max #(parameter buffer_length = 10,
    end
 
    always @(posedge clk) begin
-      if (icounter_buff_extended == buffer_length) begin
-         out_max <= argsum;
-         index <= icounter;
+      if (icounter_buff_extended == (buffer_length - 1)) begin
+         out_max <= 'd0;
+         index <= icounter[index_bits-1:0];
       end
-      else if (argsum > out_max) begin
+      else if (argsum > out_max && m_axis_tvalid_buff[1]) begin
          out_max <= argsum;
-         index <= icounter_buff;
+         index <= icounter[index_bits-1:0];
       end
       else begin
          out_max <= out_max;
@@ -109,7 +109,7 @@ module arg_max #(parameter buffer_length = 10,
    end // always @ (posedge clk)
 
    always @(posedge clk) begin
-      if (icounter_extended == buffer_length) begin
+      if (icounter_extended == (buffer_length - 1)) begin
          s_axis_tvalid <= 1'b1;
       end else begin
          s_axis_tvalid <= 1'b0;

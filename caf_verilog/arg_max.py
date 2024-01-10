@@ -40,7 +40,7 @@ class ArgMax(CafVerilogBase):
         self.q_bits = q_bits if q_bits else i_bits
         self.x_quant = quantize(self.x, self.i_bits, self.q_bits)
         self.buffer_length = len(self.x)
-        self.index_bits = int(np.ceil(np.log2(self.buffer_length))) + 1
+        self.index_bits = int(np.ceil(np.log2(self.buffer_length)))
         self.output_dir = output_dir
         self.tb_filename = '%s_tb.v' % (self.module_name())
         self.test_value_filename = '%s_input_values.txt' % (self.module_name())
