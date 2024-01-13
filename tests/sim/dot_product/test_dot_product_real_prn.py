@@ -107,7 +107,7 @@ async def verify_cpx_calcs(dut):
         expected_dot_results.append(expected_dot)
     # Right shift all outputs
     expected_dot_results_rs = [int(edr) >> 4 for edr in expected_dot_results]
-    npt.assert_equal(expected_dot_results_rs[:expected_outputs], output_cap)
+    npt.assert_equal(output_cap, expected_dot_results_rs[:expected_outputs])
 
 
 def test_via_cocotb():
@@ -129,7 +129,7 @@ def test_via_cocotb():
             always=True,
             build_args=["--trace", "--trace-structs"]
         )
-        runner.test(hdl_toplevel="%s" % dot_prod_pip.module_name(), test_module='test_dot_product_prn')
+        runner.test(hdl_toplevel="%s" % dot_prod_pip.module_name(), test_module='test_dot_product_real_prn')
 
 if __name__ == '__main__':
     test_via_cocotb()

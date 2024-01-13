@@ -11,29 +11,42 @@ from tempfile import TemporaryDirectory
 from gps_helper.prn import PRN
 import numpy as np
 from numpy import testing as npt
-
+from sk_dsp_comm import sigsys as ss
 
 fs = 1
-vals = 10000
-dot_length = 1000
-expected_outputs = vals / dot_length
+dot_length = 10
+
+def generate_test_signals():
+    """
+    PRN Sequence Generator
+    """
+    prn = PRN(15)
+    prn2 = PRN(20)
+    fs = 625e3
+    Ns = fs / 125e3
+    prn_seq = prn.prn_seq()
+    prn_seq2 = prn2.prn_seq()
+    prn_seq,b = ss.nrz_bits2(np.array(prn_seq), Ns)
+    prn_seq2,b2 = ss.nrz_bits2(np.array(prn_seq2), Ns)
+    # Make test signals complex
+    prn_seq = prn_seq + prn_seq*1j
+    prn_seq2 = prn_seq2 + prn_seq2*1j
+    return prn_seq, prn_seq2
 
 @cocotb.test()
 async def verify_cpx_calcs(dut):
-    n = np.arange(0, vals)
-    x = np.exp(2 * np.pi * 0.15 * n * 1j)
-    y = np.exp(-2 * np.pi * 0.05 * n * 1j)
-    x_quant = quantize(x, 12)
-    y_quant = quantize(y, 12)
+    prn, prn2 = generate_test_signals()
+    x_quant = quantize(prn, 12)
+    y_quant = quantize(prn2, 12)
     zipped_input_values = list(zip(x_quant, y_quant))
+    expected_outputs = int(len(zipped_input_values) / dot_length)
+
     cpx_became_valid = False
     prod_became_valid = False
     max_length_counter = -1
 
     cpx_output_i = []
     cpx_output_q = []
-
-    assert len([np.dot(x_quant[:1000], y_quant[:1000])]) == 1
 
     output_cap = []
 
@@ -74,15 +87,15 @@ async def verify_cpx_calcs(dut):
     dut.m_axis_y_tvalid.value = 0
     dut.m_axis_product_tready.value = 0
 
+    assert len(output_cap) > 0
     assert cpx_became_valid
-    assert max_length_counter == 999
+    assert max_length_counter == 9
     assert prod_became_valid
     assert len(output_cap) == expected_outputs
 
-    # Validate all the cpx multiply outputs from within the module
-    inner_cpx_output = [i + q * 1j for i, q in zip(cpx_output_i[:vals], cpx_output_q[:vals])]
+    inner_cpx_output = [i + q *1j for i, q in zip(cpx_output_i, cpx_output_q)]
     verification_cpx = x_quant * y_quant
-    npt.assert_equal(verification_cpx, inner_cpx_output)
+    npt.assert_equal(inner_cpx_output, verification_cpx[:len(inner_cpx_output)])
 
     # Validate the dot product results
     expected_dot_results = []
@@ -95,8 +108,9 @@ async def verify_cpx_calcs(dut):
         assert len(ys_lookup) == dot_length
         expected_dot = np.dot(xs_lookup, ys_lookup)
         expected_dot_results.append(expected_dot)
-    expected_dot_results = quantize(expected_dot_results, 24)
-    npt.assert_equal(output_cap, expected_dot_results)
+    # Right shift all outputs
+    expected_dot_results_rs = [(int(edr.real) >> 4) + (int(edr.imag) >> 4)*1j for edr in expected_dot_results]
+    npt.assert_equal(expected_dot_results_rs[:expected_outputs], output_cap)
 
 
 def test_via_cocotb():
@@ -104,10 +118,10 @@ def test_via_cocotb():
     Main entry point for testing output via cocotb
     """
     with TemporaryDirectory() as tmpdir:
-        x_vals = np.zeros(1000)
-        y_vals = np.zeros(1000)
-        dot_prod_pip = DotProdPip(x_vals, y_vals, output_dir=tmpdir)
+        prn_seq, prn_seq2 = generate_test_signals()
+        dot_prod_pip = DotProdPip(prn_seq[:dot_length], prn_seq2[:dot_length], output_dir=tmpdir)
         verilog_sources = [os.path.join(tmpdir, filename) for filename in glob.glob("%s/*.v" % tmpdir)]
+        assert len(verilog_sources) > 0
         runner = sim_get_runner()
         hdl_toplevel = "%s" % dot_prod_pip.module_name()
         runner.build(
@@ -118,7 +132,7 @@ def test_via_cocotb():
             always=True,
             build_args=["--trace", "--trace-structs"]
         )
-        runner.test(hdl_toplevel="%s" % dot_prod_pip.module_name(), test_module='test_dot_product_sin')
+        runner.test(hdl_toplevel="%s" % dot_prod_pip.module_name(), test_module='test_dot_product_cpx_prn')
 
 if __name__ == '__main__':
     test_via_cocotb()
