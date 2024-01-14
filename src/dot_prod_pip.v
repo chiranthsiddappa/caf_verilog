@@ -30,7 +30,6 @@ module dot_prod_pip #(parameter xi_bits = 12,
    wire signed [sum_i_bits - 1:0]       mult_out_i_extended;
    wire signed [sum_q_bits - 1:0]       mult_out_q_extended;
 
-   wire                                 m_axis_data_tvalid;
    reg signed [sum_i_bits - 1:0]        sum_i;
    reg signed [sum_q_bits - 1:0]        sum_q;
 
