@@ -152,3 +152,13 @@ def size_visualization(f, g, nlags):
                 n_indexes.append((m, cc_index))
         spacing = " " * int(n >= 0)
         print("n: " + spacing + str(n) + " " + str(n_indexes))
+
+
+async def capture_test_output_data(dut):
+    captured_out_max = dut.out_max
+    captured_index = dut.index
+    dut.m_axis_tready = 1
+    if dut.s_axis_tvalid == 1:
+        return captured_out_max, captured_index
+    else:
+        return False, False
