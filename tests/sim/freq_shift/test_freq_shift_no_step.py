@@ -1,7 +1,7 @@
 from caf_verilog.freq_shift import FreqShift, send_test_input_data, capture_test_output_data
 from caf_verilog.sig_gen import calc_smallest_phase_size, phase_increment
 from caf_verilog.quantizer import quantize
-from caf_verilog.sim_helper import sim_get_runner
+from caf_verilog.sim_helper import sim_get_runner, get_sim_cpus
 
 import os
 import cocotb
@@ -102,7 +102,7 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=False,
-            build_args=["--trace", "--trace-structs"]
+            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel=hdl_toplevel, test_module='test_freq_shift_no_step', waves=True)
 

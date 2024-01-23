@@ -3,7 +3,7 @@ from caf_verilog.quantizer import quantize
 from tempfile import TemporaryDirectory
 import os
 import unittest
-from caf_verilog.sim_helper import sim_get_runner
+from caf_verilog.sim_helper import sim_get_runner, get_sim_cpus
 import glob
 import numpy as np
 
@@ -65,7 +65,7 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=True,
-            build_args=["--trace", "--trace-structs"]
+            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel=hdl_toplevel, test_module="test_argmax_linspace")
 

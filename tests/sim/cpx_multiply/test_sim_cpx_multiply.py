@@ -1,6 +1,6 @@
 from caf_verilog.cpx_multiply import CpxMultiply
 from caf_verilog.quantizer import quantize
-from caf_verilog.sim_helper import sim_get_runner
+from caf_verilog.sim_helper import sim_get_runner, get_sim_cpus
 
 import os
 import cocotb
@@ -98,7 +98,8 @@ def test_via_cocotb():
             parameters=cpx_multiply.params_dict(),
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
-            always=True
+            always=True,
+            build_args=["--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel="%s" % cpx_multiply.module_name(), test_module="test_sim_cpx_multiply")
 

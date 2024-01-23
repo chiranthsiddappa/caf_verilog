@@ -3,7 +3,7 @@ from caf_verilog.quantizer import quantize
 import os
 import cocotb
 from cocotb.clock import Clock
-from caf_verilog.sim_helper import sim_get_runner
+from caf_verilog.sim_helper import sim_get_runner, get_sim_cpus
 from cocotb.triggers import RisingEdge
 import glob
 import numpy as np
@@ -85,7 +85,8 @@ def test_via_cocotb():
         parameters=sig_gen.params_dict(),
         vhdl_sources=[],
         hdl_toplevel=hdl_toplevel,
-        always=False
+        always=False,
+        build_args=["--threads", str(get_sim_cpus())]
     )
     runner.test(hdl_toplevel="%s" % sig_gen.sig_gen_name, test_module="test_sim_sig_gen_fs_4,")
 

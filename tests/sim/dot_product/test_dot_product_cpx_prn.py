@@ -1,6 +1,6 @@
 from caf_verilog.dot_prod_pip import DotProdPip, send_test_input_data, capture_test_output_data
 from caf_verilog.quantizer import quantize
-from caf_verilog.sim_helper import sim_get_runner
+from caf_verilog.sim_helper import sim_get_runner, get_sim_cpus
 
 import os
 import cocotb
@@ -130,7 +130,7 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=True,
-            build_args=["--trace", "--trace-structs"]
+            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel="%s" % dot_prod_pip.module_name(), test_module='test_dot_product_cpx_prn')
 
