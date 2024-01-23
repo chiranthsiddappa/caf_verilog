@@ -14,6 +14,10 @@ __sim__ = os.getenv("SIM", "verilator")
 def sim_get_runner() -> Simulator:
     return get_runner(__sim__)
 
+
+def get_sim_cpus() -> int:
+    return len(os.sched_getaffinity(0))
+
 def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False):
     """
 
