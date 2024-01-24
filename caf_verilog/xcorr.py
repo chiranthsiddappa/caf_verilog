@@ -91,11 +91,7 @@ class XCorr(CafVerilogBase):
             tb_file.write(out_tb)
 
     def write_tb_values(self):
-        ref_tb = list()
-        rec_tb = list()
-        for i in range(0, len(self.rec_quant) - len(self.ref_quant) + 1):
-            ref_tb.extend(self.ref_quant)
-            rec_tb.extend(self.rec_quant[i:len(self.ref_quant) + i])
+        ref_tb, rec_tb = gen_tb_values(self.ref_quant, self.rec_quant)
         write_quantized_output(self.output_dir, self.test_value_filename, ref_tb, rec_tb)
 
 
@@ -105,6 +101,19 @@ class XCorr(CafVerilogBase):
         :return:
         """
 
+
+def gen_tb_values(ref, rec):
+    """
+    Reference and received vectors to be provided to the module.
+    """
+    ref_tb = list()
+    rec_tb = list()
+    ref_len = len(ref)
+    for i in range(0, len(rec) - ref_len + 1):
+        ref_tb.extend(ref)
+        rec_tb.extend(rec[i:ref_len + i])
+    return ref_tb, rec_tb
+    
 
 def dot_xcorr(ref, rec):
     """
@@ -155,10 +164,24 @@ def size_visualization(f, g, nlags):
 
 
 async def capture_test_output_data(dut):
-    captured_out_max = dut.out_max
-    captured_index = dut.index
-    dut.m_axis_tready = 1
-    if dut.s_axis_tvalid == 1:
+    captured_out_max = dut.out_max.value
+    captured_index = dut.index.value
+    dut.m_axis_tready.value = 1
+    if dut.s_axis_tvalid.value == 1:
         return captured_out_max, captured_index
     else:
         return False, False
+    
+
+async def send_test_input_data(dut, x, y):
+
+    x_i = int(x.real)
+    x_q = int(x.imag)
+    y_i = int(y.real)
+    y_q = int(y.imag)
+
+    dut.xi.value = x_i
+    dut.xq.value = x_q
+    dut.yi.value = y_i
+    dut.yq.value = y_q
+    dut.m_axis_tvalid.value = 1
