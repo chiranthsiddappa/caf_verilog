@@ -35,3 +35,12 @@ class TestXCorr(TestCafVerilogBase):
             test_files = ['x_corr_tb.v', 'x_corr.v', 'arg_max.v', 'dot_prod_pip.v', 'cpx_multiply.v']
             for file in test_files:
                 self.assertIn(file, test_files)
+
+    def test_tb_values(self):
+        center = 300
+        corr_length = 200
+        ref, rec = sim_shift(self.prn_seq, center, corr_length, shift=10)
+        ref_tb, rec_tb = xc.gen_tb_values(ref, rec)
+        zipped_tb_vals = zip(ref_tb, rec_tb)
+        zipped_tb_vals = list(zipped_tb_vals)
+        assert len(zipped_tb_vals) == corr_length**2 + corr_length

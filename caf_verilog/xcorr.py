@@ -1,12 +1,14 @@
 from . caf_verilog_base import CafVerilogBase
 from .quantizer import quantize
 from . dot_product import dot_product
-import os
-from jinja2 import Environment, FileSystemLoader, Template
 from . arg_max import ArgMax
 from . dot_prod_pip import DotProdPip
 from . dot_product import DotProduct
 from .io_helper import write_quantized_output
+
+import numpy as np
+import os
+from jinja2 import Environment, FileSystemLoader, Template
 
 
 class XCorr(CafVerilogBase):
@@ -54,7 +56,8 @@ class XCorr(CafVerilogBase):
         else:
             submodules['dot_prod'] = DotProduct(**dp_params)
         dp_dict = submodules['dot_prod'].template_dict('dot_prod_%s' % (self.module_name()))
-        submodules['arg_max'] = ArgMax(self.ref,
+        argmax_ref_vector = np.array(list(self.ref) + [0])
+        submodules['arg_max'] = ArgMax(argmax_ref_vector,
                                        dp_dict['sum_i_bits'],
                                        dp_dict['sum_q_bits'],
                                        self.output_dir)
@@ -105,6 +108,8 @@ class XCorr(CafVerilogBase):
 def gen_tb_values(ref, rec):
     """
     Reference and received vectors to be provided to the module.
+    Copies the ref vector by the length of the ref vector.
+    Received vector is shifted in by a positive offset each time.
     """
     ref_tb = list()
     rec_tb = list()
