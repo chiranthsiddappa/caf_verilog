@@ -14,7 +14,7 @@ class DotProdPip(DotProduct):
 
     def params_dict(self) -> dict:
         t_dict = super().params_dict()
-        t_dict['length_counter_bits'] = int(ceil(log2(self.length)))
+        t_dict['dot_length_counter_bits'] = int(ceil(log2(self.length)))
         return t_dict
 
     def template_dict(self, inst_name=None):

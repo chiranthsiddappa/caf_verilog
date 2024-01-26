@@ -60,7 +60,7 @@ class DotProduct(CafVerilogBase):
 
     def params_dict(self) -> dict:
         return {'xi_bits': self.x_i_bits, 'xq_bits': self.x_q_bits, 'yi_bits': self.y_i_bits,
-                  'yq_bits': self.y_q_bits, 'length': self.length, 'sum_i_bits': self.sum_i_bits,
+                  'yq_bits': self.y_q_bits, 'dot_length': self.length, 'sum_i_bits': self.sum_i_bits,
                   'sum_q_bits': self.sum_q_bits}
 
     def template_dict(self, inst_name=None):

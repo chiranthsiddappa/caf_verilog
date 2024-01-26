@@ -4,7 +4,7 @@ dot_prod #(.xi_bits({{ xi_bits }}),
            .yq_bits({{ yq_bits }}),
            .i_bits({{ sum_i_size }}),
            .q_bits({{ sum_i_size }}),
-           .length({{ length }}),
+           .length({{ dot_length }}),
            .sum_i_size({{ sum_i_size }}),
            .sum_q_size({{ sum_q_size }})
            ) {{ dot_prod_name }} (.clk(clk),

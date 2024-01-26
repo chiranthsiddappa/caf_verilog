@@ -53,8 +53,8 @@ async def verify_cpx_calcs(dut):
     dut.m_axis_x_tvalid.value = 0
     dut.m_axis_y_tvalid.value = 0
     assert dut.s_axis_product_tvalid.value == 0
-    assert dut.length_counter.value.signed_integer == -1
-    assert dut.length_counter_extended.value.signed_integer == -1
+    assert dut.dot_length_counter.value.signed_integer == -1
+    assert dut.dot_length_counter_extended.value.signed_integer == -1
 
     while len(zipped_input_values) or len(output_cap) < num_expected_outputs:
         await RisingEdge(dut.clk)

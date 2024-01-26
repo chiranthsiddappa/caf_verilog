@@ -56,19 +56,19 @@ async def verify_cpx_calcs(dut):
     dut.m_axis_x_tvalid.value = 0
     dut.m_axis_y_tvalid.value = 0
     assert dut.s_axis_product_tvalid.value == 0
-    assert dut.length_counter.value.signed_integer == -1
+    assert dut.dot_length_counter.value.signed_integer == -1
     prev_length_counter = -1
-    assert dut.length_counter_extended.value.signed_integer == -1
+    assert dut.dot_length_counter_extended.value.signed_integer == -1
 
     while len(zipped_input_values) or len(output_cap) < expected_outputs:
         await RisingEdge(dut.clk)
-        assert int(dut.length_counter.value.signed_integer) == int(dut.length_counter_extended.value.signed_integer)
+        assert int(dut.dot_length_counter.value.signed_integer) == int(dut.dot_length_counter_extended.value.signed_integer)
         cpx_became_valid |= dut.s_axis_cpx_tvalid.value == 1
         if dut.s_axis_cpx_tvalid.value == 1:
             cpx_output_i.append(dut.mult_out_i.value.signed_integer)
             cpx_output_q.append(dut.mult_out_q.value.signed_integer)
         prod_became_valid |= dut.s_axis_product_tvalid.value == 1
-        max_length_counter = max(max_length_counter, dut.length_counter.value.signed_integer)
+        max_length_counter = max(max_length_counter, dut.dot_length_counter.value.signed_integer)
         if len(zipped_input_values):
             x_uz, y_uz = zipped_input_values.pop(0)
             await send_test_input_data(dut, x_uz, y_uz)
