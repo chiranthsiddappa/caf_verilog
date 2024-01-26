@@ -68,6 +68,8 @@ class XCorr(CafVerilogBase):
         am_dict = self.submodules['arg_max'].params_dict()
         del t_dict['sum_i_bits']
         del t_dict['sum_q_bits']
+        del t_dict['dot_length']
+        del t_dict['dot_length_counter_bits']
         t_dict['out_max_bits'] = am_dict['out_max_bits']
         lcb = 'length_counter_bits'
         if not lcb in t_dict:
