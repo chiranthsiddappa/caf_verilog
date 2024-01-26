@@ -56,7 +56,7 @@ class XCorr(CafVerilogBase):
         else:
             submodules['dot_prod'] = DotProduct(**dp_params)
         dp_dict = submodules['dot_prod'].template_dict('dot_prod_%s' % (self.module_name()))
-        argmax_ref_vector = np.array(list(self.ref) + [0])
+        argmax_ref_vector = np.array(list(self.ref) + [0, 0])
         submodules['arg_max'] = ArgMax(argmax_ref_vector,
                                        dp_dict['sum_i_bits'],
                                        dp_dict['sum_q_bits'],
@@ -74,6 +74,7 @@ class XCorr(CafVerilogBase):
         lcb = 'length_counter_bits'
         if not lcb in t_dict:
             t_dict[lcb] = am_dict['index_bits']
+        t_dict['length'] = am_dict['buffer_length']
         return t_dict
 
     def template_dict(self, inst_name=None):
@@ -120,7 +121,7 @@ def gen_tb_values(ref, rec):
         ref_tb.extend(ref)
         rec_tb.extend(rec[i:ref_len + i])
     return ref_tb, rec_tb
-    
+
 
 def dot_xcorr(ref, rec):
     """
@@ -178,7 +179,7 @@ async def capture_test_output_data(dut):
         return captured_out_max, captured_index
     else:
         return False, False
-    
+
 
 async def send_test_input_data(dut, x, y):
 

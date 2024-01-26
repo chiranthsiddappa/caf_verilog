@@ -36,8 +36,12 @@ def generate_test_signals():
 @cocotb.test()
 async def verify_xcorr_via_prn(dut):
     ref_quant, rec_quant = generate_test_signals()
-    ref_quant, rec_quant = gen_tb_values(ref_quant, rec_quant)
+    ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
+    input_val_pairs = list(zip(ref_quant_tb, rec_quant_tb))
     output_cap = []
+
+    assert (len(input_val_pairs) % len(ref_quant)) == 0
+    assert len(input_val_pairs) == (len(ref_quant)**2 + len(ref_quant))
 
     clock = Clock(dut.clk, 10, units='ns')
 
@@ -49,29 +53,28 @@ async def verify_xcorr_via_prn(dut):
     assert dut.s_axis_tready.value == 0
     assert dut.s_axis_tvalid.value == 0
 
-    for ref_cpx_val, rec_cpx_val in zip(ref_quant, rec_quant):
+    for ref_cpx_val, rec_cpx_val in input_val_pairs:
         await RisingEdge(dut.clk)
         dut.m_axis_tready.value = 1
         await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
-        output_max, captured_index = await capture_test_output_data(dut)
-        if output_max and captured_index:
-            output_cap.append((output_max, captured_index))
-
-    dut.m_axis_tvalid.value = 0
+        #output_max, captured_index = await capture_test_output_data(dut)
+        #if output_max and captured_index:
+        #    output_cap.append((output_max, captured_index))
 
     while (not output_cap):
         await RisingEdge(dut.clk)
+        dut.m_axis_tvalid.value = 0
         output_max, captured_index = await capture_test_output_data(dut)
         if output_max and captured_index:
             output_cap.append((output_max, captured_index))
-    
+
     index_to_verify = output_cap[0][1]
     assert index_to_verify == (corr_length / 2) - shift
 
     await RisingEdge(dut.clk)
     dut.m_axis_tready.value = 0
 
-    for _ in range(0, 5):
+    for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
 
