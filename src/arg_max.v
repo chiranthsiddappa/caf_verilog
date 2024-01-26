@@ -22,13 +22,11 @@ module arg_max #(parameter buffer_length = 10,
    reg [i_bits + i_bits - 2:0]      i_square;
    reg [q_bits + q_bits - 2:0]      q_square;
    reg [out_max_bits - 1:0]         argsum;
-   reg [out_max_bits - 1:0]         out_max_buff;
    reg                              sq_stage_valid;
    reg                              sum_stage_valid;
    reg                              cmp_stage_valid;
 
    initial begin
-      out_max_buff = 'd0;
       index = 'd0;
       s_axis_tready = 1'b0;
       icounter = 'd0;
