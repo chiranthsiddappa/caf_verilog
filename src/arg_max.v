@@ -17,17 +17,15 @@ module arg_max #(parameter buffer_length = 10,
     output reg                      s_axis_tvalid
     );
 
-   reg [1:0]                        m_axis_tvalid_buff;
    reg signed [index_bits:0]        icounter;
-   reg signed [index_bits:0]        icounter_buff;
    wire signed [31:0]               icounter_extended;
-   wire signed [31:0]               icounter_buff_extended;
    reg [i_bits + i_bits - 2:0]      i_square;
-   reg [i_bits + i_bits - 2:0]      i_square_rs;
    reg [q_bits + q_bits - 2:0]      q_square;
-   reg [q_bits + q_bits - 2:0]      q_square_rs;
    reg [out_max_bits - 1:0]         argsum;
    reg [out_max_bits - 1:0]         out_max_buff;
+   reg                              sq_stage_valid;
+   reg                              sum_stage_valid;
+   reg                              cmp_stage_valid;
 
    initial begin
       out_max_buff = 'd0;
@@ -39,15 +37,7 @@ module arg_max #(parameter buffer_length = 10,
       argsum = 'd0;
    end
 
-   // Buffered timing signals
-   always @(posedge clk) begin
-      m_axis_tvalid_buff[0] <= m_axis_tvalid;
-      m_axis_tvalid_buff[1] <= m_axis_tvalid_buff[0];
-      icounter_buff <= icounter;
-   end
-
    assign icounter_extended = { {(31 - index_bits){icounter[index_bits]}}, icounter};
-   assign icounter_buff_extended = { {(31 - index_bits){icounter_buff[index_bits]}}, icounter_buff};
 
    // s_axis_tready block with catch
    always @(posedge clk) begin
@@ -62,49 +52,69 @@ module arg_max #(parameter buffer_length = 10,
       end
    end
 
+   always @(posedge clk) begin
+      if (m_axis_tvalid & (s_axis_tready || m_axis_tready)) begin
+         i_square <= xi * xi;
+         q_square <= xq * xq;
+         sq_stage_valid <= 1'b1;
+      end else begin
+         i_square <= i_square;
+         q_square <= q_square;
+         sq_stage_valid <= 1'b0;
+      end
+   end
+
+   always @(posedge clk) begin
+      if (sq_stage_valid) begin
+         argsum <= i_square + q_square;
+         sum_stage_valid <= 1'b1;
+      end
+      else if ((icounter_extended == buffer_length -1) && !sq_stage_valid) begin
+         argsum <= 'd0;
+         sum_stage_valid <= 1'b0;
+      end
+      else begin
+         argsum <= argsum;
+         sum_stage_valid <= 1'b0;
+      end
+   end
+
+   always @(posedge clk) begin
+      if ((icounter_extended == 'd0) && !sum_stage_valid) begin
+         index <= 'd0;
+         out_max <= argsum;
+         cmp_stage_valid <= 1'b0;
+      end
+      else if ((argsum > out_max) && sum_stage_valid) begin
+         index <= icounter[index_bits - 1:0];
+         out_max <= argsum;
+         cmp_stage_valid <= 1'b1;
+      end
+      else if (sum_stage_valid) begin
+         index <= index;
+         out_max <= out_max;
+         cmp_stage_valid <= 1'b1;
+      end
+      else begin
+         index <= index;
+         out_max <= out_max;
+         cmp_stage_valid <= 1'b0;
+      end
+   end // always @ (posedge clk)
+
    // icounter increment block
    always @(posedge clk) begin
       if (icounter_extended < (buffer_length - 1)) begin
-         if (m_axis_tvalid_buff[1]) begin
+         if (sum_stage_valid) begin
             icounter <= icounter + 1'b1;
+         end else begin
+            icounter <= icounter;
          end
       end
       else if (icounter_extended == (buffer_length - 1) && m_axis_tready) begin
          icounter <= 'd0;
-      end
-      else if (!s_axis_tvalid) begin
-         icounter <= icounter + 1'b1;
-      end
-   end // always @ (posedge clk)
-
-   always @(posedge clk) begin
-      if (m_axis_tvalid & s_axis_tready) begin
-         i_square <= xi * xi;
-         q_square <= xq * xq;
       end else begin
-         i_square <= i_square;
-         q_square <= q_square;
-      end
-   end
-
-   always @(posedge clk) begin
-      if (m_axis_tvalid_buff[0] == 1'b1) begin
-         argsum <= i_square + q_square;
-      end
-   end
-
-   always @(posedge clk) begin
-      if (icounter_buff_extended == (buffer_length - 1)) begin
-         out_max <= 'd0;
-         index <= icounter[index_bits-1:0];
-      end
-      else if (argsum > out_max && m_axis_tvalid_buff[1]) begin
-         out_max <= argsum;
-         index <= icounter[index_bits-1:0];
-      end
-      else begin
-         out_max <= out_max;
-         index <= index;
+         icounter <= icounter;
       end
    end // always @ (posedge clk)
 
