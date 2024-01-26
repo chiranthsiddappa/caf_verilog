@@ -57,9 +57,6 @@ async def verify_xcorr_via_prn(dut):
         await RisingEdge(dut.clk)
         dut.m_axis_tready.value = 1
         await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
-        #output_max, captured_index = await capture_test_output_data(dut)
-        #if output_max and captured_index:
-        #    output_cap.append((output_max, captured_index))
 
     while (not output_cap):
         await RisingEdge(dut.clk)
