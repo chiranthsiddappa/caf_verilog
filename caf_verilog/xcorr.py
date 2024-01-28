@@ -10,6 +10,8 @@ import numpy as np
 import os
 from jinja2 import Environment, FileSystemLoader, Template
 
+from cocotb.triggers import RisingEdge
+
 
 class XCorr(CafVerilogBase):
 
@@ -150,12 +152,12 @@ def simple_xcorr(f, g, nlags):
     sums = []
     space = range(-nlags, nlags + 1)
     for n in space:
-        sum = 0
+        nth_sum = 0
         for m in range(0, len(g)):
             cc_index = m + n
-            if cc_index >= 0 and cc_index < len(g):
-                sum += f[m] * g[cc_index]
-        sums.append(sum)
+            if 0 <= cc_index < len(g):
+                nth_sum += f[m] * g[cc_index]
+        sums.append(nth_sum)
     return sums, space
 
 
@@ -165,7 +167,7 @@ def size_visualization(f, g, nlags):
         n_indexes = []
         for m in range(0, len(g)):
             cc_index = m + n
-            if cc_index >= 0 and cc_index < len(g):
+            if 0 <= cc_index < len(g):
                 n_indexes.append((m, cc_index))
         spacing = " " * int(n >= 0)
         print("n: " + spacing + str(n) + " " + str(n_indexes))
@@ -193,3 +195,20 @@ async def send_test_input_data(dut, x, y):
     dut.yi.value = y_i
     dut.yq.value = y_q
     dut.m_axis_tvalid.value = 1
+
+
+async def send_and_receive(dut, ref_vals, rec_vals) -> list:
+    output_cap = []
+    for ref_cpx_val, rec_cpx_val in zip(ref_vals, rec_vals):
+        await RisingEdge(dut.clk)
+        dut.m_axis_tready.value = 1
+        await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
+
+    while not output_cap:
+        await RisingEdge(dut.clk)
+        dut.m_axis_tvalid.value = 0
+        output_max, captured_index = await capture_test_output_data(dut)
+        if output_max and captured_index:
+            output_cap.append((output_max, captured_index))
+
+    return output_cap

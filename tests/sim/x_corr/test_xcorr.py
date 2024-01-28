@@ -1,4 +1,4 @@
-from caf_verilog.xcorr import XCorr, capture_test_output_data, send_test_input_data, gen_tb_values
+from caf_verilog.xcorr import XCorr, send_and_receive, gen_tb_values
 from tempfile import TemporaryDirectory
 import os
 import pathlib
@@ -17,6 +17,7 @@ from gps_helper.prn import PRN
 center = 300
 corr_length = 250
 shift = 25
+
 
 def generate_test_signals():
     prn = PRN(10)
@@ -53,17 +54,7 @@ async def verify_xcorr_via_prn(dut):
     assert dut.s_axis_tready.value == 0
     assert dut.s_axis_tvalid.value == 0
 
-    for ref_cpx_val, rec_cpx_val in input_val_pairs:
-        await RisingEdge(dut.clk)
-        dut.m_axis_tready.value = 1
-        await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
-
-    while (not output_cap):
-        await RisingEdge(dut.clk)
-        dut.m_axis_tvalid.value = 0
-        output_max, captured_index = await capture_test_output_data(dut)
-        if output_max and captured_index:
-            output_cap.append((output_max, captured_index))
+    output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
 
     index_to_verify = output_cap[0][1]
     assert index_to_verify == (corr_length / 2) - shift
