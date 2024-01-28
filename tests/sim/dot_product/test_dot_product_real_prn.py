@@ -127,7 +127,7 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=True,
-            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
+            build_args=["--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel="%s" % dot_prod_pip.module_name(), test_module='test_dot_product_real_prn')
 

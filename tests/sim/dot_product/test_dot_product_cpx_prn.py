@@ -16,6 +16,7 @@ from sk_dsp_comm import sigsys as ss
 fs = 1
 dot_length = 10
 
+
 def generate_test_signals():
     """
     PRN Sequence Generator
@@ -32,6 +33,7 @@ def generate_test_signals():
     prn_seq = prn_seq + prn_seq*1j
     prn_seq2 = prn_seq2 + prn_seq2*1j
     return prn_seq, prn_seq2
+
 
 @cocotb.test()
 async def verify_cpx_calcs(dut):
@@ -130,7 +132,7 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=True,
-            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
+            build_args=["--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel="%s" % dot_prod_pip.module_name(), test_module='test_dot_product_cpx_prn')
 

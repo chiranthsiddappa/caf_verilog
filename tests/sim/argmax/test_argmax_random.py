@@ -43,8 +43,7 @@ async def verify_arg_max(dut):
         assert index.value == np.argmax(input_abs)
     
         await empty_cycles(dut)
-    
-    
+
 
 def test_via_cocotb():
     with TemporaryDirectory() as tmpdir:
@@ -60,9 +59,10 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=True,
-            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
+            build_args=["--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel=hdl_toplevel, test_module="test_argmax_random")
+
 
 if __name__ == '__main__':
     test_via_cocotb()

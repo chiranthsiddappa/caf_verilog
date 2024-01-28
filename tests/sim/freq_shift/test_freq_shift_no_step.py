@@ -102,7 +102,7 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=False,
-            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
+            build_args=["--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel=hdl_toplevel, test_module='test_freq_shift_no_step', waves=True)
 
