@@ -17,6 +17,8 @@ from gps_helper.prn import PRN
 center = 450
 corr_length = 250
 default_shift = 25
+half_length = corr_length / 2
+shift_range = int(half_length)
 
 
 def generate_test_signals(shift):
@@ -70,10 +72,12 @@ async def verify_xcorr_via_prn(dut):
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
+    # Verify round shift
+    for idx, shift_val in enumerate(range(-1 * shift_range, shift_range)):
+        assert output_cap[idx] == shift_val
+
 
 async def full_round_shift(dut):
-    half_length = corr_length / 2
-    shift_range = int(half_length)
     output_caps = []
     for shift_in_range in range(-1 * shift_range, shift_range):
         assert shift_in_range
