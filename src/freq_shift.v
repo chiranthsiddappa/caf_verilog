@@ -45,7 +45,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
          xi_buff[0] <= xi;
          xq_buff[0] <= xq;
          xi_buff[1] <= xi_buff[0];
-         xq_buff[1] <= xi_buff[1];
+         xq_buff[1] <= xq_buff[0];
       end
       else begin
          xi_buff <= xi_buff;
