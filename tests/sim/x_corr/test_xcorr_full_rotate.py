@@ -23,7 +23,6 @@ shift_range = int(half_length)
 
 def generate_test_signals(shift):
     prn = PRN(10)
-    prn2 = PRN(20)
     fs = 625e3
     Ns = fs / 125e3
     prn_seq = prn.prn_seq()

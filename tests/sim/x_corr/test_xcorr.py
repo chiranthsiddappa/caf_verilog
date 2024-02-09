@@ -21,13 +21,10 @@ shift = 25
 
 def generate_test_signals():
     prn = PRN(10)
-    prn2 = PRN(20)
     fs = 625e3
     Ns = fs / 125e3
     prn_seq = prn.prn_seq()
-    prn_seq2 = prn2.prn_seq()
     prn_seq,b = ss.nrz_bits2(np.array(prn_seq), Ns)
-    prn_seq2,b2 = ss.nrz_bits2(np.array(prn_seq2), Ns)
     ref, rec = sim_shift(prn_seq, center, corr_length, shift=shift)
     ref_quant = quantize(ref, 12)
     rec_quant = quantize(rec, 12)
