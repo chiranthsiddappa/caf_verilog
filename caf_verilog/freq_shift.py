@@ -1,6 +1,8 @@
+import numpy as np
+
 from . caf_verilog_base import CafVerilogBase
 from .cpx_multiply import CpxMultiply
-from . sig_gen import phase_bits, SigGen, phase_increment, freq_step_str
+from . sig_gen import SigGen, phase_increment, freq_step_str
 from jinja2 import Environment, FileSystemLoader, Template
 import os
 from . quantizer import quantize
@@ -25,6 +27,18 @@ async def send_test_input_data(dut, x):
     dut.xi.value = int(x_i)
     dut.xq.value = int(x_q)
     dut.m_axis_tvalid.value = 1
+
+
+def freq_res(foas: list) -> float:
+    freqs = list()
+    for ff in foas:
+        if ff:
+            freqs.append(abs(ff))
+    freqs = np.floor(np.log10(freqs))
+    freqs = 10 ** freqs
+    min_res = min(freqs)
+    return min_res
+
 
 class FreqShift(CafVerilogBase):
 
