@@ -1,11 +1,11 @@
 from .caf_verilog_base import CafVerilogBase
 from .xcorr import XCorr
-from .freq_shift import FreqShift, freq_res
+from .freq_shift import FreqShift
 
 
 class CAFSlice(CafVerilogBase):
 
-    def __init__(self, reference, received, foas,
+    def __init__(self, reference, received, freq_res,
                  ref_i_bits=12, ref_q_bits=0,
                  rec_i_bits=12, rec_q_bits=0,
                  fs=625e3, n_bits=8,
@@ -15,7 +15,7 @@ class CAFSlice(CafVerilogBase):
         """
         self.reference = reference
         self.received = received
-        self.foas = foas
+        self.freq_res = freq_res
         self.fs = fs
         self.n_bits = n_bits
         self.ref_i_bits = ref_i_bits
@@ -28,7 +28,7 @@ class CAFSlice(CafVerilogBase):
 
     def gen_submodules(self) -> dict:
         submodules = dict()
-        submodules['freq_shift'] = FreqShift(self.received, freq_res(self.foas), self.fs, self.n_bits,
+        submodules['freq_shift'] = FreqShift(self.received, self.freq_res, self.fs, self.n_bits,
                                              i_bits=self.rec_i_bits, q_bits=self.rec_q_bits,
                                              output_dir=self.output_dir)
         submodules['x_corr'] = XCorr(self.reference, self.received, self.ref_i_bits, self.ref_q_bits,
