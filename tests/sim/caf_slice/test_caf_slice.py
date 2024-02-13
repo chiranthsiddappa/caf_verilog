@@ -50,9 +50,11 @@ async def verify_caf_slice(dut):
 
     # TODO: Add required test fixture variables above
     cocotb.start_soon(clock.start(start_high=False))
-
+    
+    await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 0
 
+    await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 1
 
