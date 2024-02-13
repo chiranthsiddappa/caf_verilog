@@ -63,7 +63,7 @@ async def verify_caf_slice(dut):
 def test_via_cocotb():
     with TemporaryDirectory() as tmpdir:
         ref_quant, rec_quant = generate_test_signals(default_shift)
-        caf_slice = CAFSlice(ref_quant, rec_quant, freq_res=freq_res, n_bits=n_bits, output_dir=tmpdir)
+        caf_slice = CAFSlice(ref_quant, rec_quant, freq_res=freq_res, n_bits=n_bits, fs=fs, output_dir=tmpdir)
         verilog_sources = [os.path.join(tmpdir, filename) for filename in glob.glob("%s/*.v" % tmpdir)]
         runner = sim_get_runner()
         hdl_toplevel = "%s" % caf_slice.module_name()
