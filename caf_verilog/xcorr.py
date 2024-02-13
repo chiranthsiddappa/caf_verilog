@@ -10,7 +10,11 @@ import numpy as np
 import os
 from jinja2 import Environment, FileSystemLoader, Template
 
-from cocotb.triggers import RisingEdge
+try:
+    from cocotb.triggers import RisingEdge
+except ImportError as ie:
+    import warnings
+    warnings.warn("Could not import cocotb", ImportWarning)
 
 
 class XCorr(CafVerilogBase):

@@ -1,12 +1,12 @@
 from logging import getLogger
 import numpy as np
 
-__log__ = getLogger()
-
 try:
     from cocotb.runner import get_runner, Simulator
 except ImportError as ie:
-    __log__.warn("Could not import cocotb")
+    import warnings
+    Simulator = object
+    warnings.warn("Could not import cocotb", ImportWarning)
 import os
 
 __hdl_toplevel_lang__ = os.getenv("HDL_TOPLEVEL_LANG", "verilog")
