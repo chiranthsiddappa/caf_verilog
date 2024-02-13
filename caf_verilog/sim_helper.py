@@ -1,4 +1,8 @@
-def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False):
+import numpy as np
+
+
+def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False,
+              freq_shift=0, fs=625e3):
     """
 
     :param ref: Reference signal.
@@ -7,6 +11,8 @@ def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False):
     :param shift: How much shift should be added to the simulated received signal.
     :param rec: A received signal can be provided for the correlation simulation.
     :param padding: Use padding to add zeros on the reference signal; ex. for generating a plot.
+    :param freq_shift: Apply a frequency shift to the reference signal
+    :param fs: Sampling Frequency
     :return: ref, rec
     :rtype: tuple
     """
@@ -20,7 +26,10 @@ def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False):
         index_error |= not ((ref_center + ref_length) < len(rec))
         if index_error:
             raise IndexError("Center and length result in an out of bounds error in rec")
-    ref_ret = ref[ref_center - fill_length: ref_center + fill_length]
+    t = np.arange(len(ref))
+    x_shift = np.exp(2 * np.pi * (freq_shift / fs) * t * 1j)
+    ref_plus_shift = [ref[i] * x_i_shift for i, x_i_shift in enumerate(x_shift)]
+    ref_ret = ref_plus_shift[ref_center - fill_length: ref_center + fill_length]
     if padding:
         fill_zeros = [0 for zz in range(0, fill_length)]
         ref_ret = fill_zeros + list(ref_ret)
