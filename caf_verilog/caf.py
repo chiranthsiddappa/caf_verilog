@@ -128,8 +128,6 @@ class CAF(CafVerilogBase):
 def simple_caf(x, y, foas, fs):
     """
     Produce values for a surface plot of the Complex Ambiguity Function.
-    This function primarily supports testing values produced via sim_helper, so y is expected to be twice the length of
-    x.
     The return is the CAF surface and a time delay range normalized by the sampling frequency.
 
     :param x: Use x as a reference signal.
@@ -140,14 +138,14 @@ def simple_caf(x, y, foas, fs):
     """
     nlags = len(x)
     ztup = (nlags, len(foas))
-    caf_res = np.zeros(ztup)
+    caf_res = []
     nlen = len(y)
     nrange = np.arange(0, nlen)
     dt_lags = nlags // 2
     dt = np.arange(-dt_lags, dt_lags) / float(fs)
-    for k, Df in enumerate(foas):
+    for k, Df in enumerate(reversed(foas)):
         theta = np.exp(1j*2*np.pi*nrange*Df/float(fs))
         y_shift = y * theta
         rxy, lags = dc.xcorr(x, y_shift, nlags)
-        caf_res[:, k] = np.abs(rxy)
+        caf_res.append(np.abs(rxy))
     return caf_res, dt
