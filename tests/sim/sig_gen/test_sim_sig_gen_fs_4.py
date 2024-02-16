@@ -28,6 +28,10 @@ async def gen_signal_fs_4_via_sim(dut):
     # Start the clock. Start it low to avoid issues on the first RisingEdge
     cocotb.start_soon(clock.start(start_high=False))
 
+    for _ in range(10):
+        await RisingEdge(dut.clk)
+        assert dut.s_axis_data_tvalid == 0
+
     dut.m_axis_data_tready.value = 1
     dut.m_axis_freq_step_tvalid.value = 1
 
