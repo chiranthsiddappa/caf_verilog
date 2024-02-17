@@ -12,7 +12,6 @@ module caf_slice #(parameter phase_bits = 10,
                    parameter out_max_bits = 5
                    )
    (input clk,
-    input                              freq_incr_valid,
     input [phase_bits - 1:0]           freq_step,
     input                              neg_shift,
     input                              m_axis_tvalid,
@@ -30,9 +29,12 @@ module caf_slice #(parameter phase_bits = 10,
 
    wire [xi_bits -1:0]                 freq_slice_xi;
    wire [xq_bits -1:0]                 freq_slice_xq;
-   wire [yi_bits -1:0]                 freq_slice_yi;
-   wire [yq_bits -1:0]                 freq_slice_yq;
+   wire [yi_bits - 1:0]                freq_slice_yi;
+   wire [yq_bits - 1:0]                freq_slice_yq;
+   reg [yi_bits -1:0]                  freq_slice_yi_buff [0:5];
+   reg [yq_bits -1:0]                  freq_slice_yq_buff [0:5];
    wire                                slice_inputs_valid;
+   reg [5:0]                           slice_inputs_valid_buff;
 
    // freq_shift axi signals
    wire                                s_axis_freq_tvalid;
@@ -52,6 +54,19 @@ module caf_slice #(parameter phase_bits = 10,
    assign m_axis_freq_tvalid = m_axis_tvalid;
 
    assign m_axis_freq_tready = s_axis_xcorr_tready;
+   assign m_axis_x_corr_tvalid = s_axis_freq_tvalid;
+
+   initial begin
+      slice_inputs_valid_buff = 6'b00_0000;
+   end
+
+   always @(posedge clk) begin
+      slice_inputs_valid_buff <= (slice_inputs_valid_buff << 1) | { 5'b0_0000, m_axis_tvalid};
+      freq_slice_yi_buff[0] <= yi;
+      freq_slice_yq_buff[0] <= yq;
+      freq_slice_yi_buff[1:5] <= freq_slice_yi_buff[0:4];
+      freq_slice_yq_buff[1:5] <= freq_slice_yq_buff[0:4];
+   end
 
    {{ freq_shift_name }} #(.phase_bits(phase_bits),
                            .i_bits(xi_bits),

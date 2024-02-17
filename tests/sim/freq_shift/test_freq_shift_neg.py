@@ -46,7 +46,10 @@ async def verify_freq_shift(dut):
     await RisingEdge(dut.clk)
     assert dut.s_axis_tvalid == 0
     assert dut.s_axis_tready == 0
+
+    await RisingEdge(dut.clk)
     dut.freq_step.value = increment
+    dut.freq_step_valid.value = 1
 
     while (dut.s_axis_tready.value == 0):
         await RisingEdge(dut.clk)

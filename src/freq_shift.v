@@ -20,37 +20,32 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
 
    wire                                                  m_axis_sig_gen_tready;
    wire signed [{{ freq_shift_n_bits - 1 }}:0]           cosine;
-   reg signed [{{ freq_shift_n_bits - 1 }}:0]            cosine_buff;
    wire signed [{{ freq_shift_n_bits - 1 }}:0]           sine;
-   reg signed [{{ freq_shift_n_bits - 1 }}:0]            sine_buff;
    wire                                                  s_axis_sig_gen_tvalid;
    reg                                                   s_axis_sig_gen_tvalid_buff;
    wire                                                  m_axis_mult_tvalid;
-   reg                                                   m_axis_tvalid_buff [1:0];
+   reg                                                   m_axis_tvalid_buff;
    wire                                                  s_axis_mult_tready;
    reg                                                   s_axis_mult_tready_buff;
-   reg [i_bits - 1:0]                                    xi_buff [1:0];
-   reg [q_bits - 1:0]                                    xq_buff [1:0];
+   reg [i_bits - 1:0]                                    xi_buff;
+   reg [q_bits - 1:0]                                    xq_buff;
 
    // Internal buffers for timing
    always @(posedge clk) begin
       s_axis_sig_gen_tvalid_buff <= s_axis_sig_gen_tvalid;
       s_axis_mult_tready_buff <= s_axis_mult_tready;
-      m_axis_tvalid_buff[0] <= m_axis_tvalid;
-      m_axis_tvalid_buff[1] <= m_axis_tvalid_buff[0];
+      m_axis_tvalid_buff <= m_axis_tvalid;
    end
 
    // Buffer inputs
    always @(posedge clk) begin
       if (m_axis_tvalid) begin
-         xi_buff[0] <= xi;
+         xi_buff <= xi;
          if (neg_shift) begin
-            xq_buff[0] <= xq * -'d1;
+            xq_buff <= xq * -'d1;
          end else begin
-            xq_buff <= xq_buff;
+            xq_buff <= xq;
          end
-         xi_buff[1] <= xi_buff[0];
-         xq_buff[1] <= xq_buff[0];
       end
       else begin
          xi_buff <= xi_buff;
@@ -58,17 +53,9 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
       end
    end // always @ (posedge clk)
 
-   // Buffer sig gen and apply neg shift
-   always @(posedge clk) begin
-      if (s_axis_sig_gen_tvalid) begin
-         cosine_buff <= cosine;
-         sine_buff <= sine;
-      end
-   end
-
    assign m_axis_sig_gen_tready = m_axis_tvalid;
    assign s_axis_tready = s_axis_mult_tready_buff & freq_step_valid;
-   assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid_buff & (m_axis_tvalid_buff[0] | m_axis_tvalid_buff[1]);
+   assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid_buff & m_axis_tvalid_buff;
 
    {{ sig_gen_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
                         .n_bits({{ freq_shift_n_bits }}),
@@ -88,10 +75,10 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
                   .q_bits(q_bits)) freq_mult(.clk(clk),
                                              .m_axis_tready(m_axis_tready),
                                              .m_axis_tvalid(m_axis_mult_tvalid),
-                                             .xi(xi_buff[1]),
-                                             .xq(xq_buff[1]),
-                                             .yi(cosine_buff),
-                                             .yq(sine_buff),
+                                             .xi(xi_buff),
+                                             .xq(xq_buff),
+                                             .yi(cosine),
+                                             .yq(sine),
                                              .s_axis_tready(s_axis_mult_tready),
                                              .i(i),
                                              .q(q),
