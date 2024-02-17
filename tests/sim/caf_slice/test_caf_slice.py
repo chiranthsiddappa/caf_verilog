@@ -1,4 +1,6 @@
 from caf_verilog.caf_slice import CAFSlice
+from caf_verilog.sig_gen import calc_smallest_phase_size, phase_increment
+from caf_verilog.xcorr import gen_tb_values, send_test_input_data
 from tempfile import TemporaryDirectory
 import glob
 import os
@@ -32,13 +34,13 @@ half_length = corr_length / 2
 shift_range = int(half_length)
 
 
-def generate_test_signals(shift):
+def generate_test_signals(time_shift, freq_shift, fs):
     prn = PRN(10)
     fs = 625e3
     Ns = fs / 125e3
     prn_seq = prn.prn_seq()
     prn_seq,b = ss.nrz_bits2(np.array(prn_seq), Ns)
-    ref, rec = sim_shift(prn_seq, center, corr_length, shift=shift)
+    ref, rec = sim_shift(prn_seq, center, corr_length, shift=time_shift, freq_shift=freq_shift, fs=fs)
     ref_quant = quantize(ref, 12)
     rec_quant = quantize(rec, 12)
     return ref_quant, rec_quant
@@ -48,23 +50,36 @@ def generate_test_signals(shift):
 async def verify_caf_slice(dut):
     clock = Clock(dut.clk, period=10, units='ns')
 
-    # TODO: Add required test fixture variables above
+    # Step related calcs
+    num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)
+    increment = phase_increment(f_out=f_shift, phase_bits=num_phase_bits, f_clk=fs)
+    ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, fs=fs)
+    ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
+
     cocotb.start_soon(clock.start(start_high=False))
     
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 0
 
     await RisingEdge(dut.clk)
+    dut.freq_step.value = increment
+    dut.freq_step_valid.value = 1
+
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 1
 
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
+    for ref_cpx_val, rec_cpx_val in zip(ref_quant_tb, rec_quant_tb):
+        await RisingEdge(dut.clk)
+        dut.m_axis_tready.value = 1
+        await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
+
 
 def test_via_cocotb():
     with TemporaryDirectory() as tmpdir:
-        ref_quant, rec_quant = generate_test_signals(default_shift)
+        ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, fs=fs)
         caf_slice = CAFSlice(ref_quant, rec_quant, freq_res=freq_res, n_bits=n_bits, fs=fs, output_dir=tmpdir)
         verilog_sources = [os.path.join(tmpdir, filename) for filename in glob.glob("%s/*.v" % tmpdir)]
         runner = sim_get_runner()
