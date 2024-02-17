@@ -7,6 +7,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
                                   input                        clk,
                                   input                        m_axis_tvalid,
                                   input [phase_bits - 1:0]     freq_step,
+                                  input                        freq_step_valid,
                                   input                        neg_shift,
                                   input signed [i_bits - 1:0]  xi,
                                   input signed [q_bits - 1:0]  xq,
@@ -43,7 +44,11 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    always @(posedge clk) begin
       if (m_axis_tvalid) begin
          xi_buff[0] <= xi;
-         xq_buff[0] <= xq;
+         if (neg_shift) begin
+            xq_buff[0] <= xq * -'d1;
+         end else begin
+            xq_buff <= xq_buff;
+         end
          xi_buff[1] <= xi_buff[0];
          xq_buff[1] <= xq_buff[0];
       end
@@ -57,23 +62,19 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    always @(posedge clk) begin
       if (s_axis_sig_gen_tvalid) begin
          cosine_buff <= cosine;
-         if (neg_shift) begin
-            sine_buff <= sine * -'d1;
-         end else begin
-            sine_buff <= sine;
-         end
+         sine_buff <= sine;
       end
    end
 
-   assign m_axis_sig_gen_tready = ~s_axis_sig_gen_tvalid | (m_axis_tvalid_buff[0] & s_axis_mult_tready);
-   assign s_axis_tready = s_axis_mult_tready_buff;
+   assign m_axis_sig_gen_tready = m_axis_tvalid;
+   assign s_axis_tready = s_axis_mult_tready_buff & freq_step_valid;
    assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid_buff & (m_axis_tvalid_buff[0] | m_axis_tvalid_buff[1]);
 
    {{ sig_gen_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
                         .n_bits({{ freq_shift_n_bits }}),
                         .lut_length({{ lut_length }})) {{ sig_gen_inst_name }}(.clk(clk),
                                                                                .m_axis_data_tready(m_axis_sig_gen_tready),
-                                                                               .m_axis_freq_step_tvalid(m_axis_tvalid),
+                                                                               .m_axis_freq_step_tvalid(freq_step_valid),
                                                                                .freq_step(freq_step),
                                                                                .cosine(cosine),
                                                                                .sine(sine),
