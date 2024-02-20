@@ -34,13 +34,13 @@ half_length = corr_length / 2
 shift_range = int(half_length)
 
 
-def generate_test_signals(time_shift, freq_shift, fs):
+def generate_test_signals(time_shift, freq_shift, f_samp):
     prn = PRN(10)
     fs = 625e3
     Ns = fs / 125e3
     prn_seq = prn.prn_seq()
     prn_seq,b = ss.nrz_bits2(np.array(prn_seq), Ns)
-    ref, rec = sim_shift(prn_seq, center, corr_length, shift=time_shift, freq_shift=freq_shift, fs=fs)
+    ref, rec = sim_shift(prn_seq, center, corr_length, shift=time_shift, freq_shift=freq_shift, fs=f_samp)
     ref_quant = quantize(ref, 12)
     rec_quant = quantize(rec, 12)
     return ref_quant, rec_quant
@@ -48,13 +48,17 @@ def generate_test_signals(time_shift, freq_shift, fs):
 
 @cocotb.test()
 async def verify_caf_slice(dut):
-    clock = Clock(dut.clk, period=10, units='ns')
-
     # Step related calcs
     num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)
     increment = phase_increment(f_out=f_shift, phase_bits=num_phase_bits, f_clk=fs)
-    ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, fs=fs)
+    ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, f_samp=fs)
     ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
+    input_val_pairs = list(zip(ref_quant_tb, rec_quant_tb))
+
+    assert (len(input_val_pairs) % len(ref_quant)) == 0
+    assert len(input_val_pairs) == (len(ref_quant)**2 + len(ref_quant))
+
+    clock = Clock(dut.clk, period=10, units='ns')
 
     cocotb.start_soon(clock.start(start_high=False))
     
@@ -64,6 +68,7 @@ async def verify_caf_slice(dut):
     await RisingEdge(dut.clk)
     dut.freq_step.value = increment
     dut.freq_step_valid.value = 1
+    dut.neg_shift.value = 1
 
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 1
@@ -76,17 +81,23 @@ async def verify_caf_slice(dut):
         dut.m_axis_tready.value = 1
         await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
 
+    for _ in range(0, 100):
+        await RisingEdge(dut.clk)
+
 
 def test_via_cocotb():
     with TemporaryDirectory() as tmpdir:
-        ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, fs=fs)
+        ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, f_samp=fs)
         caf_slice = CAFSlice(ref_quant, rec_quant, freq_res=freq_res, n_bits=n_bits, fs=fs, output_dir=tmpdir)
         verilog_sources = [os.path.join(tmpdir, filename) for filename in glob.glob("%s/*.v" % tmpdir)]
         runner = sim_get_runner()
         hdl_toplevel = "%s" % caf_slice.module_name()
+        cs_params = caf_slice.params_dict()
+        assert 'length' in cs_params
+        assert cs_params['length'] == len(ref_quant) + 2  # Plus two added by
         runner.build(
             verilog_sources=verilog_sources,
-            parameters=caf_slice.params_dict(),
+            parameters=cs_params,
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=False,
