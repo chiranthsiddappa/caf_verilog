@@ -1,6 +1,5 @@
-from caf_verilog.caf_slice import CAFSlice
+from caf_verilog.caf_slice import CAFSlice, send_and_receive, gen_tb_values
 from caf_verilog.sig_gen import calc_smallest_phase_size, phase_increment
-from caf_verilog.xcorr import gen_tb_values, send_test_input_data
 from tempfile import TemporaryDirectory
 import glob
 import os
@@ -17,18 +16,11 @@ from sk_dsp_comm import sigsys as ss
 from gps_helper.prn import PRN
 
 fs = 625e3
-f_out = 50e3
-f_shift = 20e3
-freq_res = 200
+f_shift = 500
+freq_res = 10
 n_bits = 8
-n = np.arange(0,10e3)
-x = np.exp(2 * np.pi * (f_out / fs) * n * 1j)
-x_q = quantize(x, n_bits)
-x_shift_gen = np.exp(2 * np.pi * (f_shift / fs) * n * -1j)
-x_shift_gen_q = quantize(x_shift_gen, n_bits)
-x_shifted_exp_q = x_q * x_shift_gen_q
-center = 300
-corr_length = 250
+center = 350
+corr_length = 300
 default_shift = 25
 half_length = corr_length / 2
 shift_range = int(half_length)
@@ -36,11 +28,14 @@ shift_range = int(half_length)
 
 def generate_test_signals(time_shift, freq_shift, f_samp):
     prn = PRN(10)
-    fs = 625e3
+    fs = f_samp
     Ns = fs / 125e3
     prn_seq = prn.prn_seq()
     prn_seq,b = ss.nrz_bits2(np.array(prn_seq), Ns)
-    ref, rec = sim_shift(prn_seq, center, corr_length, shift=time_shift, freq_shift=freq_shift, fs=f_samp)
+    prn_seq = [*prn_seq, *prn_seq]
+    prn_seq = np.array(prn_seq)
+    prn_seq = prn_seq + prn_seq*1j
+    ref, rec = sim_shift(prn_seq, center, corr_length, shift=time_shift, freq_shift=freq_shift, fs=fs)
     ref_quant = quantize(ref, 12)
     rec_quant = quantize(rec, 12)
     return ref_quant, rec_quant
@@ -50,6 +45,7 @@ def generate_test_signals(time_shift, freq_shift, f_samp):
 async def verify_caf_slice(dut):
     # Step related calcs
     num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)
+    # assert num_phase_bits == 12
     increment = phase_increment(f_out=f_shift, phase_bits=num_phase_bits, f_clk=fs)
     ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, f_samp=fs)
     ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
@@ -76,10 +72,10 @@ async def verify_caf_slice(dut):
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
-    for ref_cpx_val, rec_cpx_val in zip(ref_quant_tb, rec_quant_tb):
-        await RisingEdge(dut.clk)
-        dut.m_axis_tready.value = 1
-        await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
+    output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+
+    index_to_verify = output_cap[0][1]
+    assert index_to_verify.value == (corr_length / 2) - default_shift
 
     for _ in range(0, 100):
         await RisingEdge(dut.clk)
