@@ -129,7 +129,7 @@ def gen_tb_values(ref, rec):
     return ref_tb, rec_tb
 
 
-def dot_xcorr(ref, rec):
+def dot_xcorr(ref, rec) -> list:
     """
     Perform the cross correlation using the dot product.
     This produces an output list of magnitudes that are inverse offset from the center
@@ -140,8 +140,9 @@ def dot_xcorr(ref, rec):
     :return:
     """
     dx = []
-    for i in range(0, len(rec) - len(ref) + 1):
-        dx.append(dot_product(ref, rec[i:len(ref) + i]))
+    ref_len = len(ref)
+    for i in range(0, len(rec) - ref_len + 1):
+        dx.append(dot_product(ref, rec[i:ref_len + i]))
     return dx
 
 
