@@ -33,21 +33,21 @@ module cpx_multiply #(parameter xi_bits = 12,
     *    x       y
     * (x + yi)(u + vi) = (xu - yv) + (xv + yu)i
     */
-   reg signed [xi_bits + yi_bits:0] 	   i_sub;
-   reg signed [xi_bits + yi_bits:0]      i_sub_out;
-   reg signed [xq_bits + yq_bits:0]      q_add;
-   reg signed [xq_bits + yq_bits:0]      q_add_out;
-   reg signed [xi_bits + yi_bits:0]      xu;
-   reg signed [xi_bits + yi_bits:0]      xu_out;
-   reg signed [xq_bits + yq_bits:0]      yv;
-   reg signed [xq_bits + yq_bits:0]      yv_out;
-   reg signed [xi_bits + yq_bits:0]      xv;
-   reg signed [xi_bits + yq_bits:0]      xv_out;
-   reg signed [xq_bits + yi_bits:0]      yu;
-   reg signed [xq_bits + yi_bits:0]      yu_out;
+   reg signed [(xi_bits + yi_bits)-1:0] 	   i_sub;
+   reg signed [(xi_bits + yi_bits)-1:0]      i_sub_out;
+   reg signed [(xq_bits + yq_bits)-1:0]      q_add;
+   reg signed [(xq_bits + yq_bits)-1:0]      q_add_out;
+   reg signed [(xi_bits + yi_bits)-1:0]      xu;
+   reg signed [(xi_bits + yi_bits)-1:0]      xu_out;
+   reg signed [(xq_bits + yq_bits)-1:0]      yv;
+   reg signed [(xq_bits + yq_bits)-1:0]      yv_out;
+   reg signed [(xi_bits + yq_bits)-1:0]      xv;
+   reg signed [(xi_bits + yq_bits)-1:0]      xv_out;
+   reg signed [(xq_bits + yi_bits)-1:0]      yu;
+   reg signed [(xq_bits + yi_bits)-1:0]      yu_out;
 
-   assign i = i_sub_out[xi_bits+yi_bits-1: xi_bits+yi_bits-i_bits];
-   assign q = q_add_out[xq_bits+yq_bits-1: xq_bits+yq_bits-q_bits];
+   assign i = i_sub_out[(xi_bits+yi_bits)-1: (xi_bits+yi_bits-i_bits)];
+   assign q = q_add_out[(xq_bits+yq_bits)-1: (xq_bits+yq_bits-q_bits)];
 
    always @(posedge clk) begin
       if (m_axis_tvalid & s_axis_tready) begin
