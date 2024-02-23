@@ -30,9 +30,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    always @(posedge clk) begin
       if (m_axis_freq_step_tvalid) begin
          freq_step_set <= 1'b1;
-         if (freq_step_buff != freq_step) begin
-            freq_step_buff <= freq_step;
-         end
+         freq_step_buff <= freq_step;
       end
    end
 
@@ -49,7 +47,7 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
          phase <= phase;
          phase_4 <= phase_4;
       end
-   end
+   end // always @ (posedge clk)
 
    always @(posedge clk) begin
       if (freq_step_set | m_axis_freq_step_tvalid) begin

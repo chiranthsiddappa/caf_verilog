@@ -74,6 +74,9 @@ async def gen_signal_fs_4_via_sim(dut):
     Px_q, f_q = my_psd(sin_validate_q, 2**12, f_clk)
     assert np.argmax(Px_gen) == np.argmax(Px_q)
 
+    assert cosine_generated_values[0] != cosine_generated_values[1]
+    assert sine_generated_values[0] != sine_generated_values[1]
+
 
 def test_via_cocotb():
     """

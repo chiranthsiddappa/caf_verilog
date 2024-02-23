@@ -78,6 +78,7 @@ async def verify_freq_shift(dut):
 
     assert len(output_cap) == vals
     npt.assert_equal(output_cap[0].real, 1015)
+    npt.assert_equal(output_cap[0].imag, 0)
 
     # Verify signal frequencies after shift
     # Cosine
