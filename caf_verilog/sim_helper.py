@@ -31,7 +31,7 @@ def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False,
     :param shift: How much shift should be added to the simulated received signal.
     :param rec: A received signal can be provided for the correlation simulation.
     :param padding: Use padding to add zeros on the reference signal; ex. for generating a plot.
-    :param freq_shift: Apply a frequency shift to the reference signal, and return with shift as reference.
+    :param freq_shift: Apply a frequency shift to the reference signal, and return with shift as received.
     :param fs: Sampling Frequency
     :return: ref, rec
     :rtype: tuple

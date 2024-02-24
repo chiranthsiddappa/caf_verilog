@@ -125,7 +125,7 @@ class CAF(CafVerilogBase):
                 nn_file.write(str(int(freq < 0)) + '\n')
 
 
-def simple_caf(x, y, foas, fs):
+def simple_caf(x, y, foas, fs, n_bits=0):
     """
     Produce values for a surface plot of the Complex Ambiguity Function.
     The return is the CAF surface and a time delay range normalized by the sampling frequency.
@@ -134,6 +134,7 @@ def simple_caf(x, y, foas, fs):
     :param y: Use y as a captured signal.
     :param foas: Frequency offsets, provided as a list/iterable object.
     :param fs: Sampling frequency
+    :param n_bits: 0 for no quantization on sinusoids
     :return: caf_res, dt
     """
     nlags = len(x)
@@ -145,6 +146,8 @@ def simple_caf(x, y, foas, fs):
     dt = np.arange(-dt_lags, dt_lags) / float(fs)
     for k, Df in enumerate(reversed(foas)):
         theta = np.exp(1j*2*np.pi*nrange*Df/float(fs))
+        if n_bits:
+            theta = quantize(theta, n_bits)
         y_shift = y * theta
         rxy, lags = dc.xcorr(x, y_shift, nlags)
         caf_res.append(np.abs(rxy))
