@@ -58,6 +58,15 @@ async def gen_signal_fs_4_via_sim(dut):
     for _ in range(0, 5):
         await RisingEdge(dut.clk)
 
+    increment = phase_increment(f_out=f_out / 4, phase_bits=num_phase_bits, f_clk=f_clk)
+    dut.freq_step.value = increment
+    dut.m_axis_freq_step_tvalid.value = 1
+    dut.m_axis_data_tready.value = 1
+
+    for _ in range(0, 5):
+        assert dut.s_axis_data_tvalid.value == 1
+        await RisingEdge(dut.clk)
+
 
 def test_via_cocotb():
     """
