@@ -16,12 +16,12 @@ from sk_dsp_comm import sigsys as ss
 from gps_helper.prn import PRN
 
 fs = 625e3
-f_shift = 500
+f_shift = 20e3
 freq_res = 10
 n_bits = 8
 center = 350
-corr_length = 300
-default_shift = 25
+corr_length = 250
+default_shift = 0
 half_length = corr_length / 2
 shift_range = int(half_length)
 
@@ -29,7 +29,7 @@ shift_range = int(half_length)
 def generate_test_signals(time_shift, freq_shift, f_samp):
     prn = PRN(10)
     fs = f_samp
-    Ns = fs / 125e3
+    Ns = 5
     prn_seq = prn.prn_seq()
     prn_seq,b = ss.nrz_bits2(np.array(prn_seq), Ns)
     prn_seq = [*prn_seq, *prn_seq]
@@ -66,6 +66,8 @@ async def verify_caf_slice(dut):
     dut.freq_step_valid.value = 1
     dut.neg_shift.value = 1
 
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 1
 
