@@ -57,7 +57,11 @@ module {{ sig_gen_name }} #(parameter phase_bits = 32,
    end
 
    always @(posedge clk) begin
-      if (phase_increment_step_condition | phase_increment_m_axis_condition) begin
+      if (m_axis_freq_step_tvalid & phase_increment_m_axis_condition) begin
+         phase <= phase + freq_step;
+         phase_4 <= phase_4 + freq_step;
+      end
+      else if (phase_increment_step_condition | phase_increment_m_axis_condition) begin
          phase <= phase + freq_step_buff;
          phase_4 <= phase_4 + freq_step_buff;
       end
