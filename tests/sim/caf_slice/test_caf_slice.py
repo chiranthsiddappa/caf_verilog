@@ -19,7 +19,7 @@ fs = 625e3
 f_shift = 20e3
 freq_res = 10
 n_bits = 8
-center = 350
+center = 450
 corr_length = 250
 default_shift = 0
 half_length = corr_length / 2
@@ -77,7 +77,7 @@ async def verify_caf_slice(dut):
     output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
 
     index_to_verify = output_cap[0][1]
-    assert index_to_verify.value == (corr_length / 2) - default_shift
+    assert index_to_verify.value == half_length - default_shift
 
     for _ in range(0, 100):
         await RisingEdge(dut.clk)

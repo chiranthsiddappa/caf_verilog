@@ -21,7 +21,7 @@ fs = 625e3
 f_shift = 20e3
 freq_res = 10
 n_bits = 8
-center = 350
+center = 450
 corr_length = 250
 default_shift = 0
 half_length = corr_length / 2
@@ -74,9 +74,11 @@ async def verify_caf_slice_time_shifts(dut):
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
-    for time_shift in range(-int(half_length), int(half_length)+1, 5):
-        status_file.write("Starting Time Shift: %d\n" % time_shift)
-        ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, f_samp=fs)
+    for shift_in_range in range(-1 * shift_range, shift_range + 1, 5):
+        status_file.write("Starting Time Shift: %d\n" % shift_in_range)
+        ref_quant, rec_quant = generate_test_signals(time_shift=shift_in_range, freq_shift=f_shift, f_samp=fs)
+        assert len(ref_quant) == corr_length
+        assert len(rec_quant) == corr_length * 2
         ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
         input_val_pairs = list(zip(ref_quant_tb, rec_quant_tb))
 
@@ -85,8 +87,10 @@ async def verify_caf_slice_time_shifts(dut):
         output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
 
         index_to_verify = output_cap[0][1]
-        assert index_to_verify.value == (corr_length / 2) - default_shift
-        status_file.write("Completed Time Shift: %d\n" % time_shift)
+        out_max = output_cap[0][0].value
+        assert index_to_verify.value == half_length - shift_in_range
+        status_file.write("Completed Time Shift: %d index: %d out_max %d\n" % (shift_in_range,
+                          int(index_to_verify.value), int(out_max)))
 
         for _ in range(0, 10):
             await RisingEdge(dut.clk)
