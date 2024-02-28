@@ -18,7 +18,9 @@ def sim_get_runner() -> Simulator:
 
 
 def get_sim_cpus() -> int:
-    return len(os.sched_getaffinity(0))
+    num_cpus = len(os.sched_getaffinity(0))
+    num_cpus = max(int(num_cpus / 2), 1)
+    return num_cpus
 
 
 def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False,
