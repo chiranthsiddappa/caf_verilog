@@ -78,7 +78,7 @@ async def verify_xcorr_via_prn(dut):
 
 async def full_round_shift(dut):
     output_caps = []
-    for shift_in_range in range(-1 * shift_range, shift_range):
+    for shift_in_range in range(-1 * shift_range, shift_range + 1):
         assert shift_in_range
         ref_quant, rec_quant = generate_test_signals(shift_in_range)
         ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
