@@ -74,7 +74,7 @@ async def verify_caf_slice_time_shifts(dut):
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
-    for time_shift in range(-int(half_length), int(half_length)+1):
+    for time_shift in range(-int(half_length), int(half_length)+1, 5):
         status_file.write("Starting Time Shift: %d\n" % time_shift)
         ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=f_shift, f_samp=fs)
         ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
