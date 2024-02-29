@@ -84,13 +84,13 @@ async def verify_caf_slice_time_shifts(dut):
 
         assert (len(input_val_pairs) % len(ref_quant)) == 0
         assert len(input_val_pairs) == (len(ref_quant) ** 2 + len(ref_quant))
-        output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+        output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
 
-        index_to_verify = output_cap[0][1]
-        out_max = output_cap[0][0].value
-        assert index_to_verify.value == half_length - shift_in_range
+        index_to_verify = index.value
+        out_max = output_max.value
+        assert index_to_verify == half_length - shift_in_range
         status_file.write("Completed Time Shift: %d index: %d out_max %d\n" % (shift_in_range,
-                          int(index_to_verify.value), int(out_max)))
+                          int(index_to_verify), int(out_max)))
 
         for _ in range(0, 10):
             await RisingEdge(dut.clk)

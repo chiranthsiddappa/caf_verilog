@@ -74,10 +74,10 @@ async def verify_caf_slice(dut):
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
-    output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+    output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
 
-    index_to_verify = output_cap[0][1]
-    assert index_to_verify.value == half_length - default_shift
+    index_to_verify = index.value
+    assert index_to_verify == half_length - default_shift
 
     for _ in range(0, 100):
         await RisingEdge(dut.clk)

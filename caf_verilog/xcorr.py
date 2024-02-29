@@ -208,7 +208,7 @@ async def send_test_input_data(dut, x, y):
     dut.m_axis_tvalid.value = 1
 
 
-async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable) -> list:
+async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable) -> tuple:
     """
 
     :param dut: Design Under Test
@@ -225,6 +225,5 @@ async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable) -> list:
     dut.m_axis_tvalid.value = 0
 
     output_max, captured_index = await capture_test_output_data(dut)
-    output_cap.append((output_max, captured_index))
 
-    return output_cap
+    return output_max, captured_index

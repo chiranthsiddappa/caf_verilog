@@ -51,9 +51,9 @@ async def verify_xcorr_via_prn(dut):
     assert dut.s_axis_tready.value == 0
     assert dut.s_axis_tvalid.value == 0
 
-    output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+    output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
 
-    index_to_verify = output_cap[0][1]
+    index_to_verify = index.value
     assert index_to_verify == (corr_length / 2) - shift
 
     await RisingEdge(dut.clk)
