@@ -48,7 +48,7 @@ def generate_test_signals(time_shift, freq_shift, f_samp):
 
 @cocotb.test()
 async def verify_caf_slice_time_shifts(dut):
-    status_file = open(os.path.join(output_dir, "status_file.txt"), 'w', buffering=1)
+    status_file = open(os.path.join(output_dir, "time_shifts_status_file.txt"), 'w', buffering=1)
     # Step related calcs
     num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)
     # assert num_phase_bits == 12
