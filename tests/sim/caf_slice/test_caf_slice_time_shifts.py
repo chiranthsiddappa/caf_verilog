@@ -48,7 +48,7 @@ def generate_test_signals(time_shift, freq_shift, f_samp):
 
 @cocotb.test()
 async def verify_caf_slice_time_shifts(dut):
-    status_file = open(os.path.join(output_dir, "time_shifts_status_file.txt"), 'w', buffering=1)
+    status_file = open(os.path.join(output_dir, "time_shifts_status_file.csv"), 'w', buffering=1)
     # Step related calcs
     num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)
     # assert num_phase_bits == 12
@@ -74,8 +74,8 @@ async def verify_caf_slice_time_shifts(dut):
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
+    status_file.write("time_shift,index,out_max\n")
     for shift_in_range in range(-1 * shift_range, shift_range + 1, 5):
-        status_file.write("Starting Time Shift: %d\n" % shift_in_range)
         ref_quant, rec_quant = generate_test_signals(time_shift=shift_in_range, freq_shift=f_shift, f_samp=fs)
         assert len(ref_quant) == corr_length
         assert len(rec_quant) == corr_length * 2
@@ -89,8 +89,7 @@ async def verify_caf_slice_time_shifts(dut):
         index_to_verify = index.value
         out_max = output_max.value
         assert index_to_verify == half_length - shift_in_range
-        status_file.write("Completed Time Shift: %d index: %d out_max %d\n" % (shift_in_range,
-                          int(index_to_verify), int(out_max)))
+        status_file.write("%d,%d,%d\n" % (shift_in_range, int(index_to_verify), int(out_max)))
 
         for _ in range(0, 10):
             await RisingEdge(dut.clk)

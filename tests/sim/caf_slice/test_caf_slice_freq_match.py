@@ -18,7 +18,7 @@ from cocotb.triggers import RisingEdge
 
 fs = 625e3
 f_shift = 20e3
-freq_res = 10
+freq_res = 0.01
 n_bits = 8
 center = 450
 corr_length = 250
@@ -47,7 +47,7 @@ def generate_test_signals(time_shift, freq_shift, f_samp):
 
 @cocotb.test()
 async def verif_caf_slice_frequency_shifts(dut):
-    status_file = open(os.path.join(output_dir, "freq_match_status_file.txt"), 'w', buffering=1)
+    status_file = open(os.path.join(output_dir, "freq_match_status_file.csv"), 'w', buffering=1)
 
     num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)
 
@@ -91,13 +91,14 @@ async def verif_caf_slice_frequency_shifts(dut):
     for _ in range(10):
         await RisingEdge(dut.clk)
 
+    status_file.write("frequency_shift,index,out_max\n")
+
     """
     Begin all frequencies, including zero.
     """
     f_size = 100
     foas = np.arange(-f_size, f_size + 1) * 1000
     for idx, freq_shift in enumerate(foas):
-        status_file.write("Starting Frequency Shift: %d\n" % freq_shift)
         increment = phase_increment(f_out=freq_shift, phase_bits=num_phase_bits, f_clk=fs)
 
         dut.freq_step.value = increment
@@ -110,9 +111,7 @@ async def verif_caf_slice_frequency_shifts(dut):
         out_max = output_max.value
 
         assert index_to_verify == half_length - default_shift
-        status_file.write("Completed Frequency Shift: %d index: %d out_max: %d\n" % (freq_shift,
-                                                                                   int(index_to_verify),
-                                                                                   int(out_max)))
+        status_file.write("%d,%d,%d\n" % (freq_shift, int(index_to_verify), int(out_max)))
 
 
 def test_via_cocotb():
