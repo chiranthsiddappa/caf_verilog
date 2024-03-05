@@ -27,6 +27,13 @@ class TestSigGen(TestCase):
         inc = 49807
         self.assertEqual(inc, test_inc)
 
+    def test_sub_hz_increment(self):
+        fclk = 100e6
+        nbits = 8
+        hz_inc = sg.phase_bits(fclk, freq_res=1)
+        s_hz_inc = sg.phase_bits(fclk, freq_res=0.1)
+        self.assertGreater(s_hz_inc, hz_inc)
+
     def test_sig_gen_gen_tb(self):
         """
         Test that the files are written out
