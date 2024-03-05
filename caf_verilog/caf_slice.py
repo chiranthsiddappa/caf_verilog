@@ -1,6 +1,7 @@
 from .caf_verilog_base import CafVerilogBase
 from .xcorr import XCorr, send_and_receive, gen_tb_values
 from .freq_shift import FreqShift
+from . quantizer import quantize
 
 import numpy as np
 from .dot_product import dot_product
@@ -47,7 +48,7 @@ class CAFSlice(CafVerilogBase):
         return t_dict
 
 
-def caf_slice_dot(ref, rec, f_shift, fs) -> list:
+def caf_slice_dot(ref, rec, f_shift, fs, n_bits=0) -> list:
     """
     Perform the cross correlation using the dot product. Shift the reference signal to match the received signal.
     This produces an output list of magnitudes that are inverse offset from the center
@@ -57,9 +58,12 @@ def caf_slice_dot(ref, rec, f_shift, fs) -> list:
     :param rec: Received signal
     :param f_shift: Frequency Shift expected
     :param fs: Sample frequency
+    :param n_bits: 0 for no quantization on sinusoid.
     """
     t = np.arange(0, len(rec))
     slice_shift = np.exp(2 * np.pi * (-f_shift / fs) * t * 1j)
+    if n_bits:
+        slice_shift = quantize(slice_shift, n_bits=n_bits)
     dx = []
     ref_len = len(ref)
     for i in range(0, len(rec) - ref_len + 1):
