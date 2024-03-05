@@ -68,5 +68,7 @@ def caf_slice_dot(ref, rec, f_shift, fs, n_bits=0) -> list:
     ref_len = len(ref)
     for i in range(0, len(rec) - ref_len + 1):
         ref_nth_shift = ref * slice_shift[i:ref_len + i]
+        if n_bits:
+            ref_nth_shift = quantize(ref_nth_shift, n_bits=n_bits)
         dx.append(dot_product(ref_nth_shift, rec[i:ref_len + i]))
     return dx

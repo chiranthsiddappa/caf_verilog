@@ -39,6 +39,12 @@ class TestCAFSlice(TestCase):
         index_expected = (self.corr_length / 2) - self.time_shift
         assert index_to_verify == index_expected
 
+    def test_verify_via_dot_xcorr_quant_8(self):
+        caf_slice_computed = caf_slice.caf_slice_dot(self.ref_quant, self.rec_quant, self.freq_shift, self.fs, n_bits=8)
+        index_to_verify = np.argmax(np.abs(caf_slice_computed))
+        index_expected = (self.corr_length / 2) - self.time_shift
+        assert index_to_verify == index_expected
+
     def test_caf_slice_output_files(self):
         test_files = ['caf_slice.v', 'cpx_multiply.v', 'dot_prod_pip.v',
                       'freq_shift_625_12_8.v', 'sig_gen_625_12_8.v', 'x_corr.v']
