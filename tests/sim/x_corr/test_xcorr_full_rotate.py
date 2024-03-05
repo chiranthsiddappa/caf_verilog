@@ -20,6 +20,9 @@ default_shift = 25
 half_length = corr_length / 2
 shift_range = int(half_length)
 
+output_dir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))), 'xcorr_v')
+pathlib.Path(output_dir).mkdir(exist_ok=True)
+
 
 def generate_test_signals(shift):
     prn = PRN(10)
@@ -27,6 +30,7 @@ def generate_test_signals(shift):
     Ns = fs / 125e3
     prn_seq = prn.prn_seq()
     prn_seq,b = ss.nrz_bits2(np.array(prn_seq), Ns)
+    prn_seq = prn_seq + prn_seq * 1j
     ref, rec = sim_shift(prn_seq, center, corr_length, shift=shift)
     ref_quant = quantize(ref, 12)
     rec_quant = quantize(rec, 12)
@@ -38,7 +42,7 @@ async def verify_xcorr_via_prn(dut):
     ref_quant, rec_quant = generate_test_signals(default_shift)
     ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
     input_val_pairs = list(zip(ref_quant_tb, rec_quant_tb))
-    output_cap = []
+    output_caps = []
 
     assert (len(input_val_pairs) % len(ref_quant)) == 0
     assert len(input_val_pairs) == (len(ref_quant)**2 + len(ref_quant))
@@ -53,9 +57,9 @@ async def verify_xcorr_via_prn(dut):
     assert dut.s_axis_tready.value == 0
     assert dut.s_axis_tvalid.value == 0
 
-    output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+    output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
 
-    index_to_verify = output_cap[0][1]
+    index_to_verify = index.value
     assert index_to_verify == (corr_length / 2) - default_shift
 
     await RisingEdge(dut.clk)
@@ -64,7 +68,7 @@ async def verify_xcorr_via_prn(dut):
     for _ in range(0, 10):
         await RisingEdge(dut.clk)
 
-    output_cap = await full_round_shift(dut)
+    output_caps = await full_round_shift(dut)
 
     dut.m_axis_tready.value = 0
 
@@ -72,21 +76,26 @@ async def verify_xcorr_via_prn(dut):
         await RisingEdge(dut.clk)
 
     # Verify round shift
-    for idx, shift_val in enumerate(range(-1 * shift_range, shift_range)):
-        assert output_cap[idx] == shift_val
+    for idx, shift_val in enumerate(range(-1 * shift_range, shift_range + 1)):
+        assert output_caps[idx][1].value == half_length - shift_val
 
 
 async def full_round_shift(dut):
     output_caps = []
-    for shift_in_range in range(-1 * shift_range, shift_range):
-        assert shift_in_range
+    status_file = open(os.path.join(output_dir, "full_rotate_status.txt"), 'w', buffering=1)
+    for shift_in_range in range(-1 * shift_range, shift_range + 1):
+        status_file.write("Starting Time Shift: %d\n" % shift_in_range)
         ref_quant, rec_quant = generate_test_signals(shift_in_range)
         ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
-        output_cap = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
-        assert output_cap[0]
-        index_to_verify = output_cap[0][1]
+        output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+
+        index_to_verify = index.value
+        out_max = output_max.value
         assert index_to_verify == half_length - shift_in_range
-        output_caps.append(output_cap[0])
+        output_caps.append((output_max, index))
+        status_file.write("Completed Time Shift: %d index: %d out_max %d\n" % (shift_in_range,
+                                                                               int(index_to_verify),
+                                                                               int(out_max)))
     return output_caps
 
 
@@ -105,7 +114,7 @@ def test_via_cocotb():
             always=True,
             build_args=["--threads", str(get_sim_cpus())]
         )
-        runner.test(hdl_toplevel=hdl_toplevel, test_module="test_xcorr")
+        runner.test(hdl_toplevel=hdl_toplevel, test_module="test_xcorr_full_rotate")
 
 
 if __name__ == '__main__':

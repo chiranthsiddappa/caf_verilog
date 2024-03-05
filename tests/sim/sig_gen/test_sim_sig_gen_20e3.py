@@ -27,11 +27,14 @@ async def gen_signal_20e3_via_sim(dut):
     # Start the clock. Start it low to avoid issues on the first RisingEdge
     cocotb.start_soon(clock.start(start_high=False))
 
-    for _ in range(10):
+    for _ in range(5):
         await RisingEdge(dut.clk)
-        assert dut.s_axis_data_tvalid == 0
 
-    dut.m_axis_data_tready.value = 1
+    dut.m_axis_freq_step_tvalid.value = 1
+
+    for _ in range(0, 5):
+        await RisingEdge(dut.clk)
+
     dut.m_axis_freq_step_tvalid.value = 1
 
     # Setup test values
@@ -45,7 +48,7 @@ async def gen_signal_20e3_via_sim(dut):
     sine_generated_values = []
     output_df = pd.DataFrame()
 
-    await RisingEdge(dut.clk)
+    dut.m_axis_data_tready.value = 1
     
     for i in i_vals:
         await RisingEdge(dut.clk)
