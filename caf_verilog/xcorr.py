@@ -1,16 +1,21 @@
-from . caf_verilog_base import CafVerilogBase
+from .caf_verilog_base import CafVerilogBase
 from .quantizer import quantize
-from . dot_product import dot_product
-from . arg_max import ArgMax
-from . dot_prod_pip import DotProdPip
-from . dot_product import DotProduct
+from .dot_product import dot_product
+from .arg_max import ArgMax
+from .dot_prod_pip import DotProdPip
+from .dot_product import DotProduct
 from .io_helper import write_quantized_output
 
 import numpy as np
 import os
 from jinja2 import Environment, FileSystemLoader, Template
+from typing import Iterable
 
-from cocotb.triggers import RisingEdge
+try:
+    from cocotb.triggers import RisingEdge
+except ImportError as ie:
+    import warnings
+    warnings.warn("Could not import cocotb", ImportWarning)
 
 
 class XCorr(CafVerilogBase):
@@ -102,7 +107,6 @@ class XCorr(CafVerilogBase):
         ref_tb, rec_tb = gen_tb_values(self.ref_quant, self.rec_quant)
         write_quantized_output(self.output_dir, self.test_value_filename, ref_tb, rec_tb)
 
-
     def gen_quantized_output(self):
         """
 
@@ -125,7 +129,7 @@ def gen_tb_values(ref, rec):
     return ref_tb, rec_tb
 
 
-def dot_xcorr(ref, rec):
+def dot_xcorr(ref, rec) -> list:
     """
     Perform the cross correlation using the dot product.
     This produces an output list of magnitudes that are inverse offset from the center
@@ -136,8 +140,9 @@ def dot_xcorr(ref, rec):
     :return:
     """
     dx = []
-    for i in range(0, len(rec) - len(ref) + 1):
-        dx.append(dot_product(ref, rec[i:len(ref) + i]))
+    ref_len = len(ref)
+    for i in range(0, len(rec) - ref_len + 1):
+        dx.append(dot_product(ref, rec[i:ref_len + i]))
     return dx
 
 
@@ -173,14 +178,20 @@ def size_visualization(f, g, nlags):
         print("n: " + spacing + str(n) + " " + str(n_indexes))
 
 
-async def capture_test_output_data(dut):
-    captured_out_max = dut.out_max.value
-    captured_index = dut.index.value
-    dut.m_axis_tready.value = 1
-    if dut.s_axis_tvalid.value == 1:
-        return captured_out_max, captured_index
-    else:
-        return False, False
+async def capture_test_output_data(dut) -> tuple:
+    """
+    This method will wait for signal s_axis_tvalid to become 1, and then return the out_max and index values.
+    """
+    completed_capture_on_valid = False
+    while not completed_capture_on_valid:
+        captured_out_max = dut.out_max.value
+        captured_index = dut.index.value
+        dut.m_axis_tready.value = 1
+        if dut.s_axis_tvalid.value == 1:
+            completed_capture_on_valid = True
+        else:
+            await RisingEdge(dut.clk)
+    return captured_out_max, captured_index
 
 
 async def send_test_input_data(dut, x, y):
@@ -197,18 +208,22 @@ async def send_test_input_data(dut, x, y):
     dut.m_axis_tvalid.value = 1
 
 
-async def send_and_receive(dut, ref_vals, rec_vals) -> list:
+async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable) -> tuple:
+    """
+
+    :param dut: Design Under Test
+    :param ref_vals: List of reference values
+    :param rec_vals: List of received values
+    """
     output_cap = []
     for ref_cpx_val, rec_cpx_val in zip(ref_vals, rec_vals):
         await RisingEdge(dut.clk)
         dut.m_axis_tready.value = 1
         await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
 
-    while not output_cap:
-        await RisingEdge(dut.clk)
-        dut.m_axis_tvalid.value = 0
-        output_max, captured_index = await capture_test_output_data(dut)
-        if output_max and captured_index:
-            output_cap.append((output_max, captured_index))
+    await RisingEdge(dut.clk)
+    dut.m_axis_tvalid.value = 0
 
-    return output_cap
+    output_max, captured_index = await capture_test_output_data(dut)
+
+    return output_max, captured_index

@@ -14,7 +14,6 @@ from sk_dsp_comm.digitalcom import my_psd
 @cocotb.test()
 async def gen_signal_fs_4_via_sim(dut):
     f_clk = 625e3
-    #f_out = 1200.0 * 125.0
     f_out = f_clk / 4
     n_bits = 8
     num_phase_bits = calc_smallest_phase_size(f_clk, 1200, n_bits)
@@ -28,55 +27,44 @@ async def gen_signal_fs_4_via_sim(dut):
     # Start the clock. Start it low to avoid issues on the first RisingEdge
     cocotb.start_soon(clock.start(start_high=False))
 
-    for _ in range(5):
+    for _ in range(0, 5):
         await RisingEdge(dut.clk)
 
     dut.m_axis_freq_step_tvalid.value = 1
 
     for _ in range(0, 5):
         await RisingEdge(dut.clk)
+        dut.m_axis_freq_step_tvalid.value = 0
 
-    # Setup test values
-    i_vals = np.arange(0, 512*20)
-    cosine_validate = np.cos(2 * np.pi * (f_out / f_clk) * i_vals)
-    sin_validate = np.sin(2 * np.pi * (f_out / f_clk) * i_vals)
-    cosine_validate_q = quantize(cosine_validate, n_bits)
-    sin_validate_q = quantize(sin_validate, n_bits)
-
-    cosine_generated_values = []
-    sine_generated_values = []
-    output_df = pd.DataFrame()
+    assert dut.s_axis_data_tvalid.value == 1
+    assert dut.cosine.value == 127
+    assert dut.sine.value == 0
 
     dut.m_axis_data_tready.value = 1
-    
-    for i in i_vals:
+
+    await RisingEdge(dut.clk)
+    assert dut.s_axis_data_tvalid.value == 1
+    assert dut.cosine.value == 127
+    assert dut.sine.value == 0
+
+    await RisingEdge(dut.clk)
+    assert dut.s_axis_data_tvalid.value == 1
+    assert dut.cosine.value != 127
+    assert dut.sine.value != 0
+
+    for _ in range(0, 5):
         await RisingEdge(dut.clk)
+        dut.m_axis_data_tready.value = 0
+
+    increment = phase_increment(f_out=f_out / 4, phase_bits=num_phase_bits, f_clk=f_clk)
+    dut.freq_step.value = increment
+    dut.m_axis_freq_step_tvalid.value = 1
+    dut.m_axis_data_tready.value = 1
+
+    for _ in range(0, 5):
         assert dut.s_axis_data_tvalid.value == 1
-        if i == 0: # Make sure we start at cos 1, sine 0
-            assert dut.cosine.value == 127 # 8 bits signed
-            assert dut.sine.value == 0
-        cosine_generated_values.append(int(dut.cosine.value.signed_integer))
-        sine_generated_values.append(int(dut.sine.value.signed_integer))
-    
-    output_df['cosine_out'] = cosine_generated_values
-    output_df['sine_out'] = sine_generated_values
-    output_df['cosine_q'] = cosine_validate_q
-    output_df['sine_q'] = sin_validate_q
-    output_df['cosine_validate'] = cosine_validate
-    output_df['sine_validate'] = sin_validate
-    output_df.to_csv(output_file)
-
-        # Verify Cosine signal location
-    Px_gen, f_gen = my_psd(cosine_generated_values, 2**12, f_clk)
-    Px_q, f_q = my_psd(cosine_validate_q, 2**12, f_clk)
-    assert np.argmax(Px_gen) == np.argmax(Px_q)
-    #Verify Sine signal location
-    Px_gen, f_gen = my_psd(sine_generated_values, 2**12, f_clk)
-    Px_q, f_q = my_psd(sin_validate_q, 2**12, f_clk)
-    assert np.argmax(Px_gen) == np.argmax(Px_q)
-
-    assert cosine_generated_values[0] != cosine_generated_values[1]
-    assert sine_generated_values[0] != sine_generated_values[1]
+        await RisingEdge(dut.clk)
+        dut.m_axis_freq_step_tvalid.value = 0
 
 
 def test_via_cocotb():
@@ -94,9 +82,10 @@ def test_via_cocotb():
         vhdl_sources=[],
         hdl_toplevel=hdl_toplevel,
         always=False,
-        build_args=["--threads", str(get_sim_cpus())]
+        build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
     )
-    runner.test(hdl_toplevel="%s" % sig_gen.sig_gen_name, test_module="test_sim_sig_gen_fs_4,")
+    runner.test(hdl_toplevel="%s" % sig_gen.sig_gen_name,
+                test_module="test_sim_sig_gen_turnarounds,", waves=True)
 
 if __name__ == '__main__':
     test_via_cocotb()

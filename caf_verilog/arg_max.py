@@ -6,7 +6,11 @@ from . io_helper import write_quantized_output
 from shutil import copy
 from jinja2 import Environment, FileSystemLoader
 
-from cocotb.triggers import RisingEdge
+try:
+    from cocotb.triggers import RisingEdge
+except ImportError as ie:
+    import warnings
+    warnings.warn("Could not import cocotb", ImportWarning)
 
 
 async def send_test_input_data(dut, x_vals):

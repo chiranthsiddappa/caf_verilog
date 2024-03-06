@@ -13,6 +13,7 @@ from . quantizer import quantize
 from . io_helper import write_buffer_values
 from . quantizer import bin_num
 from . sig_gen import phase_increment
+from . caf_slice import caf_slice_dot
 from math import log2, ceil
 
 
@@ -125,29 +126,47 @@ class CAF(CafVerilogBase):
                 nn_file.write(str(int(freq < 0)) + '\n')
 
 
-def simple_caf(x, y, foas, fs):
+def simple_caf(x, y, foas, fs, n_bits=0):
     """
     Produce values for a surface plot of the Complex Ambiguity Function.
-    This function primarily supports testing values produced via sim_helper, so y is expected to be twice the length of
-    x.
     The return is the CAF surface and a time delay range normalized by the sampling frequency.
 
     :param x: Use x as a reference signal.
     :param y: Use y as a captured signal.
     :param foas: Frequency offsets, provided as a list/iterable object.
     :param fs: Sampling frequency
+    :param n_bits: 0 for no quantization on sinusoids
     :return: caf_res, dt
     """
     nlags = len(x)
     ztup = (nlags, len(foas))
-    caf_res = np.zeros(ztup)
+    caf_res = []
     nlen = len(y)
     nrange = np.arange(0, nlen)
     dt_lags = nlags // 2
     dt = np.arange(-dt_lags, dt_lags) / float(fs)
-    for k, Df in enumerate(foas):
+    for k, Df in enumerate(reversed(foas)):
         theta = np.exp(1j*2*np.pi*nrange*Df/float(fs))
+        if n_bits:
+            theta = quantize(theta, n_bits)
         y_shift = y * theta
         rxy, lags = dc.xcorr(x, y_shift, nlags)
-        caf_res[:, k] = np.abs(rxy)
+        caf_res.append(np.abs(rxy))
     return caf_res, dt
+
+
+def dot_caf(x, y, foas, fs, n_bits=0) -> list:
+    """
+    Produce values for a surface plot of the Complex Ambiguity Function.
+    The return is the CAF surface and a time delay range normalized by the sampling frequency.
+
+    :param x: Use x as a reference signal.
+    :param y: Use y as a captured signal.
+    :param foas: Frequency offsets, provided as a list/iterable object.
+    :param fs: Sampling frequency
+    :param n_bits: 0 for no quantization on sinusoids.
+    """
+    res = []
+    for fsa in foas:
+        res.append(caf_slice_dot(ref=x, rec=y, f_shift=fsa, fs=fs, n_bits=n_bits))
+    return res

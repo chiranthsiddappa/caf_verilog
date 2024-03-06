@@ -27,7 +27,14 @@ async def gen_signal_20e3_via_sim(dut):
     # Start the clock. Start it low to avoid issues on the first RisingEdge
     cocotb.start_soon(clock.start(start_high=False))
 
-    dut.m_axis_data_tready.value = 1
+    for _ in range(5):
+        await RisingEdge(dut.clk)
+
+    dut.m_axis_freq_step_tvalid.value = 1
+
+    for _ in range(0, 5):
+        await RisingEdge(dut.clk)
+
     dut.m_axis_freq_step_tvalid.value = 1
 
     # Setup test values
@@ -41,13 +48,13 @@ async def gen_signal_20e3_via_sim(dut):
     sine_generated_values = []
     output_df = pd.DataFrame()
 
-    await RisingEdge(dut.clk)
+    dut.m_axis_data_tready.value = 1
     
     for i in i_vals:
         await RisingEdge(dut.clk)
         assert dut.s_axis_data_tvalid.value == 1
-        if i == 0: # Make sure we start at cos 1, sine 0
-            assert dut.cosine.value == 127 # 8 bits signed
+        if i == 0:  # Make sure we start at cos 1, sine 0
+            assert dut.cosine.value == 127  # 8 bits signed
             assert dut.sine.value == 0
         cosine_generated_values.append(int(dut.cosine.value.signed_integer))
         sine_generated_values.append(int(dut.sine.value.signed_integer))
@@ -68,6 +75,9 @@ async def gen_signal_20e3_via_sim(dut):
     Px_gen, f_gen = my_psd(sine_generated_values, 2**12, f_clk)
     Px_q, f_q = my_psd(sin_validate_q, 2**12, f_clk)
     assert np.argmax(Px_gen) == np.argmax(Px_q)
+
+    assert cosine_generated_values[0] != cosine_generated_values[1]
+    assert sine_generated_values[0] != sine_generated_values[1]
 
 def test_via_cocotb():
     """
