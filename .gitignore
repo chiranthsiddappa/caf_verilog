@@ -121,3 +121,4 @@ caf_verilog/test/*.v
 sim_build/
 xcorr_v/
 caf_slice_v/
+caf_v/
