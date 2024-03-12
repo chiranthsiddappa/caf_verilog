@@ -39,6 +39,8 @@ module caf #(parameter phase_bits = 10,
    reg                                   all_freq_steps_set;
    reg [2:0]                             state;
    reg signed [length_counter_bits:0]    foas_index_counter;
+   reg [foas-1:0]                        foas_index_valid;
+   reg [phase_bits - 1:0]                freq_step_capture_buff;
    wire [31:0]                           foas_index_counter_extended;
 
    assign foas_index_counter_extended = { {(31 - foas_counter_bits){foas_index_counter[foas_counter_bits]}}, foas_index_counter};
@@ -77,12 +79,14 @@ module caf #(parameter phase_bits = 10,
          freq_step_tready <= 1'b1;
          if (freq_step_valid) begin
             freq_step_index <= freq_step_index + 1'b1;
-         end else begin
-            freq_step_index <= freq_step_index;
+            foas_index_valid <= 1'b1 << freq_step_index;
+            freq_step_capture_buff <= freq_step;
          end
       end else begin
          freq_step_tready <= 1'b0;
          freq_step_index <= 'd0;
+         foas_index_valid <= 'd0;
+         freq_step_capture_buff <= freq_step_capture_buff;
       end // else: !if(state == INCREMENT_INIT)
    end // always @ (posedge clk)
 
