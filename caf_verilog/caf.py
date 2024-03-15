@@ -1,10 +1,7 @@
 import numpy as np
 from sk_dsp_comm import digitalcom as dc
 from . caf_verilog_base import CafVerilogBase
-from . xcorr import XCorr
-from . reference_buffer import ReferenceBuffer
-from . capture_buffer import CaptureBuffer
-from . freq_shift import FreqShift
+from . caf_slice import CAFSlice
 from . __version__ import __version__
 from jinja2 import Environment, FileSystemLoader, Template
 import os
@@ -56,16 +53,16 @@ class CAF(CafVerilogBase):
         self.write_module()
 
     def gen_submodules(self):
-        submodules = dict()
-        submodules['reference_buffer'] = ReferenceBuffer(self.reference, self.ref_i_bits, self.ref_q_bits,
-                                                 self.output_dir, 'ref_buff')
-        submodules['capture_buffer'] = CaptureBuffer(len(self.received), self.rec_i_bits, self.rec_q_bits,
-                                               self.output_dir, 'capt_buff')
-        submodules['freq_shift'] = FreqShift(self.received, self.freq_res(), self.fs, self.n_bits,
-                                             i_bits=self.rec_i_bits, q_bits=self.rec_q_bits,
-                                             output_dir=self.output_dir)
-        submodules['x_corr'] = XCorr(self.reference, self.received, self.ref_i_bits, self.ref_q_bits,
-                                     self.rec_i_bits, self.rec_q_bits, pipeline=self.pip, output_dir=self.output_dir)
+        submodules = {'caf_slice': CAFSlice(reference=self.reference,
+                                            received=self.received,
+                                            freq_res=self.freq_res(),
+                                            ref_i_bits=self.ref_i_bits,
+                                            ref_q_bits=self.ref_q_bits,
+                                            rec_i_bits=self.rec_i_bits,
+                                            rec_q_bits=self.rec_q_bits,
+                                            fs=self.fs,
+                                            n_bits=self.n_bits,
+                                            output_dir=self.output_dir)}
         return submodules
 
     def freq_res(self):
@@ -78,21 +75,15 @@ class CAF(CafVerilogBase):
         min_res = min(freqs)
         return min_res
 
+    def params_dict(self) -> dict:
+        pd = {**self.submodules['caf_slice'].params_dict()}
+        num_foas = len(self.foas)
+        pd['foas'] = num_foas
+        pd['foas_counter_bits'] = int(np.ceil(np.log2(num_foas)))
+        return pd
+
     def template_dict(self, inst_name=None):
-        t_dict = {**self.submodules['reference_buffer'].template_dict(),
-                  **self.submodules['capture_buffer'].template_dict(),
-                  **self.submodules['freq_shift'].template_dict(),
-                  **self.submodules['x_corr'].template_dict()}
-        t_dict['%s_foa_len' % self.module_name()] = len(self.foas)
-        t_dict['%s_foa_len_bits' % self.module_name()] = int(ceil(log2(len(self.foas))))
-        t_dict['%s_phase_increment_filename' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
-                                                                             self.phase_increment_filename))
-        t_dict['%s_neg_shift_filename' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
-                                                                               self.neg_shift_filename))
-        t_dict['%s_input' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
-                                                                               self.test_value_filename))
-        t_dict['%s_name' % self.module_name()] = inst_name if inst_name else '%s_tb' % self.module_name()
-        t_dict['caf_state_params_filename'] = os.path.abspath(os.path.join(self.output_dir, 'caf_state_params.v'))
+        t_dict = self.params_dict()
         return t_dict
 
     def write_module(self):
@@ -115,7 +106,7 @@ class CAF(CafVerilogBase):
             tb_file.write(out_tb)
 
     def write_phase_increment_values(self):
-        phase_bits = self.template_dict()['freq_shift_phase_bits']
+        phase_bits = self.template_dict()['phase_bits']
         with open(os.path.join(self.output_dir, self.phase_increment_filename), 'w+') as pi_file:
             for freq in self.foas:
                 incr = phase_increment(abs(freq), phase_bits, self.fs)
