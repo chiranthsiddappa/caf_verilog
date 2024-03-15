@@ -31,18 +31,25 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    reg                                                   s_axis_mult_tready_buff;
    reg signed [i_bits - 1:0]                             xi_buff;
    reg signed [q_bits - 1:0]                             xq_buff;
+   reg                                                   neg_shift_buff;
 
+   initial begin
+      neg_shift_buff = 1'b0;
+   end
 
    always @(posedge clk) begin
       s_axis_sig_gen_tvalid_buff <= s_axis_sig_gen_tvalid;
       s_axis_mult_tready_buff <= s_axis_mult_tready;
       m_axis_tvalid_buff <= m_axis_tvalid;
+      if (freq_step_valid) begin
+         neg_shift_buff <= neg_shift;
+      end
    end
 
    always @(posedge clk) begin
       if (s_axis_sig_gen_tvalid && m_axis_tvalid) begin
          cosine_buff <= cosine;
-         if (neg_shift) begin
+         if (neg_shift_buff) begin
             sine_buff <= sine * -'d1;
          end else begin
             sine_buff <= sine;
