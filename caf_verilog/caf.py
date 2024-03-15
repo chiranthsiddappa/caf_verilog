@@ -105,6 +105,11 @@ class CAF(CafVerilogBase):
         with open(os.path.join(self.output_dir, '%s_tb.v' % self.module_name()), 'w+') as tb_file:
             tb_file.write(out_tb)
 
+    def phase_increment_values(self) -> list:
+        phase_bits = self.params_dict()['phase_bits']
+        vals = [phase_increment(f_out=abs(freq), phase_bits=phase_bits, f_clk=self.fs) for freq in self.foas]
+        return vals
+
     def write_phase_increment_values(self):
         phase_bits = self.template_dict()['phase_bits']
         with open(os.path.join(self.output_dir, self.phase_increment_filename), 'w+') as pi_file:

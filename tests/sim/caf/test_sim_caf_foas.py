@@ -30,10 +30,13 @@ theta_shift = np.exp(1j * 2 * np.pi * ncorr * (foas[foa_offset]) / float(fs))
 ref, rec = sim_shift(prn_seq, center, corr_length, shift=shift)
 output_dir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))), 'caf_v')
 pathlib.Path(output_dir).mkdir(exist_ok=True)
+caf = CAF(ref, rec * theta_shift, foas, fs=fs, n_bits=8, ref_i_bits=8, rec_i_bits=8, output_dir=output_dir)
 
 
 @cocotb.test()
 async def verify_caf_foas(dut):
+    phase_increments = caf.phase_increment_values()
+    neg_shift_vals = np.signbit(foas)
     # Verify test vector length
     assert len(prn_seq) == 6138
 
@@ -41,7 +44,24 @@ async def verify_caf_foas(dut):
 
     cocotb.start_soon(clock.start(start_high=False))
 
-    await RisingEdge(dut.clk)
+    for _ in range(0, 5):
+        await RisingEdge(dut.clk)
+
+    assert dut.m_axis_freq_step_tready.value == 1
+    assert dut.freq_step_index.value == 0
+
+    for inc, bit in zip(phase_increments, neg_shift_vals):
+        dut.s_axis_freq_step_tready.value = 1
+        dut.freq_step.value = int(inc)
+        dut.neg_shift.value = 1 if bit else 0
+        dut.s_axis_freq_step_valid.value = 1
+        await RisingEdge(dut.clk)
+
+    for _ in range(0, 5):
+        dut.s_axis_freq_step_tready.value = 0
+        dut.s_axis_freq_step_valid.value = 0
+        dut.freq_step.value = 0
+        await RisingEdge(dut.clk)
 
 
 def test_via_cocotb():
@@ -49,8 +69,10 @@ def test_via_cocotb():
     verilog_sources = [os.path.join(output_dir, filename) for filename in glob.glob("%s/*.v" % output_dir)]
     runner = sim_get_runner()
     hdl_toplevel = "%s" % caf.module_name()
+    caf_params = caf.params_dict()
     runner.build(
         verilog_sources=verilog_sources,
+        parameters=caf_params,
         vhdl_sources=[],
         hdl_toplevel=hdl_toplevel,
         always=False,
