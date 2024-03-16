@@ -49,8 +49,17 @@ module caf #(parameter phase_bits = 10,
    reg [phase_bits - 1:0]              freq_step_capture_buff;
    wire [31:0]                         foas_index_counter_extended;
 
+   // Slices
+   wire [foas-1:0]                     s_axis_tready_slice;
+   wire                                m_axis_tready_slice;
+   wire [out_max_bits-1:0]             out_max_slice [foas-1:0];
+   wire [length_counter_bits-1:0]      index_slice[foas-1:0];
+   wire [foas-1:0]                     s_axis_tvalid_slice;
+
    assign freq_step_index = foas_index_counter[foas_counter_bits - 1:0];
    assign foas_index_counter_extended = { {(31 - foas_counter_bits){1'b0}}, foas_index_counter};
+
+   assign m_axis_tready_slice = 1'b1;
 
    initial begin
       m_axis_freq_step_tready = 1'b0;
@@ -115,6 +124,39 @@ module caf #(parameter phase_bits = 10,
          freq_step_capture_buff <= freq_step_capture_buff;
       end // else: !if(state == INCREMENT_INIT)
    end // always @ (posedge clk)
+
+   // CAF Slices
+   genvar i;
+
+   generate
+      for (i = 0; i < foas; i = i + 1) begin
+         caf_slice #(.phase_bits(phase_bits),
+                     .xi_bits(xi_bits),
+                     .xq_bits(xq_bits),
+                     .yi_bits(yi_bits),
+                     .yq_bits(yq_bits),
+                     .i_bits(i_bits),
+                     .q_bits(q_bits),
+                     .length(length),
+                     .length_counter_bits(length_counter_bits),
+                     .out_max_bits(out_max_bits)
+                     ) caf_slice_inst(.clk(clk),
+                                      .freq_step(freq_step_capture_buff),
+                                      .freq_step_valid(foas_index_valid[i]),
+                                      .neg_shift(neg_shift_index[i]),
+                                      .m_axis_tvalid(m_axis_tvalid),
+                                      .xi(xi),
+                                      .xq(xq),
+                                      .yi(yi),
+                                      .yq(yq),
+                                      .s_axis_tready(s_axis_tready_slice[i]),
+                                      .m_axis_tready(m_axis_tready_slice),
+                                      .out_max(out_max_slice[i]),
+                                      .index(index_slice[i]),
+                                      .s_axis_tvalid(s_axis_tvalid_slice[i])
+                                      );
+      end // for (i = 0; i < foas; i = i + 1)
+   endgenerate
 
    initial begin
       $dumpfile("caf.vcd");

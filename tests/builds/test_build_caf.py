@@ -40,8 +40,10 @@ class TestBuildCAF(unittest.TestCase):
         verilog_sources = [os.path.join(output_dir, filename) for filename in glob.glob("%s/*.v" % output_dir)]
         runner = sim_get_runner()
         hdl_toplevel = "%s" % caf.module_name()
+        caf_params = caf.params_dict()
         runner.build(
             verilog_sources=verilog_sources,
+            parameters=caf_params,
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=True,

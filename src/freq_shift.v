@@ -32,10 +32,14 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    reg signed [i_bits - 1:0]                             xi_buff;
    reg signed [q_bits - 1:0]                             xq_buff;
    reg                                                   neg_shift_buff;
+   reg                                                   freq_step_valid_set_buff;
+   wire                                                  freq_step_set;
 
    initial begin
       neg_shift_buff = 1'b0;
    end
+
+   assign freq_step_set = freq_step_valid | freq_step_valid_set_buff;
 
    always @(posedge clk) begin
       s_axis_sig_gen_tvalid_buff <= s_axis_sig_gen_tvalid;
@@ -43,6 +47,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
       m_axis_tvalid_buff <= m_axis_tvalid;
       if (freq_step_valid) begin
          neg_shift_buff <= neg_shift;
+         freq_step_valid_set_buff <= 1'b1;
       end
    end
 
@@ -65,7 +70,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    end // always @ (posedge clk)
 
    assign m_axis_sig_gen_tready = m_axis_tvalid;
-   assign s_axis_tready = s_axis_mult_tready_buff & freq_step_valid;
+   assign s_axis_tready = s_axis_mult_tready_buff & freq_step_set;
    assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid_buff & m_axis_tvalid_buff;
 
    {{ sig_gen_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
