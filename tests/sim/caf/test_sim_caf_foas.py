@@ -62,6 +62,7 @@ async def verify_caf_foas(dut):
         dut.s_axis_freq_step_valid.value = 0
         dut.freq_step.value = 0
         await RisingEdge(dut.clk)
+        assert dut.state.value == 2  # CORRELATE
 
 
 def test_via_cocotb():
