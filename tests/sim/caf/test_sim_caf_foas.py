@@ -1,4 +1,3 @@
-from caf_verilog.caf import CAF
 import pathlib
 import os
 import unittest
@@ -12,6 +11,8 @@ import numpy as np
 from gps_helper.prn import PRN
 from sk_dsp_comm import sigsys as ss
 from sk_dsp_comm import digitalcom as dc
+
+from caf_verilog.caf import CAF, set_increment_values
 
 prn = PRN(10)
 prn_seq = prn.prn_seq()
@@ -50,12 +51,7 @@ async def verify_caf_foas(dut):
     assert dut.m_axis_freq_step_tready.value == 1
     assert dut.freq_step_index.value == 0
 
-    for inc, bit in zip(phase_increments, neg_shift_vals):
-        dut.s_axis_freq_step_tready.value = 1
-        dut.freq_step.value = int(inc)
-        dut.neg_shift.value = 1 if bit else 0
-        dut.s_axis_freq_step_valid.value = 1
-        await RisingEdge(dut.clk)
+    await set_increment_values(caf, dut)
 
     for _ in range(0, 5):
         dut.s_axis_freq_step_tready.value = 0

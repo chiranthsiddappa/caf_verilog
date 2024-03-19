@@ -12,6 +12,12 @@ from . quantizer import bin_num
 from . sig_gen import phase_increment
 from math import log2, ceil
 
+try:
+    from cocotb.triggers import RisingEdge
+except ImportError as ie:
+    import warnings
+    warnings.warn("Could not import cocotb", ImportWarning)
+
 
 class CAF(CafVerilogBase):
 
@@ -79,7 +85,7 @@ class CAF(CafVerilogBase):
         pd = {**self.submodules['caf_slice'].params_dict()}
         num_foas = len(self.foas)
         pd['foas'] = num_foas
-        pd['foas_counter_bits'] = int(np.ceil(np.log2(num_foas)))
+        pd['foas_counter_bits'] = int(ceil(log2(num_foas)))
         return pd
 
     def template_dict(self, inst_name=None):
@@ -119,6 +125,23 @@ class CAF(CafVerilogBase):
         with open(os.path.join(self.output_dir, self.neg_shift_filename), 'w+') as nn_file:
             for freq in self.foas:
                 nn_file.write(str(int(freq < 0)) + '\n')
+
+
+async def set_increment_values(caf: CAF, dut):
+    """
+
+    :param caf: CAF instance to retrieve module values
+    :param dut: cocotb design under test
+    """
+    phase_increments = caf.phase_increment_values()
+    neg_shift_vals = np.signbit(caf.foas)
+
+    for inc, bit in zip(phase_increments, neg_shift_vals):
+        dut.s_axis_freq_step_tready.value = 1
+        dut.freq_step.value = int(inc)
+        dut.neg_shift.value = 1 if bit else 0
+        dut.s_axis_freq_step_valid.value = 1
+        await RisingEdge(dut.clk)
 
 
 def simple_caf(x, y, foas, fs):
