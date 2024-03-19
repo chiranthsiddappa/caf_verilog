@@ -51,7 +51,7 @@ module caf #(parameter phase_bits = 10,
 
    // Slices
    wire [foas-1:0]                     s_axis_tready_slice;
-   reg [foas-1:0]                      s_axis_tready_slice_cmp;
+   reg [foas-1:0]                      all_slice_static_cmp;
    wire                                m_axis_tready_slice;
    wire [out_max_bits-1:0]             out_max_slice [foas-1:0];
    wire [length_counter_bits-1:0]      index_slice[foas-1:0];
@@ -60,12 +60,12 @@ module caf #(parameter phase_bits = 10,
    assign freq_step_index = foas_index_counter[foas_counter_bits - 1:0];
    assign foas_index_counter_extended = { {(31 - foas_counter_bits){1'b0}}, foas_index_counter};
 
-   assign m_axis_tready_slice = 1'b1;
+   assign m_axis_tready_slice = state == CORRELATE;
 
-   assign s_axis_tready = (s_axis_tready_slice == s_axis_tready_slice_cmp) && (state == CORRELATE);
+   assign s_axis_tready = (s_axis_tready_slice == all_slice_static_cmp) && (state == CORRELATE);
 
    initial begin
-      s_axis_tready_slice_cmp = -'d1;
+      all_slice_static_cmp = -'d1;
       m_axis_freq_step_tready = 1'b0;
       freq_step_index = 'd0;
       s_axis_tvalid = 1'b0;
@@ -85,7 +85,11 @@ module caf #(parameter phase_bits = 10,
            end
         end
         CORRELATE: begin
-           // TODO: Capture all caf slice outputs
+           if (s_axis_tvalid_slice == all_slice_static_cmp) begin
+              state <= FIND_MAX;
+           end else begin
+              state <= state;
+           end
         end
         default: begin
            state <= state;
