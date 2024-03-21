@@ -53,14 +53,16 @@ async def verify_caf_foas(dut):
 
     await set_increment_values(caf, dut)
 
-    for _ in range(0, 5):
-        dut.s_axis_freq_step_tready.value = 0
-        dut.s_axis_freq_step_valid.value = 0
-        dut.freq_step.value = 0
+    dut.s_axis_freq_step_tready.value = 0
+    dut.s_axis_freq_step_valid.value = 0
+    dut.freq_step.value = 0
+
+    while dut.s_axis_tready.value != 1:
         await RisingEdge(dut.clk)
-        assert dut.s_axis_tready.value == 1
-        assert dut.s_axis_tready_slice.value == int('111', 2)
-        assert dut.state.value == 2  # CORRELATE
+
+    assert dut.s_axis_tready.value == 1
+    assert dut.s_axis_tready_slice.value == (2**len(foas)) - 1
+    assert dut.state.value == 2  # CORRELATE
 
 
 def test_via_cocotb():
@@ -75,7 +77,7 @@ def test_via_cocotb():
         vhdl_sources=[],
         hdl_toplevel=hdl_toplevel,
         always=False,
-        build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
+        build_args=["--trace-fst", "--trace-structs", "--threads", str(get_sim_cpus())]
     )
     runner.test(hdl_toplevel=hdl_toplevel, test_module='test_sim_caf_foas', waves=True)
 
