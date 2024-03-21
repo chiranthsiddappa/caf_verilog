@@ -28,7 +28,7 @@ async def verify_arg_max(dut):
     assert dut.s_axis_tready.value == 0
     assert dut.s_axis_tvalid.value == 0
 
-    for _ in range(0, 10):
+    for _ in range(0, 100):
         i_random = np.random.rand(1024) - 0.5
         q_random = np.random.rand(1024) - 0.5
         x_vals = i_random + q_random*1j
