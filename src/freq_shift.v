@@ -39,7 +39,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
       neg_shift_buff = 1'b0;
    end
 
-   assign freq_step_set = freq_step_valid | freq_step_valid_set_buff;
+   assign freq_step_set = freq_step_valid_set_buff;
 
    always @(posedge clk) begin
       s_axis_sig_gen_tvalid_buff <= s_axis_sig_gen_tvalid;

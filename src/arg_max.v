@@ -25,6 +25,8 @@ module arg_max #(parameter buffer_length = 10,
    reg                              sq_stage_valid;
    reg                              sum_stage_valid;
    reg                              cmp_stage_valid;
+   wire                             result_collected;
+   reg                              result_collected_buff;
 
    initial begin
       index = 'd0;
@@ -36,13 +38,14 @@ module arg_max #(parameter buffer_length = 10,
    end
 
    assign icounter_extended = { {(31 - index_bits){icounter[index_bits]}}, icounter};
+   assign result_collected = s_axis_tvalid & m_axis_tready;
 
    // s_axis_tready block with catch
    always @(posedge clk) begin
       if (icounter_extended < buffer_length) begin
          s_axis_tready <= 1'b1;
       end
-      else if (icounter_extended == buffer_length & m_axis_tready) begin
+      else if ((icounter_extended == buffer_length) | (result_collected_buff | result_collected)) begin
          s_axis_tready <= 1'b1;
       end
       else begin
@@ -51,7 +54,7 @@ module arg_max #(parameter buffer_length = 10,
    end
 
    always @(posedge clk) begin
-      if (m_axis_tvalid & (s_axis_tready || m_axis_tready)) begin
+      if (m_axis_tvalid & (s_axis_tready)) begin
          i_square <= xi * xi;
          q_square <= xq * xq;
          sq_stage_valid <= 1'b1;
@@ -109,7 +112,7 @@ module arg_max #(parameter buffer_length = 10,
             icounter <= icounter;
          end
       end
-      else if (icounter_extended == (buffer_length - 1) && m_axis_tready) begin
+      else if (result_collected | result_collected_buff) begin
          icounter <= 'd0;
       end else begin
          icounter <= icounter;
@@ -117,16 +120,21 @@ module arg_max #(parameter buffer_length = 10,
    end // always @ (posedge clk)
 
    always @(posedge clk) begin
-      if (icounter_extended == (buffer_length - 1)) begin
+      result_collected_buff <= result_collected;
+      if (result_collected | result_collected_buff) begin
+         s_axis_tvalid <= 1'b0;
+      end
+      else if (icounter_extended == (buffer_length - 1)) begin
          s_axis_tvalid <= 1'b1;
-      end else begin
+      end
+      else begin
          s_axis_tvalid <= 1'b0;
       end
    end
 
    initial begin
       $dumpfile("arg_max.vcd");
-      $dumpvars(2, arg_max);
+      $dumpvars(1, arg_max);
    end
 
 endmodule // argmax
