@@ -52,7 +52,8 @@ module caf #(parameter phase_bits = 10,
    // Slices
    wire [foas-1:0]                     s_axis_tready_slice;
    reg [foas-1:0]                      all_slice_static_cmp;
-   wire                                m_axis_tready_slice;
+   wire [foas-1:0]                     m_axis_tready_slice;
+   reg [foas-1:0]                      m_axis_tready_find_max;
    wire [out_max_bits-1:0]             out_max_slice [foas-1:0];
    wire [length_counter_bits-1:0]      index_slice[foas-1:0];
    wire [foas-1:0]                     s_axis_tvalid_slice;
@@ -60,7 +61,9 @@ module caf #(parameter phase_bits = 10,
    assign freq_step_index = foas_index_counter[foas_counter_bits - 1:0];
    assign foas_index_counter_extended = { {(31 - foas_counter_bits){1'b0}}, foas_index_counter};
 
-   assign m_axis_tready_slice = state == CORRELATE;
+   assign m_axis_tready_slice = (s_axis_tvalid_slice == all_slice_static_cmp) ?
+                                m_axis_tready_find_max :
+                                (((state == CORRELATE) & m_axis_tready) ? all_slice_static_cmp : 'd0);
 
    assign s_axis_tready = (s_axis_tready_slice == all_slice_static_cmp) && (state == CORRELATE);
 
@@ -71,6 +74,7 @@ module caf #(parameter phase_bits = 10,
       s_axis_tvalid = 1'b0;
       foas_index_counter = 'd0;
       state = 'd0;
+      m_axis_tready_find_max = 'd0;
    end
 
    always @(posedge clk) begin
@@ -158,7 +162,7 @@ module caf #(parameter phase_bits = 10,
                                       .yi(yi),
                                       .yq(yq),
                                       .s_axis_tready(s_axis_tready_slice[i]),
-                                      .m_axis_tready(m_axis_tready_slice),
+                                      .m_axis_tready(m_axis_tready_slice[i]),
                                       .out_max(out_max_slice[i]),
                                       .index(index_slice[i]),
                                       .s_axis_tvalid(s_axis_tvalid_slice[i])
