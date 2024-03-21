@@ -223,6 +223,6 @@ async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable, cycle_ti
     await RisingEdge(dut.clk)
     dut.m_axis_tvalid.value = 0
 
-    output_max, captured_index = await capture_test_output_data(dut)
+    output_max, captured_index = await capture_test_output_data(dut, cycle_timeout=cycle_timeout)
 
     return output_max, captured_index
