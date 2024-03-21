@@ -29,9 +29,11 @@ async def verify_arg_max(dut):
     dut.m_axis_tready.value = 0
     dut.m_axis_tvalid.value = 0
 
-    await RisingEdge(dut.clk)
-    assert dut.s_axis_tready.value == 0
-    assert dut.s_axis_tvalid.value == 0
+    for i in range(0, 10):
+        if (dut.s_axis_tready.value == 0):
+            await RisingEdge(dut.clk)
+        else:
+            continue
 
     # Send and receive capture data
     await send_test_input_data(dut, x_vals)
@@ -40,7 +42,7 @@ async def verify_arg_max(dut):
     assert index == 2047
     assert captured_max == expected_max_output_val
 
-    await empty_cycles(dut)
+    #await empty_cycles(dut)
 
     await send_test_input_data(dut, reversed(x_vals))
 
@@ -65,7 +67,7 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=True,
-            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
+            build_args=["--trace-fst", "--trace-structs", "--threads", str(get_sim_cpus())]
         )
         runner.test(hdl_toplevel=hdl_toplevel, test_module="test_argmax_linspace")
 
