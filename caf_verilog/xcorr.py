@@ -178,20 +178,18 @@ def size_visualization(f, g, nlags):
         print("n: " + spacing + str(n) + " " + str(n_indexes))
 
 
-async def capture_test_output_data(dut) -> tuple:
+async def capture_test_output_data(dut, cycle_timeout=10) -> tuple:
     """
     This method will wait for signal s_axis_tvalid to become 1, and then return the out_max and index values.
     """
-    completed_capture_on_valid = False
-    while not completed_capture_on_valid:
+    for cycle in range(cycle_timeout):
         captured_out_max = dut.out_max.value
         captured_index = dut.index.value
         dut.m_axis_tready.value = 1
         if dut.s_axis_tvalid.value == 1:
-            completed_capture_on_valid = True
-        else:
-            await RisingEdge(dut.clk)
-    return captured_out_max, captured_index
+            return captured_out_max, captured_index
+        await RisingEdge(dut.clk)
+    raise RuntimeError("Could not retrieve result in %d cycles" % cycle_timeout)
 
 
 async def send_test_input_data(dut, x, y):
@@ -208,7 +206,7 @@ async def send_test_input_data(dut, x, y):
     dut.m_axis_tvalid.value = 1
 
 
-async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable) -> tuple:
+async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable, cycle_timeout=10) -> tuple:
     """
 
     :param dut: Design Under Test
@@ -217,9 +215,10 @@ async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable) -> tuple
     """
     output_cap = []
     for ref_cpx_val, rec_cpx_val in zip(ref_vals, rec_vals):
-        await RisingEdge(dut.clk)
+        assert dut.s_axis_tready.value == 1
         dut.m_axis_tready.value = 1
         await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
+        await RisingEdge(dut.clk)
 
     await RisingEdge(dut.clk)
     dut.m_axis_tvalid.value = 0
