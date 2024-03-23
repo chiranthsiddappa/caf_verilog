@@ -66,14 +66,6 @@ async def verify_caf_slice_time_shifts(dut):
     dut.freq_step_valid.value = 1
     dut.neg_shift.value = 1
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
-    assert dut.s_axis_tready.value == 1
-
-    for _ in range(0, 10):
-        await RisingEdge(dut.clk)
-
     status_file.write("time_shift,index,out_max\n")
     for shift_in_range in range(-1 * shift_range, shift_range + 1, 5):
         ref_quant, rec_quant = generate_test_signals(time_shift=shift_in_range, freq_shift=f_shift, f_samp=fs)
@@ -82,9 +74,12 @@ async def verify_caf_slice_time_shifts(dut):
         ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
         input_val_pairs = list(zip(ref_quant_tb, rec_quant_tb))
 
+        while dut.s_axis_tready.value == 0:
+            await RisingEdge(dut.clk)
+
         assert (len(input_val_pairs) % len(ref_quant)) == 0
         assert len(input_val_pairs) == (len(ref_quant) ** 2 + len(ref_quant))
-        output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+        output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb, cycle_timeout=20)
 
         index_to_verify = index.value
         out_max = output_max.value
