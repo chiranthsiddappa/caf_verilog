@@ -12,19 +12,19 @@ module dot_prod_pip #(parameter xi_bits = 12,
                       parameter sum_q_bits = 24
                       )
    (input clk,
-    input                            m_axis_product_tready,
-    input                            m_axis_x_tvalid,
-    input [xi_bits - 1:0] xi,
-    input [xq_bits - 1:0] xq,
-    input                            m_axis_y_tvalid,
-    input [yi_bits - 1:0] yi,
-    input [yq_bits - 1:0] yq,
-    output reg                       s_axis_product_tvalid,
-    output reg signed [i_bits-1:0]          i,
-    output reg signed [q_bits-1:0]          q
+    input                          m_axis_product_tready,
+    input                          m_axis_x_tvalid,
+    input [xi_bits - 1:0]          xi,
+    input [xq_bits - 1:0]          xq,
+    input                          m_axis_y_tvalid,
+    input [yi_bits - 1:0]          yi,
+    input [yq_bits - 1:0]          yq,
+    output reg                     s_axis_product_tvalid,
+    output reg signed [i_bits-1:0] i,
+    output reg signed [q_bits-1:0] q
     );
 
-   wire                                 cpx_m_axis_tvalid;
+   wire                            cpx_m_axis_tvalid;
    wire signed [xi_bits + yi_bits -1:0] mult_out_i;
    wire signed [xq_bits + yq_bits -1:0] mult_out_q;
    wire signed [sum_i_bits - 1:0]       mult_out_i_extended;
