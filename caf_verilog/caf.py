@@ -136,7 +136,10 @@ async def set_increment_values(caf: CAF, dut):
     phase_increments = caf.phase_increment_values()
     neg_shift_vals = np.signbit(caf.foas)
 
+    assert dut.freq_step_index.value == 0
+
     for inc, bit in zip(phase_increments, neg_shift_vals):
+        assert dut.m_axis_freq_step_tready.value == 1
         dut.s_axis_freq_step_tready.value = 1
         dut.freq_step.value = int(inc)
         dut.neg_shift.value = 1 if bit else 0
