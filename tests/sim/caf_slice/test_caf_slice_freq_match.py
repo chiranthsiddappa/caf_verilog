@@ -46,7 +46,7 @@ def generate_test_signals(time_shift, freq_shift, f_samp):
 
 
 @cocotb.test()
-async def verif_caf_slice_frequency_shifts(dut):
+async def verify_caf_slice_frequency_shifts(dut):
     status_file = open(os.path.join(output_dir, "freq_match_status_file.csv"), 'w', buffering=1)
 
     num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)

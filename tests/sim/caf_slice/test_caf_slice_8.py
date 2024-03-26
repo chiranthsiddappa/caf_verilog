@@ -96,4 +96,4 @@ def test_via_cocotb():
             always=False,
             build_args=["--trace-fst", "--trace-structs", "--threads", str(get_sim_cpus())]
         )
-        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_caf_slice', waves=True)
+        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_caf_slice_8', waves=True)

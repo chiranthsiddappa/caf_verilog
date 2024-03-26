@@ -18,7 +18,7 @@ from gps_helper.prn import PRN
 fs = 625e3
 f_shift = 20e3
 freq_res = 10
-n_bits = 8
+n_bits = 12
 center = 450
 corr_length = 250
 default_shift = 0
@@ -96,4 +96,4 @@ def test_via_cocotb():
             always=False,
             build_args=["--trace-fst", "--trace-structs", "--threads", str(get_sim_cpus())]
         )
-        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_caf_slice', waves=True)
+        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_caf_slice_12', waves=True)
