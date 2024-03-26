@@ -166,7 +166,9 @@ module caf #(parameter phase_bits = 10,
            end
         end // case: FIND_MAX
         RETURN_MAX: begin
-           foas_index <= 'd0;
+           foas_index <= foas_index;
+           time_index <= time_index;
+           out_max <= out_max;
         end
         default: begin
            // INCREMENT INIT

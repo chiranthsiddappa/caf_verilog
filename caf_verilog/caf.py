@@ -175,6 +175,34 @@ async def send_input_data(caf: CAF, dut, cycle_timeout=10):
         await RisingEdge(dut.clk)
 
 
+async def retrieve_max(caf: CAF, dut, cycle_timeout=20):
+    foa_extended_timeout = cycle_timeout + len(caf.foas)
+    tvalid_slice_val = (2**(len(caf.foas))) - 1
+
+    for cycle in range(foa_extended_timeout):
+        if dut.s_axis_tvalid_slice.value != tvalid_slice_val:
+            await RisingEdge(dut.clk)
+
+    assert dut.s_axis_tvalid_slice.value == tvalid_slice_val
+
+    for cycle in range(foa_extended_timeout):
+        if dut.s_axis_tvalid.value != 1:
+            await RisingEdge(dut.clk)
+
+    assert dut.s_axis_tvalid.value == 1
+
+    out_max = dut.out_max
+    time_index = dut.time_index
+    foas_index = dut.foas_index
+    dut.m_axis_tready.value = 1
+
+    await RisingEdge(dut.clk)
+
+    dut.m_axis_tready.value = 0
+
+    return int(time_index.value), caf.foas[int(foas_index.value)], int(out_max.value)
+
+
 def simple_caf(x, y, foas, fs):
     """
     Produce values for a surface plot of the Complex Ambiguity Function.

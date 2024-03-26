@@ -4,7 +4,7 @@ import pathlib
 
 from caf_verilog.sim_helper import sim_get_runner, sim_shift, get_sim_cpus
 from caf_verilog.quantizer import quantize
-from caf_verilog.caf import CAF, set_increment_values, send_input_data
+from caf_verilog.caf import CAF, set_increment_values, send_input_data, retrieve_max
 
 import numpy as np
 import unittest
@@ -63,14 +63,12 @@ async def caf_find_max(dut):
 
     await send_input_data(caf, dut)
 
-    tvalid_slice_val = (2**(len(foas))) - 1
+    time_index, foa_value, out_max = await retrieve_max(caf, dut)
 
-    while dut.s_axis_tvalid_slice.value != tvalid_slice_val:
-        await RisingEdge(dut.clk)
+    assert time_index == half_length - default_shift
+    assert foa_value == f_shift
 
-    for _ in range(10):
-        if dut.s_axis_tvalid.value != 1:
-            await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
 
 
 def test_via_cocotb():
