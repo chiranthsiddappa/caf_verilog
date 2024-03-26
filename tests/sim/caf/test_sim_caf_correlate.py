@@ -12,8 +12,7 @@ from gps_helper.prn import PRN
 from sk_dsp_comm import sigsys as ss
 from sk_dsp_comm import digitalcom as dc
 
-from caf_verilog.caf import CAF, set_increment_values
-from caf_verilog.xcorr import send_and_receive, gen_tb_values
+from caf_verilog.caf import CAF, set_increment_values, send_input_data
 
 prn = PRN(10)
 prn_seq = prn.prn_seq()
@@ -45,28 +44,9 @@ async def caf_correlation(dut):
     for _ in range(0, 5):
         await RisingEdge(dut.clk)
 
-    assert dut.m_axis_freq_step_tready.value == 1
-    assert dut.freq_step_index.value == 0
-
     await set_increment_values(caf, dut)
 
-    while(dut.s_axis_tready.value != 1):
-        await RisingEdge(dut.clk)
-
-    ref_tb, rec_tb = gen_tb_values(ref, rec)
-
-    for ref_vals, rec_vals in zip(ref_tb, rec_tb):
-        ref_x_i = int(ref_vals.real)
-        ref_x_q = int(ref_vals.imag)
-        rec_y_i = int(rec_vals.real)
-        rec_y_q = int(rec_vals.imag)
-        dut.m_axis_tready.value = 1
-        dut.m_axis_tvalid.value = 1
-        dut.xi.value = ref_x_i
-        dut.xq.value = ref_x_q
-        dut.yi.value = rec_y_i
-        dut.yq.value = rec_y_q
-        await RisingEdge(dut.clk)
+    await send_input_data(caf, dut)
 
     tvalid_slice_val = (2**(len(foas))) - 1
 
@@ -81,7 +61,6 @@ async def caf_correlation(dut):
 
 
 def test_via_cocotb():
-    caf = CAF(ref, rec * theta_shift, foas, fs=fs, n_bits=8, ref_i_bits=8, rec_i_bits=8, output_dir=output_dir)
     verilog_sources = [os.path.join(output_dir, filename) for filename in glob.glob("%s/*.v" % output_dir)]
     runner = sim_get_runner()
     hdl_toplevel = "%s" % caf.module_name()

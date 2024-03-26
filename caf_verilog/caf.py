@@ -10,6 +10,7 @@ from . quantizer import quantize
 from . io_helper import write_buffer_values
 from . quantizer import bin_num
 from . sig_gen import phase_increment
+from . xcorr import gen_tb_values
 from math import log2, ceil
 
 try:
@@ -144,6 +145,33 @@ async def set_increment_values(caf: CAF, dut):
         dut.freq_step.value = int(inc)
         dut.neg_shift.value = 1 if bit else 0
         dut.s_axis_freq_step_valid.value = 1
+        await RisingEdge(dut.clk)
+
+
+async def send_input_data(caf: CAF, dut, cycle_timeout=10):
+    """
+    :param caf: CAF instance to retrieve module values
+    :param dut: cocotb design under test
+    :param cycle_timeout: Number of clock cycles to wait for ready signal
+    """
+    ref_tb, rec_tb = gen_tb_values(caf.ref_quant, caf.rec_quant)
+
+    for cycle in range(cycle_timeout):
+        if dut.s_axis_tready.value != 1:
+            await RisingEdge(dut.clk)
+
+    assert dut.s_axis_tready.value == 1
+
+    for ref_val, rec_val in zip(ref_tb, rec_tb):
+        ref_x_i = int(ref_val.real)
+        ref_x_q = int(ref_val.imag)
+        rec_y_i = int(rec_val.real)
+        rec_y_q = int(rec_val.imag)
+        dut.m_axis_tvalid.value = 1
+        dut.xi.value = ref_x_i
+        dut.xq.value = ref_x_q
+        dut.yi.value = rec_y_i
+        dut.yq.value = rec_y_q
         await RisingEdge(dut.clk)
 
 

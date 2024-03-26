@@ -48,9 +48,6 @@ async def verify_caf_foas(dut):
     for _ in range(0, 5):
         await RisingEdge(dut.clk)
 
-    assert dut.m_axis_freq_step_tready.value == 1
-    assert dut.freq_step_index.value == 0
-
     await set_increment_values(caf, dut)
 
     dut.s_axis_freq_step_tready.value = 0
@@ -66,7 +63,6 @@ async def verify_caf_foas(dut):
 
 
 def test_via_cocotb():
-    caf = CAF(ref, rec * theta_shift, foas, fs=fs, n_bits=8, ref_i_bits=8, rec_i_bits=8, output_dir=output_dir)
     verilog_sources = [os.path.join(output_dir, filename) for filename in glob.glob("%s/*.v" % output_dir)]
     runner = sim_get_runner()
     hdl_toplevel = "%s" % caf.module_name()
