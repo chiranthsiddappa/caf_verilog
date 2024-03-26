@@ -194,6 +194,7 @@ async def capture_test_output_data(dut, cycle_timeout=11) -> tuple:
 
 
 async def send_test_input_data(dut, x, y):
+    assert dut.s_axis_tready.value == 1
 
     x_i = int(x.real)
     x_q = int(x.imag)
@@ -215,8 +216,13 @@ async def send_and_receive(dut, ref_vals: Iterable, rec_vals: Iterable, cycle_ti
     :param rec_vals: List of received values
     :param cycle_timeout: Number of clock cycles to wait for valid signal
     """
+    for cycle in range(cycle_timeout):
+        if dut.s_axis_tready.value != 1:
+            await RisingEdge(dut.clk)
+    if dut.s_axis_tready.value != 1:
+        raise RuntimeError("Could not send input in %d cycles" % cycle_timeout)
+
     for ref_cpx_val, rec_cpx_val in zip(ref_vals, rec_vals):
-        assert dut.s_axis_tready.value == 1
         dut.m_axis_tready.value = 1
         await send_test_input_data(dut, ref_cpx_val, rec_cpx_val)
         await RisingEdge(dut.clk)
