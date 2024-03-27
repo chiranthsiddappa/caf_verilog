@@ -147,6 +147,8 @@ async def set_increment_values(caf: CAF, dut):
         dut.s_axis_freq_step_valid.value = 1
         await RisingEdge(dut.clk)
 
+    dut.s_axis_freq_step_tready.value = 0
+
 
 async def send_input_data(caf: CAF, dut, cycle_timeout=10):
     """
@@ -178,6 +180,8 @@ async def send_input_data(caf: CAF, dut, cycle_timeout=10):
 async def retrieve_max(caf: CAF, dut, cycle_timeout=20):
     foa_extended_timeout = cycle_timeout + len(caf.foas)
     tvalid_slice_val = (2**(len(caf.foas))) - 1
+
+    dut.m_axis_tvalid.value = 0
 
     for cycle in range(foa_extended_timeout):
         if dut.s_axis_tvalid_slice.value != tvalid_slice_val:

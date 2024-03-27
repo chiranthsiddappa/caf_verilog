@@ -68,6 +68,13 @@ async def caf_find_max(dut):
     assert time_index == half_length - default_shift
     assert foa_value == f_shift
 
+    await send_input_data(caf, dut)
+
+    time_index, foa_value, out_max = await retrieve_max(caf, dut)
+
+    assert time_index == half_length - default_shift
+    assert foa_value == f_shift
+
     await RisingEdge(dut.clk)
 
 

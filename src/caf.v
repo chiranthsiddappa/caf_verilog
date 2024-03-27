@@ -72,7 +72,9 @@ module caf #(parameter phase_bits = 10,
                                 all_slice_static_cmp :
                                 m_axis_tready_find_max;
 
-   assign s_axis_tready = (s_axis_tready_slice == all_slice_static_cmp) && (state == CORRELATE);
+   assign s_axis_tready = (s_axis_tready_slice == all_slice_static_cmp) &&
+                          (s_axis_tvalid_slice != all_slice_static_cmp) &&
+                          (state == CORRELATE || state == IDLE);
    assign s_axis_tvalid = state == RETURN_MAX;
 
    initial begin
@@ -111,6 +113,14 @@ module caf #(parameter phase_bits = 10,
         RETURN_MAX: begin
            if (m_axis_tready) begin
               state <= IDLE;
+           end
+        end
+        IDLE: begin
+           if (m_axis_tvalid) begin
+              state <= CORRELATE;
+           end
+           else if (s_axis_freq_step_tready) begin
+              state <= INCREMENT_INIT;
            end
         end
         default: begin
