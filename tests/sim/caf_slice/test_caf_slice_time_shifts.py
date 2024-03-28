@@ -61,21 +61,31 @@ async def verify_caf_slice_time_shifts(dut):
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 0
 
-    await RisingEdge(dut.clk)
-    dut.freq_step.value = increment
+    dut.freq_step.value = 0
     dut.freq_step_valid.value = 1
-    dut.neg_shift.value = 1
 
     status_file.write("time_shift,index,out_max\n")
+
+    await compute_time_shifts(dut, freq_shift=0, status_file=status_file)
+
+    dut.freq_step.value = increment
+    dut.freq_step_valid.value = 1
+    dut.neg_shift.value = 0
+    await RisingEdge(dut.clk)
+
+    await compute_time_shifts(dut, freq_shift=f_shift, status_file=status_file)
+
+    for _ in range(0, 100):
+        await RisingEdge(dut.clk)
+
+
+async def compute_time_shifts(dut, freq_shift: float, status_file):
     for shift_in_range in range(-1 * shift_range, shift_range + 1, 5):
-        ref_quant, rec_quant = generate_test_signals(time_shift=shift_in_range, freq_shift=f_shift, f_samp=fs)
+        ref_quant, rec_quant = generate_test_signals(time_shift=shift_in_range, freq_shift=freq_shift, f_samp=fs)
         assert len(ref_quant) == corr_length
         assert len(rec_quant) == corr_length * 2
         ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
         input_val_pairs = list(zip(ref_quant_tb, rec_quant_tb))
-
-        while dut.s_axis_tready.value == 0:
-            await RisingEdge(dut.clk)
 
         assert (len(input_val_pairs) % len(ref_quant)) == 0
         assert len(input_val_pairs) == (len(ref_quant) ** 2 + len(ref_quant))
@@ -83,14 +93,8 @@ async def verify_caf_slice_time_shifts(dut):
 
         index_to_verify = index.value
         out_max = output_max.value
-        assert index_to_verify == half_length - shift_in_range
         status_file.write("%d,%d,%d\n" % (shift_in_range, int(index_to_verify), int(out_max)))
-
-        for _ in range(0, 10):
-            await RisingEdge(dut.clk)
-
-    for _ in range(0, 100):
-        await RisingEdge(dut.clk)
+        assert index_to_verify == half_length - shift_in_range
 
 
 def test_via_cocotb():
