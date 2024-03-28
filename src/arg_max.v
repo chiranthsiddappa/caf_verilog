@@ -130,7 +130,7 @@ module arg_max #(parameter buffer_length = 10,
          s_axis_tvalid <= 1'b1;
       end
       else begin
-         s_axis_tvalid <= 1'b0;
+         s_axis_tvalid <= s_axis_tvalid;
       end
    end
 
