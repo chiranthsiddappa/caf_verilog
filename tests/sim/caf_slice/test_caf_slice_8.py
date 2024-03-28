@@ -61,13 +61,10 @@ async def verify_caf_slice(dut):
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 0
 
-    await RisingEdge(dut.clk)
     dut.freq_step.value = increment
     dut.freq_step_valid.value = 1
     dut.neg_shift.value = 1 if f_shift < 0 else 0
-
-    while dut.s_axis_tready.value == 0:
-        await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
 
     output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb, cycle_timeout=20)
 
