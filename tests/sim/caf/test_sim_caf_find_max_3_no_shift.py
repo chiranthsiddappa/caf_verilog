@@ -18,7 +18,7 @@ from gps_helper.prn import PRN
 fs = 625e3
 foas = np.array([-20e3, 0, 20e3])
 f_shift = 0
-freq_res = 10
+freq_res = 0.0001
 n_bits = 8
 center = 450
 corr_length = 250
@@ -61,19 +61,17 @@ async def caf_find_max(dut):
 
     await set_increment_values(caf, dut)
 
-    await send_input_data(caf, dut)
+    for foa in foas:
+        ref_quant_v, rec_quant_v = generate_test_signals(time_shift=default_shift, freq_shift=foa, f_samp=fs)
+        caf.ref_quant = ref_quant_v
+        caf.rec_quant = rec_quant_v
 
-    time_index, foa_value, out_max = await retrieve_max(caf, dut)
+        await send_input_data(caf, dut)
 
-    assert time_index == half_length - default_shift
-    assert foa_value == f_shift
+        time_index, foa_value, out_max = await retrieve_max(caf, dut)
 
-    await send_input_data(caf, dut)
-
-    time_index, foa_value, out_max = await retrieve_max(caf, dut)
-
-    assert time_index == half_length - default_shift
-    assert foa_value == f_shift
+        assert time_index == half_length - default_shift
+        assert foa_value == foa
 
     await RisingEdge(dut.clk)
 
