@@ -23,11 +23,12 @@ async def send_test_input_data(dut, x_vals):
 
 
 async def capture_test_output_data(dut):
-    while (dut.s_axis_tvalid.value == 0):
-        await RisingEdge(dut.clk)
+    while dut.s_axis_tvalid.value == 0:
         dut.m_axis_tready.value = 1
         dut.m_axis_tvalid.value = 0
+        await RisingEdge(dut.clk)
     assert dut.s_axis_tvalid.value == 1
+    dut.m_axis_tready.value = 0
     return dut.index.value, dut.out_max.value
 
 
@@ -35,6 +36,7 @@ async def empty_cycles(dut):
     for _ in range(0, 5):
         dut.m_axis_tready.value = 0
         await RisingEdge(dut.clk)
+
 
 class ArgMax(CafVerilogBase):
 

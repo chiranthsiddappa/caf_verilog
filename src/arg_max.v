@@ -27,6 +27,7 @@ module arg_max #(parameter buffer_length = 10,
    reg                              cmp_stage_valid;
    wire                             result_collected;
    reg                              result_collected_buff;
+   wire                             result_collected_cond;
 
    initial begin
       index = 'd0;
@@ -39,13 +40,14 @@ module arg_max #(parameter buffer_length = 10,
 
    assign icounter_extended = { {(31 - index_bits){icounter[index_bits]}}, icounter};
    assign result_collected = s_axis_tvalid & m_axis_tready;
+   assign result_collected_cond = result_collected | result_collected_buff;
 
    // s_axis_tready block with catch
    always @(posedge clk) begin
       if (icounter_extended < buffer_length) begin
          s_axis_tready <= 1'b1;
       end
-      else if ((icounter_extended == buffer_length) | (result_collected_buff | result_collected)) begin
+      else if ((icounter_extended == buffer_length) | result_collected_cond) begin
          s_axis_tready <= 1'b1;
       end
       else begin
@@ -81,7 +83,7 @@ module arg_max #(parameter buffer_length = 10,
    end
 
    always @(posedge clk) begin
-      if ((icounter_extended == 'd0) && !sum_stage_valid) begin
+      if ((icounter_extended == 'd0) && !sum_stage_valid && result_collected_cond) begin
          index <= 'd0;
          out_max <= argsum;
          cmp_stage_valid <= 1'b0;
@@ -112,7 +114,7 @@ module arg_max #(parameter buffer_length = 10,
             icounter <= icounter;
          end
       end
-      else if (result_collected | result_collected_buff) begin
+      else if (icounter_extended == (buffer_length - 1)) begin
          icounter <= 'd0;
       end else begin
          icounter <= icounter;
@@ -121,7 +123,7 @@ module arg_max #(parameter buffer_length = 10,
 
    always @(posedge clk) begin
       result_collected_buff <= result_collected;
-      if (result_collected | result_collected_buff) begin
+      if (result_collected_cond) begin
          s_axis_tvalid <= 1'b0;
       end
       else if (icounter_extended == (buffer_length - 1)) begin
