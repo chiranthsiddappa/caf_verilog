@@ -188,6 +188,7 @@ async def capture_test_output_data(dut, cycle_timeout=11) -> tuple:
         dut.m_axis_tvalid.value = 0
         dut.m_axis_tready.value = 1
         if dut.s_axis_tvalid.value == 1:
+            dut.m_axis_tready.value = 0
             return captured_out_max, captured_index
         await RisingEdge(dut.clk)
     raise RuntimeError("Could not retrieve result in %d cycles" % cycle_timeout)
