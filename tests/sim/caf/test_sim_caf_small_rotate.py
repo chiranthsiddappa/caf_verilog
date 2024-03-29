@@ -18,8 +18,7 @@ from gps_helper.prn import PRN
 fs = 625e3
 foas = np.array([-20e3, 0, 20e3])
 f_shift = 0
-freq_res = 0.0001
-n_bits = 8
+n_bits = 12
 center = 450
 corr_length = 250
 default_shift = 0
