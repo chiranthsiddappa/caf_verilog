@@ -176,6 +176,8 @@ async def send_input_data(caf: CAF, dut, cycle_timeout=10):
         dut.yq.value = rec_y_q
         await RisingEdge(dut.clk)
 
+    dut.m_axis_tvalid.value = 0
+
 
 async def retrieve_max(caf: CAF, dut, cycle_timeout=20):
     foa_extended_timeout = cycle_timeout + len(caf.foas)
