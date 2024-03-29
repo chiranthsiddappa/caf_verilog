@@ -61,8 +61,8 @@ async def caf_find_max(dut):
 
     await set_increment_values(caf, dut)
 
-    for foa in foas:
-        ref_quant_v, rec_quant_v = generate_test_signals(time_shift=default_shift, freq_shift=foa, f_samp=fs)
+    for shift_in_range in range(-1 * shift_range, shift_range + 1, 5):
+        ref_quant_v, rec_quant_v = generate_test_signals(time_shift=shift_in_range, freq_shift=f_shift, f_samp=fs)
         caf.ref_quant = ref_quant_v
         caf.rec_quant = rec_quant_v
 
@@ -70,8 +70,8 @@ async def caf_find_max(dut):
 
         time_index, foa_value, out_max = await retrieve_max(caf, dut)
 
-        assert time_index == half_length - default_shift
-        assert foa_value == foa
+        assert time_index == half_length - shift_in_range
+        assert foa_value == f_shift
 
     await RisingEdge(dut.clk)
 
@@ -89,7 +89,7 @@ def test_via_cocotb():
         always=True,
         build_args=["--trace-fst", "--trace-structs", "--threads", str(get_sim_cpus())]
     )
-    runner.test(hdl_toplevel=hdl_toplevel, test_module='test_sim_caf_find_max', waves=True)
+    runner.test(hdl_toplevel=hdl_toplevel, test_module='test_sim_caf_find_max_3_no_shift', waves=True)
 
 
 if __name__ == '__main__':
