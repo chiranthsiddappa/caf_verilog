@@ -25,7 +25,7 @@ default_shift = 0
 half_length = corr_length / 2
 shift_range = int(half_length)
 
-output_dir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))), 'caf_v_max')
+output_dir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))), 'caf_v_small_rotate')
 pathlib.Path(output_dir).mkdir(exist_ok=True)
 
 
@@ -39,8 +39,8 @@ def generate_test_signals(time_shift, freq_shift, f_samp):
     prn_seq = np.array(prn_seq)
     prn_seq = prn_seq + prn_seq*1j
     ref, rec = sim_shift(prn_seq, center, corr_length, shift=time_shift, freq_shift=freq_shift, fs=fs)
-    ref_quant = quantize(ref, 12)
-    rec_quant = quantize(rec, 12)
+    ref_quant = quantize(ref, n_bits=n_bits)
+    rec_quant = quantize(rec, n_bits=n_bits)
     return ref_quant, rec_quant
 
 
@@ -49,7 +49,8 @@ caf = CAF(ref_quant, rec_quant, foas=foas, n_bits=n_bits, ref_i_bits=12, rec_i_b
 
 
 @cocotb.test()
-async def caf_find_max(dut):
+async def caf_verify_all_peaks(dut):
+    status_file = open(os.path.join(output_dir, "caf_small_rotate_status_file.csv"), 'w', buffering=1)
 
     clock = Clock(dut.clk, period=10, units='ns')
 
@@ -60,6 +61,7 @@ async def caf_find_max(dut):
 
     await set_increment_values(caf, dut)
 
+    status_file.write("time_index,time_index_expected,foa,foa_expected,out_max\n")
     for foa in foas:
         for shift_in_range in range(-1 * shift_range, shift_range + 1, 5):
             ref_quant_v, rec_quant_v = generate_test_signals(time_shift=shift_in_range, freq_shift=foa, f_samp=fs)
@@ -69,9 +71,15 @@ async def caf_find_max(dut):
             await send_input_data(caf, dut)
 
             time_index, foa_value, out_max = await retrieve_max(caf, dut)
+            time_loc_verify = half_length - shift_in_range
+            time_index_correct = time_index == time_loc_verify
+            foa_correct = foa_value == foa
+            status_file.write("%d,%d,%d,%d,%d\n" % (time_index, time_loc_verify,
+                                                    foa_value, foa,
+                                                    out_max))
 
-            assert time_index == half_length - shift_in_range
-            assert foa_value == foa
+            assert time_index_correct
+            assert foa_correct
 
     await RisingEdge(dut.clk)
 
