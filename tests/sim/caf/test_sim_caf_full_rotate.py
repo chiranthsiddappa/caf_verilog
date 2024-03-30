@@ -15,12 +15,9 @@ from cocotb.triggers import RisingEdge
 from sk_dsp_comm import sigsys as ss
 from gps_helper.prn import PRN
 
-
-
 fs = 625e3
 f_shift = 20e3
-freq_res = 0.01
-n_bits = 8
+n_bits = 12
 center = 450
 corr_length = 250
 default_shift = 0
@@ -54,6 +51,7 @@ caf = CAF(ref_quant, rec_quant, foas=foas, n_bits=n_bits, ref_i_bits=12, rec_i_b
 
 @cocotb.test()
 async def caf_verify_all_peaks(dut):
+    status_file = open(os.path.join(output_dir, "caf_full_rotate_status_file.csv"), 'w', buffering=1)
 
     clock = Clock(dut.clk, period=10, units='ns')
 
@@ -63,6 +61,31 @@ async def caf_verify_all_peaks(dut):
         await RisingEdge(dut.clk)
 
     await set_increment_values(caf, dut)
+
+    status_file.write("time_index,time_index_expected,foa,foa_expected,out_max,time_index_correct,foa_correct\n")
+    for idf, freq_shift_v in enumerate(foas):
+        for shift_in_range in range(-1 * shift_range, shift_range + 1, 5):
+            ref_quant_v, rec_quant_v = generate_test_signals(time_shift=shift_in_range,
+                                                             freq_shift=freq_shift_v,
+                                                             f_samp=fs)
+            caf.ref_quant = ref_quant_v
+            caf.rec_quant = rec_quant_v
+
+            await send_input_data(caf, dut)
+
+            time_index, foa_value, out_max = await retrieve_max(caf, dut)
+            time_loc_verify = half_length - shift_in_range
+            time_index_correct = time_index == time_loc_verify
+            foa_correct = foa_value == freq_shift_v
+            status_file.write("%d,%d,%d,%d,%d,%i,%i\n" % (time_index, time_loc_verify,
+                                                          foa_value, freq_shift_v,
+                                                          out_max, time_index_correct, foa_correct))
+
+            assert time_index_correct
+            assert foa_correct
+
+    for _ in range(5):
+        await RisingEdge(dut.clk)
 
 
 def test_via_cocotb():
