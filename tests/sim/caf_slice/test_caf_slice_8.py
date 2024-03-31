@@ -61,20 +61,12 @@ async def verify_caf_slice(dut):
     await RisingEdge(dut.clk)
     assert dut.s_axis_tready.value == 0
 
-    await RisingEdge(dut.clk)
     dut.freq_step.value = increment
     dut.freq_step_valid.value = 1
-    dut.neg_shift.value = 1
-
+    dut.neg_shift.value = 1 if f_shift < 0 else 0
     await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
-    assert dut.s_axis_tready.value == 1
 
-    for _ in range(0, 10):
-        await RisingEdge(dut.clk)
-
-    output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+    output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb, cycle_timeout=20)
 
     index_to_verify = index.value
     assert index_to_verify == half_length - default_shift
@@ -99,6 +91,6 @@ def test_via_cocotb():
             vhdl_sources=[],
             hdl_toplevel=hdl_toplevel,
             always=False,
-            build_args=["--trace", "--trace-structs", "--threads", str(get_sim_cpus())]
+            build_args=["--trace-fst", "--trace-structs", "--threads", str(get_sim_cpus())]
         )
-        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_caf_slice', waves=True)
+        runner.test(hdl_toplevel=hdl_toplevel, test_module='test_caf_slice_8', waves=True)

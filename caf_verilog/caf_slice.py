@@ -33,7 +33,7 @@ class CAFSlice(CafVerilogBase):
     def gen_submodules(self) -> dict:
         submodules = dict()
         submodules['freq_shift'] = FreqShift(self.received, self.freq_res, self.fs, self.n_bits,
-                                             i_bits=self.rec_i_bits, q_bits=self.rec_q_bits,
+                                             i_bits=self.ref_i_bits, q_bits=self.ref_q_bits,
                                              output_dir=self.output_dir)
         submodules['x_corr'] = XCorr(self.reference, self.received, self.ref_i_bits, self.ref_q_bits,
                                      self.rec_i_bits, self.rec_q_bits, pipeline=True, output_dir=self.output_dir)

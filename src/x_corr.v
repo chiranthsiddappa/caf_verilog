@@ -54,6 +54,6 @@ module x_corr #(parameter xi_bits = 12,
 
    initial begin
       $dumpfile("x_corr.vcd");
-      $dumpvars(2, x_corr);
+      $dumpvars(1, x_corr);
    end
 endmodule // xcorr

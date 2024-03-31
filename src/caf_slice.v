@@ -34,7 +34,6 @@ module caf_slice #(parameter phase_bits = 10,
    wire [yq_bits - 1:0]                freq_slice_yq;
    reg [yi_bits -1:0]                  freq_slice_yi_buff [0:4];
    reg [yq_bits -1:0]                  freq_slice_yq_buff [0:4];
-   wire                                slice_inputs_valid;
    reg [4:0]                           slice_inputs_valid_buff;
 
    // freq_shift axi signals
@@ -67,9 +66,21 @@ module caf_slice #(parameter phase_bits = 10,
    always @(posedge clk) begin
       slice_inputs_valid_buff <= (slice_inputs_valid_buff << 1) | { 4'b0000, m_axis_tvalid};
       freq_slice_yi_buff[0] <= yi;
-      freq_slice_yq_buff[0] <= yq;
-      freq_slice_yi_buff[1:4] <= freq_slice_yi_buff[0:3];
-      freq_slice_yq_buff[1:4] <= freq_slice_yq_buff[0:3];
+      if (!neg_shift) begin
+         freq_slice_yq_buff[0] <= yq * -'d1;
+      end else begin
+         freq_slice_yq_buff[0] <= yq;
+      end
+      // yi buffer
+      freq_slice_yi_buff[1] <= freq_slice_yi_buff[0];
+      freq_slice_yi_buff[2] <= freq_slice_yi_buff[1];
+      freq_slice_yi_buff[3] <= freq_slice_yi_buff[2];
+      freq_slice_yi_buff[4] <= freq_slice_yi_buff[3];
+      // yq buffer
+      freq_slice_yq_buff[1] <= freq_slice_yq_buff[0];
+      freq_slice_yq_buff[2] <= freq_slice_yq_buff[1];
+      freq_slice_yq_buff[3] <= freq_slice_yq_buff[2];
+      freq_slice_yq_buff[4] <= freq_slice_yq_buff[3];
    end
 
    {{ freq_shift_name }} #(.phase_bits(phase_bits),
@@ -111,7 +122,7 @@ module caf_slice #(parameter phase_bits = 10,
 
    initial begin
       $dumpfile("caf_slice.vcd");
-      $dumpvars(2, caf_slice);
+      $dumpvars(1, caf_slice);
    end
 
 endmodule // caf_slice

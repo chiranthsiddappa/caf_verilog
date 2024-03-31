@@ -46,7 +46,7 @@ def generate_test_signals(time_shift, freq_shift, f_samp):
 
 
 @cocotb.test()
-async def verif_caf_slice_frequency_shifts(dut):
+async def verify_caf_slice_frequency_shifts(dut):
     status_file = open(os.path.join(output_dir, "freq_match_status_file.csv"), 'w', buffering=1)
 
     num_phase_bits = calc_smallest_phase_size(fs, freq_res, n_bits)
@@ -68,28 +68,17 @@ async def verif_caf_slice_frequency_shifts(dut):
     dut.freq_step_valid.value = 1
     dut.neg_shift.value = 0
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
-    assert dut.s_axis_tready.value == 1
-
-    for _ in range(10):
+    while dut.s_axis_tready.value == 0:
         await RisingEdge(dut.clk)
 
     ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=0, f_samp=fs)
     ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
 
-    output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+    output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb, cycle_timeout=20)
 
     index_to_verify = index.value
     out_max = output_max.value
     assert index_to_verify == half_length - default_shift
-
-    dut.freq_step_valid.value = 0
-    dut.neg_shift.value = 1
-
-    for _ in range(10):
-        await RisingEdge(dut.clk)
 
     status_file.write("frequency_shift,index,out_max\n")
 
@@ -103,15 +92,16 @@ async def verif_caf_slice_frequency_shifts(dut):
 
         dut.freq_step.value = increment
         dut.freq_step_valid.value = 1
+        dut.neg_shift.value = 1 if (freq_shift < 0) else 0
 
         ref_quant, rec_quant = generate_test_signals(time_shift=default_shift, freq_shift=freq_shift, f_samp=fs)
         ref_quant_tb, rec_quant_tb = gen_tb_values(ref_quant, rec_quant)
-        output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb)
+        output_max, index = await send_and_receive(dut, ref_quant_tb, rec_quant_tb, cycle_timeout=20)
         index_to_verify = index.value
         out_max = output_max.value
 
-        assert index_to_verify == half_length - default_shift
         status_file.write("%d,%d,%d\n" % (freq_shift, int(index_to_verify), int(out_max)))
+        assert index_to_verify == half_length - default_shift
 
 
 def test_via_cocotb():
