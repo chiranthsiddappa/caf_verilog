@@ -8,12 +8,15 @@ from caf_verilog.caf import CAF, set_increment_values, send_input_data, retrieve
 
 import numpy as np
 import unittest
+import pytest
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
 from sk_dsp_comm import sigsys as ss
 from gps_helper.prn import PRN
+
+__rotate_mode__ = os.getenv("CAF_ROTATE", "small")
 
 fs = 625e3
 foas = np.array([-20e3, 0, 20e3])
@@ -84,6 +87,7 @@ async def caf_verify_all_peaks(dut):
     await RisingEdge(dut.clk)
 
 
+@pytest.mark.skipif(__rotate_mode__.lower() != "small", reason="CAF Rotate mode is %s" % __rotate_mode__)
 def test_via_cocotb():
     verilog_sources = [os.path.join(output_dir, filename) for filename in glob.glob("%s/*.v" % output_dir)]
     runner = sim_get_runner()

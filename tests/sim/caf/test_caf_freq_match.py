@@ -28,7 +28,7 @@ shift_range = int(half_length)
 f_size = 100
 foas = np.arange(-f_size, f_size + 1) * 1000
 
-output_dir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))), 'caf_v_max')
+output_dir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))), 'caf_v_match')
 pathlib.Path(output_dir).mkdir(exist_ok=True)
 
 
