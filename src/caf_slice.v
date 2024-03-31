@@ -71,8 +71,16 @@ module caf_slice #(parameter phase_bits = 10,
       end else begin
          freq_slice_yq_buff[0] <= yq;
       end
-      freq_slice_yi_buff[1:4] <= freq_slice_yi_buff[0:3];
-      freq_slice_yq_buff[1:4] <= freq_slice_yq_buff[0:3];
+      // yi buffer
+      freq_slice_yi_buff[1] <= freq_slice_yi_buff[0];
+      freq_slice_yi_buff[2] <= freq_slice_yi_buff[1];
+      freq_slice_yi_buff[3] <= freq_slice_yi_buff[2];
+      freq_slice_yi_buff[4] <= freq_slice_yi_buff[3];
+      // yq buffer
+      freq_slice_yq_buff[1] <= freq_slice_yq_buff[0];
+      freq_slice_yq_buff[2] <= freq_slice_yq_buff[1];
+      freq_slice_yq_buff[3] <= freq_slice_yq_buff[2];
+      freq_slice_yq_buff[4] <= freq_slice_yq_buff[3];
    end
 
    {{ freq_shift_name }} #(.phase_bits(phase_bits),
