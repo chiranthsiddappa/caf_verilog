@@ -85,6 +85,9 @@ module caf #(parameter phase_bits = 10,
       foas_index_counter = 'd0;
       state = 'd0;
       m_axis_tready_find_max = 'd0;
+      out_max = 'd0;
+      foas_index = 'd0;
+      time_index = 'd0;
    end
 
    always @(posedge clk) begin
