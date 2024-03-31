@@ -1,288 +1,243 @@
 `timescale 1ns/1ns
 
-module caf(input clk,
-           output reg        s_axis_tready,
-           input [31:0]      m_axis_tdata,
-           input             m_axis_tvalid,
-           output reg        s_axis_tvalid,
-           output reg [31:0] s_axis_tdata,
-           input             m_axis_tready);
+module caf #(parameter phase_bits = 10,
+             parameter xi_bits = 12,
+             parameter xq_bits = 12,
+             parameter yi_bits = 12,
+             parameter yq_bits = 12,
+             parameter i_bits = 24,
+             parameter q_bits = 24,
+             parameter length = 5,
+             parameter length_counter_bits = 3,
+             parameter foas = 3,
+             parameter foas_counter_bits = 3,
+             parameter out_max_bits = 64
+             )
+   (input clk,
+    input                                  s_axis_freq_step_tready,
+    input [phase_bits - 1:0]               freq_step,
+    input                                  s_axis_freq_step_valid,
+    output reg                             m_axis_freq_step_tready,
+    output [foas_counter_bits - 1:0]       freq_step_index,
+    output reg                             freq_step_index_tvalid,
+    input                                  neg_shift,
+    input                                  m_axis_tvalid,
+    input [xi_bits - 1:0]                  xi,
+    input [xq_bits - 1:0]                  xq,
+    input [yi_bits - 1:0]                  yi,
+    input [yq_bits - 1:0]                  yq,
+    output                                 s_axis_tready,
+    input                                  m_axis_tready,
+    output reg [out_max_bits -1:0]         out_max,
+    output reg [foas_counter_bits - 1:0]   foas_index,
+    output reg [length_counter_bits - 1:0] time_index,
+    output reg                             s_axis_tvalid);
+
+   parameter                           INCREMENT_INIT = 3'b000;
+   parameter                           IDLE = 3'b001;
+   parameter                           CORRELATE = 3'b010;
+   parameter                           FIND_MAX = 3'b011;
+   parameter                           RETURN_MAX = 3'b100;
+
+   reg                                 all_freq_steps_set;
+   reg [2:0]                           state;
+   wire                                foas_last_index;
+
+   // FOAS
+   reg                                 foas_transaction_started;
+   reg [foas_counter_bits-1:0]         foas_index_counter;
+   reg [foas-1:0]                      foas_index_valid;
+   reg [foas-1:0]                      neg_shift_index;
+   reg [phase_bits - 1:0]              freq_step_capture_buff;
+   wire [31:0]                         foas_index_counter_extended;
+
+   // Slices
+   wire [foas-1:0]                     s_axis_tready_slice;
+   reg [foas-1:0]                      all_slice_static_cmp;
+   wire [foas-1:0]                     m_axis_tready_slice;
+   wire [out_max_bits-1:0]             out_max_slice [foas-1:0];
+   wire [length_counter_bits-1:0]      index_slice[foas-1:0];
+   wire [foas-1:0]                     s_axis_tvalid_slice;
+
+   // Max
+   reg [foas-1:0]                      m_axis_tready_find_max;
+   reg [out_max_bits - 1:0]            out_max_buff;
+   reg [foas_counter_bits -1:0]        foas_index_buff;
+   reg [length_counter_bits - 1:0]     time_index_buff;
+
+   assign freq_step_index = foas_index_counter[foas_counter_bits - 1:0];
+   assign foas_index_counter_extended = { {(32 - foas_counter_bits){1'b0}}, foas_index_counter};
+   assign foas_last_index = foas_index_counter_extended == (foas - 1);
+
+   assign m_axis_tready_slice = (s_axis_tvalid_slice == all_slice_static_cmp) ?
+                                m_axis_tready_find_max :
+                                ((state == CORRELATE) & m_axis_tready) ?
+                                all_slice_static_cmp :
+                                m_axis_tready_find_max;
+
+   assign s_axis_tready = (s_axis_tready_slice == all_slice_static_cmp) &&
+                          (s_axis_tvalid_slice != all_slice_static_cmp) &&
+                          (state == CORRELATE || state == IDLE);
 
    initial begin
-      s_axis_tready = 1'b0;
+      all_slice_static_cmp = -'d1;
+      m_axis_freq_step_tready = 1'b0;
       s_axis_tvalid = 1'b0;
-      s_axis_tdata  = 'd0;
+      foas_index_counter = 'd0;
+      state = 'd0;
+      m_axis_tready_find_max = 'd0;
+      out_max = 'd0;
+      foas_index = 'd0;
+      time_index = 'd0;
    end
 
-   reg [{{ ref_index_bits }}:0] ref_iter;
-   wire                         m_axi_ref_rready;
-   reg                          m_axi_ref_rvalid;
-   reg [{{ ref_index_bits - 1}}:0] m_axi_ref_raddr;
-   wire                            s_axi_ref_rready;
-   wire [{{ ref_i_bits - 1 }}:0]   ref_i;
-   wire [{{ ref_q_bits - 1 }}:0]   ref_q;
-   wire                            s_axi_ref_rvalid;
+   always @(posedge clk) begin
+      case (state)
+        INCREMENT_INIT: begin
+           if (foas_last_index && (s_axis_freq_step_valid == 1'b1)) begin
+              state <= CORRELATE;
+              all_freq_steps_set <= 1'b1;
+           end else begin
+              state <= state;
+              all_freq_steps_set <= all_freq_steps_set;
+           end
+        end
+        CORRELATE: begin
+           if (s_axis_tvalid_slice == all_slice_static_cmp) begin
+              state <= FIND_MAX;
+           end else begin
+              state <= state;
+           end
+        end
+        FIND_MAX: begin
+           if (foas_last_index) begin
+              state <= RETURN_MAX;
+           end
+        end
+        RETURN_MAX: begin
+           if (m_axis_tready) begin
+              state <= IDLE;
+           end
+        end
+        IDLE: begin
+           if (m_axis_tvalid) begin
+              state <= CORRELATE;
+           end
+           else if (s_axis_freq_step_tready) begin
+              state <= INCREMENT_INIT;
+           end
+        end
+        default: begin
+           state <= state;
+           all_freq_steps_set <= all_freq_steps_set;
+        end
+      endcase // case (state)
+   end // always @ (posedge clk)
 
-   initial begin
-      m_axi_ref_rvalid = 1'b0;
-      m_axi_ref_raddr = 'd0;
-      m_axi_ref_raddr = 'd0;
-   end
+   always @(posedge clk) begin
+      case (state)
+        INCREMENT_INIT: begin
+           // Output master logic
+           if ((foas_index_counter_extended == (foas - 1)) && (s_axis_freq_step_valid == 1'b1)) begin
+              m_axis_freq_step_tready <= 1'b0;
+              foas_index_counter <= 'd0;
+           end
+           else if (foas_index_counter_extended < (foas - 1)) begin
+              m_axis_freq_step_tready <= 1'b1;
+              if (s_axis_freq_step_tready) begin
+                 foas_index_counter <= foas_index_counter + 1'b1;
+              end
+           end
+           // Internal logic
+           if (s_axis_freq_step_valid) begin
+              freq_step_capture_buff <= freq_step;
+              foas_index_valid <= 1'b1 << foas_index_counter;
+              if (neg_shift) begin
+                 neg_shift_index <= 1'b1 << foas_index_counter;
+              end
+              else begin
+                 neg_shift_index <= 'd0;
+              end
+           end else begin
+              freq_step_capture_buff <= freq_step_capture_buff;
+              foas_index_valid <= foas_index_valid;
+           end // else: !if(s_axis_freq_step_valid)
+        end // case: INCREMENT_INIT
+        FIND_MAX: begin
+           m_axis_tready_find_max <= 1'b1 << foas_index_counter;
+           // Increment counter
+           if (foas_last_index) begin
+              foas_index_counter <= 'd0;
+           end
+           else begin
+              foas_index_counter <= foas_index_counter + 1'b1;
+           end
+           // Find max logic
+           if (out_max_slice[foas_index_counter] > out_max_buff) begin
+              foas_index_buff <= foas_index_counter;
+              time_index_buff <= index_slice[foas_index_counter];
+              out_max_buff <= out_max_slice[foas_index_counter];
+           end
+        end // case: FIND_MAX
+        RETURN_MAX: begin
+           foas_index <= foas_index_buff;
+           time_index <= time_index_buff;
+           out_max <= out_max_buff;
+           s_axis_tvalid <= (s_axis_tvalid == 1'b0) ? 1'b1 : (m_axis_tready) ? 1'b0 : s_axis_tvalid;
+        end
+        default: begin
+           // INCREMENT INIT
+           m_axis_freq_step_tready <= 1'b0;
+           foas_index_counter <= 'd0;
+           foas_index_valid <= 'd0;
+           freq_step_capture_buff <= freq_step_capture_buff;
+           // FIND MAX
+           out_max <= 'd0;
+           foas_index <= 'd0;
+           m_axis_tready_find_max <= 'd0;
+           out_max_buff <= 'd0;
+           // RETURN MAX
+           s_axis_tvalid <= 1'b0;
+        end // case: default
+      endcase // case (state)
+   end // always @ (posedge clk)
 
-   {% include "reference_buffer_inst.v" %}
+   // CAF Slices
+   genvar i;
 
-     wire m_axi_cap_rready;
-   reg   m_axi_cap_rvalid;
-   reg [{{ cap_index_bits - 1}}:0] m_axi_cap_raddr;
-   wire                            s_axi_cap_rready;
-   wire [{{ cap_i_bits - 1 }}:0]   cap_i;
-   wire [{{ cap_q_bits - 1 }}:0]   cap_q;
-   wire                            s_axi_cap_rvalid;
-   reg [{{ cap_index_bits - 1}}:0] m_axi_cap_waddr;
-   reg                             m_axi_cap_wvalid;
-   wire                            s_axi_cap_wready;
-   reg [{{ cap_i_bits + cap_q_bits - 1 }}:0] m_axi_cap_wdata;
-   wire                                      s_axi_cap_bresp;
-   wire                                      s_axi_cap_bvalid;
-   wire                                      m_axi_cap_bready;
-
-   initial begin
-      m_axi_cap_raddr = 'd0;
-      m_axi_cap_rvalid = 1'b0;
-      m_axi_cap_waddr = 'd0;
-      m_axi_cap_wdata = 'd0;
-      m_axi_cap_wvalid = 1'b0;
-   end
-
-`include "caf_state_params.v"
-
-   reg [4:0]                               state;
-
-   initial begin
-      state = INIT;
-   end
-
-   {% include "capture_buffer_inst.v" %}
-
-     genvar ithFreq;
-
-   reg [{{ ref_index_bits }}:0] cap_start;
-   reg [{{ ref_index_bits - 1 }}:0] cap_iter;
-   wire [{{ caf_foa_len - 1 }}:0]   m_axis_freq_tvalid;
-   reg [{{ freq_shift_phase_bits - 1 }}:0] freq_step_lut [0:{{ caf_foa_len - 1 }}];
-   reg                                     neg_shift_lut [0:{{ caf_foa_len - 1 }}];
-   reg [{{ freq_shift_phase_bits - 1 }}:0] freq_step [0:{{ caf_foa_len - 1 }}];
-   reg                                     neg_shift [0:{{ caf_foa_len - 1 }}];
-   wire [{{ cap_i_bits - 1 }}:0]           freq_shift_xi [{{ caf_foa_len - 1 }}:0];
-   wire [{{ cap_q_bits - 1 }}:0]           freq_shift_xq [{{ caf_foa_len - 1 }}:0];
-   wire [{{ caf_foa_len - 1 }}:0]          s_axis_freq_tready;
-   wire [{{ caf_foa_len - 1 }}:0]          m_axis_freq_tready;
-   wire [{{ cap_i_bits - 1 }}:0]           i_freq [{{ caf_foa_len - 1 }}:0];
-   wire [{{ cap_q_bits - 1 }}:0]           q_freq [{{ caf_foa_len - 1 }}:0];
-   wire [{{ caf_foa_len - 1 }}:0]          s_axis_freq_tvalid;
-   reg [{{ caf_foa_len_bits }}:0]          freq_assign;
-
-   assign m_axi_cap_rready = &s_axis_freq_tready;
-
-   initial begin
-      cap_start = 'd0;
-      cap_iter = 'd0;
-      $readmemb("{{ caf_phase_increment_filename }}", freq_step_lut);
-      $readmemb("{{ caf_neg_shift_filename }}", neg_shift_lut);
-      freq_assign = 'd0;
-   end
-
-   wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tvalid;
-   wire [{{ caf_foa_len - 1 }}:0] s_axis_x_corr_tready;
-   wire [{{ out_max_bits - 1 }}:0] out_max [{{ caf_foa_len - 1 }}:0];
-   reg [{{ out_max_bits - 1 }}:0]  out_max_buff [{{ caf_foa_len - 1 }}:0];
-   reg [{{ cap_i_bits - 1 }}:0]    x_corr_yi [{{ caf_foa_len - 1 }}:0];
-   reg [{{ cap_q_bits - 1 }}:0]    x_corr_yq [{{ caf_foa_len - 1 }}:0];
-   wire [{{ length_counter_bits }}:0] x_corr_index [{{ caf_foa_len - 1 }}:0];
-   reg [{{ length_counter_bits }}:0]  x_corr_index_buff [{{ caf_foa_len - 1 }}:0];
-   reg                                m_axis_x_corr_tready;
-   reg [{{ caf_foa_len - 1 }}:0]      m_axis_x_corr_tvalid;
-   reg [{{ caf_foa_len_bits - 1 }}:0] freq_final;
-
-   initial begin
-      m_axis_x_corr_tready = 1'b0;
-   end
-
-   assign m_axi_ref_rready = s_axis_x_corr_tready;
-   assign m_axis_freq_tvalid = { {{caf_foa_len}}{s_axi_cap_rvalid} };
-
-   reg [{{ out_max_bits - 1 }}:0] out_max_final;
-   reg [{{ length_counter_bits - 1}}:0] index_final;
-   
    generate
-      for (ithFreq = 0; ithFreq < {{ caf_foa_len }}; ithFreq = ithFreq + 1) begin: caf_freq
+      for (i = 0; i < foas; i = i + 1) begin
+         caf_slice #(.phase_bits(phase_bits),
+                     .xi_bits(xi_bits),
+                     .xq_bits(xq_bits),
+                     .yi_bits(yi_bits),
+                     .yq_bits(yq_bits),
+                     .i_bits(i_bits),
+                     .q_bits(q_bits),
+                     .length(length),
+                     .length_counter_bits(length_counter_bits),
+                     .out_max_bits(out_max_bits)
+                     ) caf_slice_inst(.clk(clk),
+                                      .freq_step(freq_step_capture_buff),
+                                      .freq_step_valid(foas_index_valid[i]),
+                                      .neg_shift(neg_shift_index[i]),
+                                      .m_axis_tvalid(m_axis_tvalid),
+                                      .xi(xi),
+                                      .xq(xq),
+                                      .yi(yi),
+                                      .yq(yq),
+                                      .s_axis_tready(s_axis_tready_slice[i]),
+                                      .m_axis_tready(m_axis_tready_slice[i]),
+                                      .out_max(out_max_slice[i]),
+                                      .index(index_slice[i]),
+                                      .s_axis_tvalid(s_axis_tvalid_slice[i])
+                                      );
+      end // for (i = 0; i < foas; i = i + 1)
+   endgenerate
 
-         assign freq_shift_xi[ithFreq] = cap_i;
-         assign freq_shift_xq[ithFreq] = cap_q;
-         assign m_axis_freq_tready[ithFreq] = s_axis_x_corr_tready[ithFreq];
-
-         initial begin
-            out_max_buff[ithFreq] = 'd0;
-            x_corr_index_buff[ithFreq] = 'd0;
-         end
-
-         always @(posedge clk) begin
-            m_axis_x_corr_tvalid[ithFreq] <= s_axis_freq_tvalid[ithFreq] & s_axi_ref_rvalid;
-            x_corr_yi[ithFreq] <= i_freq[ithFreq];
-            x_corr_yq[ithFreq] <= q_freq[ithFreq];
-            if (&s_axis_x_corr_tvalid) begin
-               out_max_buff[ithFreq] <= out_max[ithFreq];
-               x_corr_index_buff[ithFreq] <= x_corr_index[ithFreq];
-            end
-         end
-
-         {{ freq_shift_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
-                                 .i_bits({{ freq_shift_i_bits }}),
-                                 .q_bits({{ freq_shift_q_bits }})) freq_shift_caf(.clk(clk),
-                                                                                  .m_axis_tvalid(m_axis_freq_tvalid[ithFreq]),
-                                                                                  .freq_step(freq_step[ithFreq]),
-                                                                                  .neg_shift(neg_shift[ithFreq]),
-                                                                                  .xi(freq_shift_xi[ithFreq]),
-                                                                                  .xq(freq_shift_xq[ithFreq]),
-                                                                                  .s_axis_tready(s_axis_freq_tready[ithFreq]),
-                                                                                  .m_axis_tready(m_axis_freq_tready[ithFreq]),
-                                                                                  .i(i_freq[ithFreq]),
-                                                                                  .q(q_freq[ithFreq]),
-                                                                                  .s_axis_tvalid(s_axis_freq_tvalid[ithFreq]));
-
-         x_corr #(.xi_bits({{ ref_i_bits }}),
-                  .xq_bits({{ ref_q_bits }}),
-                  .yi_bits({{ cap_i_bits }}),
-                  .yq_bits({{ cap_q_bits }}),
-                  .i_bits({{ sum_i_bits }}),
-                  .q_bits({{ sum_q_bits }}),
-                  .length({{ ref_buffer_length }}),
-                  .length_counter_bits({{ ref_index_bits }}),
-                  .out_max_bits({{ out_max_bits }})
-                  ) x_corr_caf (.clk(clk),
-                                .s_axis_tready(s_axis_x_corr_tready[ithFreq]),
-                                .xi(ref_i),
-                                .xq(ref_q),
-                                .yi(x_corr_yi[ithFreq]),
-                                .yq(x_corr_yq[ithFreq]),
-                                .m_axis_tready(m_axis_x_corr_tready),
-                                .m_axis_tvalid(m_axis_x_corr_tvalid[ithFreq]),
-                                .out_max(out_max[ithFreq]),
-                                .index(x_corr_index[ithFreq]),
-                                .s_axis_tvalid(s_axis_x_corr_tvalid[ithFreq])
-                                );
-      end // block: caf_freq_gen
-      endgenerate
-
-     always @(posedge clk) begin
-        case(state)
-          INIT:
-            if (freq_assign < {{ caf_foa_len }}) begin
-               freq_step[freq_assign] <= freq_step_lut[freq_assign];
-               neg_shift[freq_assign] <= neg_shift_lut[freq_assign];
-               freq_assign <= freq_assign + 1'b1;
-            end
-            else begin
-               freq_assign <= 'd0;
-               state <= IDLE;
-            end
-          IDLE:
-            begin
-               s_axis_tready <= s_axi_cap_wready;
-               s_axis_tvalid <= 1'b0;
-               if (m_axis_tvalid) begin
-                  state <= CAPTURE;
-                  m_axi_cap_wvalid <= 1'b1;
-                  m_axi_cap_waddr <= 'd0;
-                  m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
-               end
-               else begin
-                  state <= state;
-               end
-            end
-          CAPTURE:
-            if (m_axis_tvalid && m_axi_cap_waddr < {{ cap_buffer_length - 1 }}) begin
-               m_axi_cap_waddr <= m_axi_cap_waddr + 1'b1;
-               m_axi_cap_wdata <= m_axis_tdata[{{ cap_i_bits + cap_q_bits - 1 }}:0];
-               m_axi_cap_wvalid <= 1'b1;
-            end
-            else if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }}) begin
-               s_axis_tready <= 1'b0;
-               m_axi_cap_wvalid <= 1'b0;
-               m_axi_cap_waddr <= 'd0;
-               state <= CORRELATE;
-               cap_start <= 'd0;
-               cap_iter <= 'd0;
-               m_axi_cap_raddr <= 'd0;
-               m_axi_ref_raddr <= 'd0;
-               m_axi_cap_rvalid <= 1'b1;
-               m_axi_ref_rvalid <= 1'b1;
-               m_axis_x_corr_tready <= 1'b1;
-               ref_iter <= 'd0;
-            end // if (m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
-            else begin
-               m_axi_cap_wvalid <= 1'b0;
-            end // else: !if(m_axi_cap_waddr == {{ cap_buffer_length - 1 }})
-          CORRELATE:
-            begin
-               // ref logic
-               if (ref_iter <= ref_iter <= {{ ref_buffer_length }}) begin
-                  if (m_axi_ref_raddr < {{ ref_buffer_length - 1 }}) begin
-                     if (s_axis_freq_tvalid) begin
-                        m_axi_ref_raddr <= m_axi_ref_raddr + &s_axis_freq_tvalid;
-                     end
-                  end else begin
-                     ref_iter <= ref_iter + &s_axis_freq_tvalid;
-                     m_axi_ref_raddr <= 'd0;
-                  end
-               end else begin
-                  m_axi_ref_rvalid <= 1'b0;
-               end
-               // cap logic
-               if(cap_start <= {{ ref_buffer_length }}) begin
-                  if (cap_iter < {{ ref_buffer_length - 1 }}) begin
-                     m_axi_cap_rvalid <= 1'b1;
-                     m_axi_cap_raddr <= m_axi_cap_raddr + s_axi_cap_rvalid;
-                     cap_iter <= cap_iter + s_axi_cap_rvalid;
-                  end
-                  else begin
-                     cap_iter <= 'd0;
-                     cap_start <= cap_start + 1'b1;
-                     m_axi_cap_raddr <= cap_start + 1'b1;
-                  end
-               end
-               else begin
-                  m_axi_cap_rvalid <= 1'b0;
-               end // else: !if(cap_start <= {{ ref_buffer_length }})
-               if (s_axis_x_corr_tvalid) begin
-                  state <= FIND_MAX;
-                  m_axis_x_corr_tready <= 1'b0;
-                  out_max_final <= 'd0;
-                  index_final <= 'd0;
-                  freq_assign <= 'd0;
-                  freq_final <= 'd0;
-               end
-            end // case: CORRELATE
-          FIND_MAX:
-            begin
-               $display("freq_assign: %d, s_axis_tvalid: %b, m_axis_tready: %b", freq_assign, s_axis_tvalid, m_axis_tready);
-               
-               if (freq_assign < {{ caf_foa_len }}) begin
-                  freq_assign <= freq_assign + 1'b1;
-                  if (out_max_buff[freq_assign] > out_max_final) begin
-                     out_max_final <= out_max_buff[freq_assign];
-                     index_final <= x_corr_index[freq_assign];
-                     freq_final <= freq_assign;
-                  end
-               end else begin
-                  s_axis_tvalid <= 1'b1;
-                  s_axis_tdata <= {index_final, freq_final};
-               end // else: !if(freq_assign < {{ caf_foa_len }})
-               if (m_axis_tready && freq_assign >= {{ caf_foa_len }}) begin
-                  state <= IDLE;
-               end
-            end
-        endcase // case (state)
-     end // always @ (posedge clk)
+   initial begin
+      $dumpfile("caf.vcd");
+      $dumpvars(1, caf);
+   end
 
 endmodule // caf

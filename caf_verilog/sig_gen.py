@@ -17,7 +17,7 @@ class SigGen(CafVerilogBase):
         self.f = freq_res
         self.fs = fs
         self.n_bits = n_bits
-        self.phase_bits = self.calc_smallest_phase_size()
+        self.phase_bits = calc_smallest_phase_size(self.fs, self.f, self.n_bits)
         self.output_dir = output_dir
         self.tb_filename = 'sig_gen_tb.v'
         self.sig_gen_name = "sig_gen_%s_%s_%s" % (str(fs).replace('.', '')[:3], self.phase_bits, self.n_bits)
@@ -25,19 +25,16 @@ class SigGen(CafVerilogBase):
         self.test_output_filename = "sig_gen_output_values.txt"
         self.write_module()
 
-    def calc_smallest_phase_size(self):
-        pb = phase_bits(self.fs, self.f)
-        if pb <= self.n_bits:
-            diff = self.n_bits - pb + 1
-            pb += diff
-        return pb
+    def params_dict(self) -> dict:
+        t_dict = {'phase_bits': self.phase_bits, 'n_bits': self.n_bits}
+        t_dict['lut_length'] = 2 ** (self.n_bits + 1) - 1
+        return t_dict
 
     def template_dict(self, inst_name=None):
-        t_dict = {'phase_bits': self.phase_bits, 'n_bits': self.n_bits}
+        t_dict = self.params_dict()
         t_dict['lut_filename'] = os.path.abspath(os.path.join(self.output_dir, self.lut_filename))
         t_dict['sig_gen_inst_name'] = inst_name
         t_dict['sig_gen_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
-        t_dict['lut_length'] = 2 ** (self.n_bits + 1) - 1
         t_dict['sig_gen_name'] = self.sig_gen_name
         return t_dict
 
@@ -110,7 +107,7 @@ def lut_values(n_bits):
     return values
 
 
-def phase_bits(f_clk, freq_res):
+def phase_bits(f_clk, freq_res) -> int:
     """
     Calculate the number of bits the phase accumulator will need.
 
@@ -121,7 +118,7 @@ def phase_bits(f_clk, freq_res):
     return int(np.ceil(np.log2(f_clk / freq_res)))
 
 
-def phase_increment(f_out, phase_bits, f_clk):
+def phase_increment(f_out, phase_bits, f_clk) -> int:
     """
     Calculate the phase increment required to produce the desired frequency.
 
@@ -131,3 +128,10 @@ def phase_increment(f_out, phase_bits, f_clk):
     :return:
     """
     return int(f_out * 2**phase_bits / f_clk)
+
+def calc_smallest_phase_size(f_clk, freq_res, n_bits) -> int:
+    pb = phase_bits(f_clk=f_clk, freq_res=freq_res)
+    if pb <= n_bits:
+        diff = n_bits - pb + 1
+        pb += diff
+    return pb

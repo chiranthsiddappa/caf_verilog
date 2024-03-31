@@ -1,4 +1,4 @@
-argmax #(.buffer_length({{ buffer_length }}),
+arg_max #(.buffer_length({{ buffer_length }}),
          .index_bits({{ index_bits }}),
          .out_max_bits({{ out_max_bits }}),
          .i_bits({{ i_bits }}),

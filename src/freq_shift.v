@@ -7,6 +7,7 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    (                        input clk,
                             input                        m_axis_tvalid,
                             input [phase_bits - 1:0]     freq_step,
+                            input                        freq_step_valid,
                             input                        neg_shift,
                             input signed [i_bits - 1:0]  xi,
                             input signed [q_bits - 1:0]  xq,
@@ -25,33 +26,58 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
    wire                                                  s_axis_sig_gen_tvalid;
    reg                                                   s_axis_sig_gen_tvalid_buff;
    wire                                                  m_axis_mult_tvalid;
+   reg                                                   m_axis_tvalid_buff;
    wire                                                  s_axis_mult_tready;
-   reg [i_bits - 1:0]                                    xi_buff;
-   reg [q_bits - 1:0]                                    xq_buff;
+   reg                                                   s_axis_mult_tready_buff;
+   reg signed [i_bits - 1:0]                             xi_buff;
+   reg signed [q_bits - 1:0]                             xq_buff;
+   reg                                                   neg_shift_buff;
+   reg                                                   freq_step_valid_set_buff;
+   wire                                                  freq_step_set;
+
+   initial begin
+      neg_shift_buff = 1'b0;
+   end
+
+   assign freq_step_set = freq_step_valid_set_buff;
 
    always @(posedge clk) begin
-      s_axis_sig_gen_tvalid_buff <= s_axis_sig_gen_tvalid & m_axis_tvalid;
+      s_axis_sig_gen_tvalid_buff <= s_axis_sig_gen_tvalid;
+      s_axis_mult_tready_buff <= s_axis_mult_tready;
+      m_axis_tvalid_buff <= m_axis_tvalid;
+      if (freq_step_valid) begin
+         neg_shift_buff <= neg_shift;
+         freq_step_valid_set_buff <= 1'b1;
+      end
+   end
+
+   always @(posedge clk) begin
       if (s_axis_sig_gen_tvalid && m_axis_tvalid) begin
          cosine_buff <= cosine;
-         if (neg_shift) begin
+         if (neg_shift_buff) begin
             sine_buff <= sine * -'d1;
          end else begin
             sine_buff <= sine;
          end
          xi_buff <= xi;
          xq_buff <= xq;
-      end
+      end else begin
+         cosine_buff <= cosine_buff;
+         sine_buff <= sine_buff;
+         xi_buff <= xi_buff;
+         xq_buff <= xq_buff;
+      end // else: !if(s_axis_sig_gen_tvalid && m_axis_tvalid)
    end // always @ (posedge clk)
 
-   assign m_axis_sig_gen_tready = ~s_axis_sig_gen_tvalid | (m_axis_tvalid & s_axis_mult_tready);
-   assign s_axis_tready = s_axis_sig_gen_tvalid_buff & s_axis_mult_tready;
-   assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid_buff & m_axis_tvalid;
+   assign m_axis_sig_gen_tready = m_axis_tvalid;
+   assign s_axis_tready = s_axis_mult_tready_buff & freq_step_set;
+   assign m_axis_mult_tvalid = s_axis_sig_gen_tvalid_buff & m_axis_tvalid_buff;
 
    {{ sig_gen_name }} #(.phase_bits({{ freq_shift_phase_bits }}),
                         .n_bits({{ freq_shift_n_bits }}),
                         .lut_length({{ lut_length }})) {{ sig_gen_inst_name }}(.clk(clk),
                                                                                .m_axis_data_tready(m_axis_sig_gen_tready),
-                                                                               .m_axis_freq_step_tvalid(m_axis_tvalid),
+                                                                               .m_axis_freq_step_tvalid(freq_step_valid),
                                                                                .freq_step(freq_step),
                                                                                .cosine(cosine),
                                                                                .sine(sine),
@@ -73,5 +99,10 @@ module {{ freq_shift_name }} #(parameter phase_bits = 32,
                                              .i(i),
                                              .q(q),
                                              .s_axis_tvalid(s_axis_tvalid));
+
+   initial begin
+      $dumpfile("{{ freq_shift_name }}.vcd");
+      $dumpvars(2, {{ freq_shift_name }});
+   end
 
 endmodule //

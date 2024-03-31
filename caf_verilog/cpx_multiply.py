@@ -79,11 +79,15 @@ class CpxMultiply(CafVerilogBase):
         with open(os.path.join(self.output_dir, self.tb_filename), 'w+') as tb_file:
             tb_file.write(out_tb)
 
-    def template_dict(self, inst_name=None):
-        t_dict = {'xi_bits': self.x_i_bits, 'xq_bits': self.x_q_bits, 'yi_bits': self.y_i_bits,
+    def params_dict(self) -> dict:
+        params = {'xi_bits': self.x_i_bits, 'xq_bits': self.x_q_bits, 'yi_bits': self.y_i_bits,
                   'yq_bits': self.y_q_bits}
-        t_dict['i_out_bits'] = self.x_i_bits + self.y_i_bits
-        t_dict['q_out_bits'] = self.x_q_bits + self.y_q_bits
+        params['i_bits'] = self.x_i_bits + self.y_i_bits
+        params['q_bits'] = self.x_q_bits + self.y_q_bits
+        return params
+
+    def template_dict(self, inst_name=None):
+        t_dict = self.params_dict()
         t_dict['cpx_multiply_input'] = os.path.abspath(os.path.join(self.output_dir, self.test_value_filename))
         t_dict['cpx_multiply_output'] = os.path.abspath(os.path.join(self.output_dir, self.test_output_filename))
         t_dict['cpx_multiply_name'] = inst_name if inst_name else 'cpx_multiply_tb'

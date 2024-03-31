@@ -6,26 +6,26 @@ module dot_prod #(parameter xi_bits = 12,
 		  parameter yq_bits = 12,
                   parameter i_bits = 24,
                   parameter q_bits = 24,
-                  parameter length = 5,
+                  parameter dot_length = 5,
                   parameter sum_i_size = 24,
                   parameter sum_q_size = 24
 		  )
    (input clk,
     input                                   m_axis_product_tready,
     input                                   m_axis_x_tvalid,
-    input [(xi_bits * length) - 1:0] xi,
-    input [(xq_bits * length) - 1:0] xq,
+    input [(xi_bits * dot_length) - 1:0] xi,
+    input [(xq_bits * dot_length) - 1:0] xq,
     input                                   m_axis_y_tvalid,
-    input [(yi_bits * length) - 1:0] yi,
-    input [(yq_bits * length) - 1:0] yq,
+    input [(yi_bits * dot_length) - 1:0] yi,
+    input [(yq_bits * dot_length) - 1:0] yq,
     output reg                              s_axis_product_tvalid,
     output reg [i_bits-1:0]                 i,
     output reg [q_bits-1:0]                 q
     );
 
-   wire [0:length - 1]                      mult_valid;
-   wire signed [xi_bits + yi_bits -1:0]                 mult_out_i [0:length-1];
-   wire signed [xi_bits + yi_bits -1:0]                 mult_out_q [0:length-1];
+   wire [0:dot_length - 1]                      mult_valid;
+   wire signed [xi_bits + yi_bits -1:0]                 mult_out_i [0:dot_length-1];
+   wire signed [xi_bits + yi_bits -1:0]                 mult_out_q [0:dot_length-1];
    wire                                     m_axis_data_tvalid;
    genvar                                   iLen;
    integer                                  ithSum;
@@ -37,7 +37,7 @@ module dot_prod #(parameter xi_bits = 12,
    end
 
    generate
-      for (iLen = 0; iLen < length; iLen = iLen + 1) begin: mult_gen
+      for (iLen = 0; iLen < dot_length; iLen = iLen + 1) begin: mult_gen
 
          cpx_multiply #(.xi_bits(xi_bits),
                         .xq_bits(xq_bits),
@@ -62,7 +62,7 @@ module dot_prod #(parameter xi_bits = 12,
 
    always @(posedge clk) begin
       if (m_axis_product_tready & mult_valid) begin
-         for (ithSum = 0, sum_i = 0, sum_q = 0; ithSum < length; ithSum = ithSum + 1) begin
+         for (ithSum = 0, sum_i = 0, sum_q = 0; ithSum < dot_length; ithSum = ithSum + 1) begin
             sum_i = sum_i + mult_out_i[ithSum];
             sum_q = sum_q + mult_out_q[ithSum];
          end

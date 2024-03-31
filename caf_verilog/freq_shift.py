@@ -1,9 +1,43 @@
+import numpy as np
+
 from . caf_verilog_base import CafVerilogBase
-from . sig_gen import phase_bits, SigGen, phase_increment, freq_step_str
+from .cpx_multiply import CpxMultiply
+from . sig_gen import SigGen, phase_increment, freq_step_str
 from jinja2 import Environment, FileSystemLoader, Template
 import os
 from . quantizer import quantize
 from . io_helper import write_quantized_output
+
+
+async def capture_test_output_data(dut):
+    captured_output = dut.i.value.signed_integer + dut.q.value.signed_integer * 1j
+    dut.m_axis_tready.value = 1
+    if dut.s_axis_tvalid.value == 1:
+        return captured_output
+    else:
+        return False
+
+
+async def send_test_input_data(dut, x):
+    
+    assert dut.s_axis_tready.value == 1 # Just to double check
+    x_i = int(x.real)
+    x_q = int(x.imag)
+
+    dut.xi.value = int(x_i)
+    dut.xq.value = int(x_q)
+    dut.m_axis_tvalid.value = 1
+
+
+def freq_res(foas: list) -> float:
+    freqs = list()
+    for ff in foas:
+        if ff:
+            freqs.append(abs(ff))
+    freqs = np.floor(np.log10(freqs))
+    freqs = 10 ** freqs
+    min_res = min(freqs)
+    return min_res
 
 
 class FreqShift(CafVerilogBase):
@@ -19,7 +53,9 @@ class FreqShift(CafVerilogBase):
         self.neg_shift_str = '1\'' + bin(int(neg_shift))[1:]
         self.x_quant = quantize(x, self.i_bits, self.q_bits)
         self.output_dir = output_dir
-        self.submodules = {'sig_gen': SigGen(self.freq_res, self.fs, self.n_bits, self.output_dir)}
+        self.submodules = {'sig_gen': SigGen(self.freq_res, self.fs, self.n_bits, self.output_dir),
+                           'cpx_multiply': CpxMultiply(x=x, y=x, x_i_bits=i_bits, x_q_bits=q_bits, y_i_bits=i_bits, y_q_bits=q_bits,
+                                                       output_dir=self.output_dir)}
         self.phase_bits = self.submodules['sig_gen'].phase_bits
         self.tb_filename = '%s_tb.v' % self.module_name()
         self.freq_shift_name = "%s_%s_%s_%s" % (self.module_name(), str(fs).replace('.', '')[:3], self.phase_bits,
@@ -28,8 +64,15 @@ class FreqShift(CafVerilogBase):
         self.test_output_filename = "%s_output_values.txt" % (self.freq_shift_name)
         self.write_module()
 
-    def template_dict(self):
+    def params_dict(self) -> dict:
         t_dict = dict()
+        t_dict['i_bits'] = self.i_bits
+        t_dict['q_bits'] = self.q_bits
+        t_dict['phase_bits'] = self.phase_bits
+        return t_dict
+
+    def template_dict(self):
+        t_dict = self.params_dict()
         t_dict['%s_i_bits' % self.module_name()] = self.i_bits
         t_dict['%s_q_bits' % self.module_name()] = self.q_bits
         t_dict['%s_n_bits' % self.module_name()] = self.n_bits

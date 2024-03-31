@@ -1,10 +1,7 @@
 import numpy as np
 from sk_dsp_comm import digitalcom as dc
 from . caf_verilog_base import CafVerilogBase
-from . xcorr import XCorr
-from . reference_buffer import ReferenceBuffer
-from . capture_buffer import CaptureBuffer
-from . freq_shift import FreqShift
+from . caf_slice import CAFSlice
 from . __version__ import __version__
 from jinja2 import Environment, FileSystemLoader, Template
 import os
@@ -13,7 +10,14 @@ from . quantizer import quantize
 from . io_helper import write_buffer_values
 from . quantizer import bin_num
 from . sig_gen import phase_increment
+from . xcorr import gen_tb_values
 from math import log2, ceil
+
+try:
+    from cocotb.triggers import RisingEdge
+except ImportError as ie:
+    import warnings
+    warnings.warn("Could not import cocotb", ImportWarning)
 
 
 class CAF(CafVerilogBase):
@@ -56,16 +60,16 @@ class CAF(CafVerilogBase):
         self.write_module()
 
     def gen_submodules(self):
-        submodules = dict()
-        submodules['reference_buffer'] = ReferenceBuffer(self.reference, self.ref_i_bits, self.ref_q_bits,
-                                                 self.output_dir, 'ref')
-        submodules['capture_buffer'] = CaptureBuffer(len(self.received), self.rec_i_bits, self.rec_q_bits,
-                                               self.output_dir, 'cap')
-        submodules['freq_shift'] = FreqShift(self.received, self.freq_res(), self.fs, self.n_bits,
-                                             i_bits=self.rec_i_bits, q_bits=self.rec_q_bits,
-                                             output_dir=self.output_dir)
-        submodules['x_corr'] = XCorr(self.reference, self.received, self.ref_i_bits, self.ref_q_bits,
-                                     self.rec_i_bits, self.rec_q_bits, pipeline=self.pip, output_dir=self.output_dir)
+        submodules = {'caf_slice': CAFSlice(reference=self.reference,
+                                            received=self.received,
+                                            freq_res=self.freq_res(),
+                                            ref_i_bits=self.ref_i_bits,
+                                            ref_q_bits=self.ref_q_bits,
+                                            rec_i_bits=self.rec_i_bits,
+                                            rec_q_bits=self.rec_q_bits,
+                                            fs=self.fs,
+                                            n_bits=self.n_bits,
+                                            output_dir=self.output_dir)}
         return submodules
 
     def freq_res(self):
@@ -78,20 +82,15 @@ class CAF(CafVerilogBase):
         min_res = min(freqs)
         return min_res
 
+    def params_dict(self) -> dict:
+        pd = {**self.submodules['caf_slice'].params_dict()}
+        num_foas = len(self.foas)
+        pd['foas'] = num_foas
+        pd['foas_counter_bits'] = int(ceil(log2(num_foas)))
+        return pd
+
     def template_dict(self, inst_name=None):
-        t_dict = {**self.submodules['reference_buffer'].template_dict(),
-                  **self.submodules['capture_buffer'].template_dict(),
-                  **self.submodules['freq_shift'].template_dict(),
-                  **self.submodules['x_corr'].template_dict()}
-        t_dict['%s_foa_len' % self.module_name()] = len(self.foas)
-        t_dict['%s_foa_len_bits' % self.module_name()] = int(ceil(log2(len(self.foas))))
-        t_dict['%s_phase_increment_filename' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
-                                                                             self.phase_increment_filename))
-        t_dict['%s_neg_shift_filename' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
-                                                                               self.neg_shift_filename))
-        t_dict['%s_input' % self.module_name()] = os.path.abspath(os.path.join(self.output_dir,
-                                                                               self.test_value_filename))
-        t_dict['%s_name' % self.module_name()] = inst_name if inst_name else '%s_tb' % self.module_name()
+        t_dict = self.params_dict()
         return t_dict
 
     def write_module(self):
@@ -113,8 +112,13 @@ class CAF(CafVerilogBase):
         with open(os.path.join(self.output_dir, '%s_tb.v' % self.module_name()), 'w+') as tb_file:
             tb_file.write(out_tb)
 
+    def phase_increment_values(self) -> list:
+        phase_bits = self.params_dict()['phase_bits']
+        vals = [phase_increment(f_out=abs(freq), phase_bits=phase_bits, f_clk=self.fs) for freq in self.foas]
+        return vals
+
     def write_phase_increment_values(self):
-        phase_bits = self.template_dict()['freq_shift_phase_bits']
+        phase_bits = self.template_dict()['phase_bits']
         with open(os.path.join(self.output_dir, self.phase_increment_filename), 'w+') as pi_file:
             for freq in self.foas:
                 incr = phase_increment(abs(freq), phase_bits, self.fs)
@@ -122,6 +126,87 @@ class CAF(CafVerilogBase):
         with open(os.path.join(self.output_dir, self.neg_shift_filename), 'w+') as nn_file:
             for freq in self.foas:
                 nn_file.write(str(int(freq < 0)) + '\n')
+
+
+async def set_increment_values(caf: CAF, dut):
+    """
+
+    :param caf: CAF instance to retrieve module values
+    :param dut: cocotb design under test
+    """
+    phase_increments = caf.phase_increment_values()
+    neg_shift_vals = np.signbit(caf.foas)
+
+    assert dut.freq_step_index.value == 0
+
+    for inc, bit in zip(phase_increments, neg_shift_vals):
+        assert dut.m_axis_freq_step_tready.value == 1
+        dut.s_axis_freq_step_tready.value = 1
+        dut.freq_step.value = int(inc)
+        dut.neg_shift.value = 1 if bit else 0
+        dut.s_axis_freq_step_valid.value = 1
+        await RisingEdge(dut.clk)
+
+    dut.s_axis_freq_step_tready.value = 0
+
+
+async def send_input_data(caf: CAF, dut, cycle_timeout=10):
+    """
+    :param caf: CAF instance to retrieve module values
+    :param dut: cocotb design under test
+    :param cycle_timeout: Number of clock cycles to wait for ready signal
+    """
+    ref_tb, rec_tb = gen_tb_values(caf.ref_quant, caf.rec_quant)
+
+    for cycle in range(cycle_timeout):
+        if dut.s_axis_tready.value != 1:
+            await RisingEdge(dut.clk)
+
+    assert dut.s_axis_tready.value == 1
+
+    for ref_val, rec_val in zip(ref_tb, rec_tb):
+        ref_x_i = int(ref_val.real)
+        ref_x_q = int(ref_val.imag)
+        rec_y_i = int(rec_val.real)
+        rec_y_q = int(rec_val.imag)
+        dut.m_axis_tvalid.value = 1
+        dut.xi.value = ref_x_i
+        dut.xq.value = ref_x_q
+        dut.yi.value = rec_y_i
+        dut.yq.value = rec_y_q
+        await RisingEdge(dut.clk)
+
+    dut.m_axis_tvalid.value = 0
+
+
+async def retrieve_max(caf: CAF, dut, cycle_timeout=20):
+    foa_extended_timeout = cycle_timeout + len(caf.foas)
+    tvalid_slice_val = (2**(len(caf.foas))) - 1
+
+    dut.m_axis_tvalid.value = 0
+
+    for cycle in range(foa_extended_timeout):
+        if dut.s_axis_tvalid_slice.value != tvalid_slice_val:
+            await RisingEdge(dut.clk)
+
+    assert dut.s_axis_tvalid_slice.value == tvalid_slice_val
+
+    for cycle in range(foa_extended_timeout):
+        if dut.s_axis_tvalid.value != 1:
+            await RisingEdge(dut.clk)
+
+    assert dut.s_axis_tvalid.value == 1
+
+    out_max = dut.out_max
+    time_index = dut.time_index
+    foas_index = dut.foas_index
+    dut.m_axis_tready.value = 1
+
+    await RisingEdge(dut.clk)
+
+    dut.m_axis_tready.value = 0
+
+    return int(time_index.value), caf.foas[int(foas_index.value)], int(out_max.value)
 
 
 def simple_caf(x, y, foas, fs):

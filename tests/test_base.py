@@ -1,5 +1,6 @@
-from .. caf_verilog_base import CafVerilogBase
+from caf_verilog.caf_verilog_base import CafVerilogBase
 from unittest import TestCase
+from tempfile import TemporaryDirectory
 
 
 class TestCafVerilogBase(TestCase):
@@ -9,7 +10,7 @@ class TestCafVerilogBase(TestCase):
 
     def test_gen_tb_not_implemented(self):
         cvb = CafVerilogBase()
-        with self.assertRaisesRegexp(NotImplementedError, 'This class has not implemented a testbench'):
+        with self.assertRaisesRegex(NotImplementedError, 'This class has not implemented a testbench'):
             cvb.gen_tb()
 
     def test_template_dict_not_implemented(self):

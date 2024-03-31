@@ -1,4 +1,26 @@
+from logging import getLogger
 import numpy as np
+
+try:
+    from cocotb.runner import get_runner, Simulator
+except ImportError as ie:
+    import warnings
+    Simulator = object
+    warnings.warn("Could not import cocotb", ImportWarning)
+import os
+
+__hdl_toplevel_lang__ = os.getenv("HDL_TOPLEVEL_LANG", "verilog")
+__sim__ = os.getenv("SIM", "verilator")
+
+
+def sim_get_runner() -> Simulator:
+    return get_runner(__sim__)
+
+
+def get_sim_cpus() -> int:
+    num_cpus = len(os.sched_getaffinity(0))
+    num_cpus = max(int(num_cpus / 2), 1)
+    return num_cpus
 
 
 def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False,
@@ -39,3 +61,4 @@ def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False,
     else:
         rec_ret = ref_plus_shift[sim_center - ref_length: sim_center + ref_length]
     return ref_ret, rec_ret
+

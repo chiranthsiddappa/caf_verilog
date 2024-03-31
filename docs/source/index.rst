@@ -18,6 +18,7 @@ Welcome to CAF Verilog's documentation!
    caf_verilog_base
    cpx_multiply
    dot_product
+   freq_shift
    io_helper
    quantizer
    sig_gen
