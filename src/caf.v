@@ -31,7 +31,7 @@ module caf #(parameter phase_bits = 10,
     output reg [out_max_bits -1:0]         out_max,
     output reg [foas_counter_bits - 1:0]   foas_index,
     output reg [length_counter_bits - 1:0] time_index,
-    output                                 s_axis_tvalid);
+    output reg                             s_axis_tvalid);
 
    parameter                           INCREMENT_INIT = 3'b000;
    parameter                           IDLE = 3'b001;
@@ -61,6 +61,9 @@ module caf #(parameter phase_bits = 10,
 
    // Max
    reg [foas-1:0]                      m_axis_tready_find_max;
+   reg [out_max_bits - 1:0]            out_max_buff;
+   reg [foas_counter_bits -1:0]        foas_index_buff;
+   reg [length_counter_bits - 1:0]     time_index_buff;
 
    assign freq_step_index = foas_index_counter[foas_counter_bits - 1:0];
    assign foas_index_counter_extended = { {(32 - foas_counter_bits){1'b0}}, foas_index_counter};
@@ -75,12 +78,10 @@ module caf #(parameter phase_bits = 10,
    assign s_axis_tready = (s_axis_tready_slice == all_slice_static_cmp) &&
                           (s_axis_tvalid_slice != all_slice_static_cmp) &&
                           (state == CORRELATE || state == IDLE);
-   assign s_axis_tvalid = state == RETURN_MAX;
 
    initial begin
       all_slice_static_cmp = -'d1;
       m_axis_freq_step_tready = 1'b0;
-      freq_step_index = 'd0;
       s_axis_tvalid = 1'b0;
       foas_index_counter = 'd0;
       state = 'd0;
@@ -172,16 +173,17 @@ module caf #(parameter phase_bits = 10,
               foas_index_counter <= foas_index_counter + 1'b1;
            end
            // Find max logic
-           if (out_max_slice[foas_index_counter] > out_max) begin
-              foas_index <= foas_index_counter;
-              time_index <= index_slice[foas_index_counter];
-              out_max <= out_max_slice[foas_index_counter];
+           if (out_max_slice[foas_index_counter] > out_max_buff) begin
+              foas_index_buff <= foas_index_counter;
+              time_index_buff <= index_slice[foas_index_counter];
+              out_max_buff <= out_max_slice[foas_index_counter];
            end
         end // case: FIND_MAX
         RETURN_MAX: begin
-           foas_index <= foas_index;
-           time_index <= time_index;
-           out_max <= out_max;
+           foas_index <= foas_index_buff;
+           time_index <= time_index_buff;
+           out_max <= out_max_buff;
+           s_axis_tvalid <= (s_axis_tvalid == 1'b0) ? 1'b1 : (m_axis_tready) ? 1'b0 : s_axis_tvalid;
         end
         default: begin
            // INCREMENT INIT
@@ -193,6 +195,9 @@ module caf #(parameter phase_bits = 10,
            out_max <= 'd0;
            foas_index <= 'd0;
            m_axis_tready_find_max <= 'd0;
+           out_max_buff <= 'd0;
+           // RETURN MAX
+           s_axis_tvalid <= 1'b0;
         end // case: default
       endcase // case (state)
    end // always @ (posedge clk)
