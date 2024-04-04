@@ -24,7 +24,6 @@ module arg_max #(parameter buffer_length = 10,
    reg [out_max_bits - 1:0]         argsum;
    reg                              sq_stage_valid;
    reg                              sum_stage_valid;
-   reg                              cmp_stage_valid;
    wire                             result_collected;
    reg                              result_collected_buff;
    wire                             result_collected_cond;
@@ -86,22 +85,18 @@ module arg_max #(parameter buffer_length = 10,
       if ((icounter_extended == 'd0) && !sum_stage_valid && result_collected_cond) begin
          index <= 'd0;
          out_max <= argsum;
-         cmp_stage_valid <= 1'b0;
       end
       else if ((argsum > out_max) && sum_stage_valid) begin
          index <= icounter[index_bits - 1:0];
          out_max <= argsum;
-         cmp_stage_valid <= 1'b1;
       end
       else if (sum_stage_valid) begin
          index <= index;
          out_max <= out_max;
-         cmp_stage_valid <= 1'b1;
       end
       else begin
          index <= index;
          out_max <= out_max;
-         cmp_stage_valid <= 1'b0;
       end
    end // always @ (posedge clk)
 
