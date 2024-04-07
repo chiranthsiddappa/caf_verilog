@@ -222,20 +222,24 @@ def simple_caf(x, y, foas, fs, n_bits=0):
     :param n_bits: 0 for no quantization on sinusoids
     :return: caf_res, dt
     """
+    f_len = len(foas)
     nlags = len(x)
-    ztup = (nlags, len(foas))
-    caf_res = []
     nlen = len(y)
     nrange = np.arange(0, nlen)
     dt_lags = nlags // 2
     dt = np.arange(-dt_lags, dt_lags) / float(fs)
-    for k, Df in enumerate(reversed(foas)):
-        theta = np.exp(1j*2*np.pi*nrange*Df/float(fs))
+    caf_res = np.empty([len(foas), nlags])
+    theta_shift_range = 1j * 2 * np.pi * nrange / fs
+    theta_shifts = np.empty([len(foas), nlen], dtype=np.complexfloating)
+    for ff in reversed(range(f_len)):
+        theta_shifts[ff] = np.exp(theta_shift_range * foas[ff])
+    for ff in range(f_len):
+        theta = theta_shifts[ff]
         if n_bits:
             theta = quantize(theta, n_bits)
-        y_shift = y * theta
-        rxy, lags = dc.xcorr(x, y_shift, nlags)
-        caf_res.append(np.abs(rxy))
+        x_shift = x * theta
+        rxy, lags = dc.xcorr(x_shift, y, nlags)
+        caf_res[ff] = np.abs(rxy)
     return caf_res, dt
 
 
