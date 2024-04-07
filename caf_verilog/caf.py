@@ -228,9 +228,9 @@ def simple_caf(x, y, foas, fs, n_bits=0):
     nrange = np.arange(0, nlen)
     dt_lags = nlags // 2
     dt = np.arange(-dt_lags, dt_lags) / float(fs)
-    caf_res = np.empty([len(foas), nlags])
+    caf_res = np.empty([f_len, nlags])
     theta_shift_range = 1j * 2 * np.pi * nrange / fs
-    theta_shifts = np.empty([len(foas), nlen], dtype=np.complexfloating)
+    theta_shifts = np.empty([f_len, nlen], dtype=np.complexfloating)
     for ff in reversed(range(f_len)):
         theta_shifts[ff] = np.exp(theta_shift_range * foas[ff])
     for ff in range(f_len):
