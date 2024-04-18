@@ -210,7 +210,7 @@ async def retrieve_max(caf: CAF, dut, cycle_timeout=20):
     return int(time_index.value), caf.foas[int(foas_index.value)], int(out_max.value)
 
 
-def simple_caf(x, y, foas, fs, n_bits=0):
+def simple_caf(x: np.ndarray, y: np.ndarray, foas: np.ndarray, fs, n_bits=0):
     """
     Produce values for a surface plot of the Complex Ambiguity Function.
     The return is the CAF surface and a time delay range normalized by the sampling frequency.
@@ -223,19 +223,20 @@ def simple_caf(x, y, foas, fs, n_bits=0):
     :return: caf_res, dt
     """
     nlags = len(x)
-    ztup = (nlags, len(foas))
-    caf_res = []
+    f_len = foas.shape[0]
+    caf_res = np.empty([f_len, nlags], dtype=np.float64)
     nlen = len(y)
     nrange = np.arange(0, nlen)
     dt_lags = nlags // 2
     dt = np.arange(-dt_lags, dt_lags) / float(fs)
-    for k, Df in enumerate(reversed(foas)):
+    for ff in range(f_len):
+        Df = foas[ff]
         theta = np.exp(1j*2*np.pi*nrange*Df/float(fs))
         if n_bits:
             theta = quantize(theta, n_bits)
         y_shift = y * theta
         rxy, lags = dc.xcorr(x, y_shift, nlags)
-        caf_res.append(np.abs(rxy))
+        np.abs(rxy, out=caf_res[ff])
     return caf_res, dt
 
 
