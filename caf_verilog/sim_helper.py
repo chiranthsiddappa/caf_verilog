@@ -5,6 +5,7 @@ try:
     from cocotb.runner import get_runner, Simulator
 except ImportError as ie:
     import warnings
+
     Simulator = object
     warnings.warn("Could not import cocotb", ImportWarning)
 import os
@@ -56,9 +57,8 @@ def sim_shift(ref, ref_center, ref_length, shift=0, rec=None, padding=False,
         fill_zeros = [0 for zz in range(0, fill_length)]
         ref_ret = fill_zeros + list(ref_ret)
         ref_ret += fill_zeros
-    if rec:
+    if rec is not None:
         rec_ret = rec[sim_center - ref_length:sim_center + ref_length]
     else:
         rec_ret = ref_plus_shift[sim_center - ref_length: sim_center + ref_length]
     return ref_ret, rec_ret
-
